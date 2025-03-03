@@ -79,11 +79,14 @@ class Navigation {
      * Initialize navigation state
      */
     initializeNavigation() {
-        // Default: expanded on desktop, collapsed on mobile
+        // Make navigation visible by default on both mobile and desktop
         if (this.isMobile) {
-            this.collapse();
+            // For mobile, use fixed width since fit-content might make it too wide
+            this.nav.style.width = `${this.config.defaultWidth}px`;
+            this.nav.classList.remove('collapsed');
+            document.body.classList.remove('nav-collapsed');
         } else {
-            // For desktop, start with fit-content instead of fixed width
+            // For desktop, start with fit-content
             this.nav.style.width = 'fit-content';
             this.nav.classList.remove('collapsed');
             document.body.classList.remove('nav-collapsed');
@@ -97,13 +100,8 @@ class Navigation {
         const wasMobile = this.isMobile;
         this.isMobile = window.innerWidth <= 768;
 
-        // If switching between views
-        if (wasMobile !== this.isMobile) {
-            if (this.isMobile) {
-                // Going to mobile - collapse
-                this.collapse();
-            }
-        }
+        // If switching between views, we no longer auto-collapse
+        // This allows the navigation to remain in its current state when switching device sizes
     }
 
     /**
