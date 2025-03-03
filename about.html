@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - VistaKine</title>
     <link rel="stylesheet" href="styles/main.css">
+    <!-- Add resize handle pull tab setup script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure the pull tab exists by the time the page loads
+            // This just adds the element - all styling is handled by CSS
+            setTimeout(function() {
+                const resizeHandle = document.querySelector('.resize-handle');
+                if (resizeHandle && !resizeHandle.querySelector('.pull-tab')) {
+                    const pullTab = document.createElement('div');
+                    pullTab.className = 'pull-tab';
+                    resizeHandle.appendChild(pullTab);
+                }
+            }, 100); // Small delay to ensure resize handle is created
+        });
+    </script>
 </head>
 <body>
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">

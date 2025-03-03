@@ -175,33 +175,30 @@ body {
 	border-right: 1px solid rgba(194, 208, 224, 0.5);
 	box-shadow: 0 0 15px rgba(74, 101, 129, 0.1);
 	height: 100vh;
-	width: 280px;
+	width: fit-content;
 	position: fixed;
 	flex-shrink: 0;
-	overflow: hidden;
+	overflow: visible;
 	z-index: 10;
 	transition: width 0.2s ease-out, opacity 0.15s ease;
+}
+
+/* Make sure only the container has overflow:auto, not the entire nav */
+#chapter-nav .u-container {
+	height: 100%;
+	width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: var(--grid-gutter);
 }
 
 #chapter-nav.collapsed {
 	width: 0;
 	border-right: none;
+	overflow: visible;
 }
 
-/* Keep the pull tab visible even when navigation is collapsed */
-#chapter-nav.collapsed .pull-tab {
-	opacity: 0.6;
-	right: -8px;
-}
-
-#chapter-nav .u-container {
-	height: 100%;
-	width: 100%;
-	overflow-y: auto;
-	padding: var(--grid-gutter);
-}
-
-/* Resize handle */
+/* Resize handle - positioned relative to nav menu */
 .resize-handle {
 	position: absolute;
 	top: 0;
@@ -212,6 +209,7 @@ body {
 	z-index: 95;
 	background: transparent;
 	transition: background-color 0.15s ease;
+	pointer-events: auto;
 }
 
 .resize-handle:hover,
@@ -220,68 +218,42 @@ body.resizing .resize-handle,
 	background: var(--color-primary);
 }
 
-/* Pull tab for more visibility */
+/* Pull tab - positioned absolutely outside the nav menu */
 .pull-tab {
 	position: absolute;
 	top: 50%;
-	right: 1px;
-	width: 8px;
-	height: 40px;
-	background: var(--color-primary);
-	border-radius: 4px 0 0 4px;
+	right: -14px;
+	width: 12px;
+	height: 60px;
+	background: #9EA7B3;
+	border-radius: 0 4px 4px 0;
 	transform: translateY(-50%);
-	opacity: 0;
-	transition: opacity 0.2s ease, width 0.2s ease;
-	box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+	opacity: 0.6;
+	transition: opacity 0.2s ease, width 0.2s ease, right 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
 	z-index: 96;
+	pointer-events: auto;
+}
+
+/* State when navigation is NOT collapsed */
+#chapter-nav:not(.collapsed) .pull-tab {
+	right: -14px;
+}
+
+/* State when navigation is collapsed - more visible and sticks out more */
+#chapter-nav.collapsed .pull-tab {
+	opacity: 0.8;
+	right: -14px;
+	box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .resize-handle:hover .pull-tab,
 body.resizing .pull-tab,
 .resize-handle.active .pull-tab {
-	opacity: 0.8;
-	width: 12px;
-}
-
-/* Improved touch target and visual feedback on mobile */
-@media (max-width: 768px) {
-	.resize-handle {
-		width: 14px;
-		right: -7px;
-	}
-
-	.pull-tab {
-		width: 12px;
-		height: 50px;
-		opacity: 0.3;
-	}
-
-	.resize-handle:hover .pull-tab,
-	body.resizing .pull-tab,
-	.resize-handle.active .pull-tab {
-		opacity: 0.9;
-		width: 16px;
-	}
-
-	.resize-handle:after {
-		content: "";
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		transform: translate(-50%, -50%);
-		height: 44px;
-		width: 4px;
-		background-color: var(--color-primary);
-		border-radius: 4px;
-		opacity: 0.3;
-		transition: opacity 0.15s ease, height 0.2s ease;
-	}
-
-	body.resizing .resize-handle:after,
-	.resize-handle.active:after {
-		opacity: 0.9;
-		height: 80px;
-	}
+	opacity: 1;
+	width: 16px;
+	right: -16px;
+	background: var(--color-primary);
 }
 
 /* Main content */
