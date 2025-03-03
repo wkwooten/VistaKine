@@ -180,7 +180,9 @@ body {
 	flex-shrink: 0;
 	overflow: visible;
 	z-index: 10;
-	transition: width 0.2s ease-out, opacity 0.15s ease;
+	transition: width 0.2s ease-out, left 0.2s ease-out, opacity 0.15s ease;
+	left: 0;
+	top: 0;
 }
 
 /* Make sure only the container has overflow:auto, not the entire nav */
@@ -190,32 +192,126 @@ body {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding: var(--grid-gutter);
+	opacity: 1;
+	transition: opacity 0.15s ease;
+}
+
+/* Custom width class to handle JavaScript-defined widths without inline styles */
+#chapter-nav.custom-width {
+	width: 280px;
+	/* Default fallback */
+}
+
+/* Width presets (we'll use JavaScript to add these classes) */
+#chapter-nav.width-0 {
+	width: 0;
+}
+
+#chapter-nav.width-100 {
+	width: 100px;
+}
+
+#chapter-nav.width-150 {
+	width: 150px;
+}
+
+#chapter-nav.width-200 {
+	width: 200px;
+}
+
+#chapter-nav.width-250 {
+	width: 250px;
+}
+
+#chapter-nav.width-280 {
+	width: 280px;
+}
+
+#chapter-nav.width-300 {
+	width: 300px;
+}
+
+#chapter-nav.width-350 {
+	width: 350px;
+}
+
+#chapter-nav.width-400 {
+	width: 400px;
+}
+
+#chapter-nav.width-450 {
+	width: 450px;
+}
+
+#chapter-nav.width-500 {
+	width: 500px;
+}
+
+#chapter-nav.width-550 {
+	width: 550px;
+}
+
+#chapter-nav.width-600 {
+	width: 600px;
+}
+
+/* Remove the attr() approach which doesn't work for width */
+#chapter-nav[data-nav-width] {
+	/* We'll use the data attribute just to store the value,
+       but actual styling will come from the classes above */
+}
+
+/* Expanded state styling */
+#chapter-nav.expanded {
+	border-right: 1px solid rgba(194, 208, 224, 0.5);
+	box-shadow: 0 0 15px rgba(74, 101, 129, 0.1);
+	clip-path: none;
 }
 
 #chapter-nav.collapsed {
 	width: 0;
 	border-right: none;
 	overflow: visible;
+	box-shadow: none;
+	left: 0;
+	clip-path: inset(0 100% 0 0);
 }
 
-/* Resize handle - positioned relative to nav menu */
+/* Opacity classes for the container */
+#chapter-nav .u-container.opacity-0 {
+	opacity: 0;
+}
+
+#chapter-nav .u-container.opacity-low {
+	opacity: 0.3;
+}
+
+#chapter-nav .u-container.opacity-med {
+	opacity: 0.6;
+}
+
+#chapter-nav .u-container.opacity-high {
+	opacity: 1;
+}
+
+/* Ensure container is invisible when navigation is collapsed */
+#chapter-nav.collapsed .u-container {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Resize handle with pull tab - always visible */
 .resize-handle {
 	position: absolute;
 	top: 0;
 	right: -2px;
-	width: 6px;
+	width: 10px;
 	height: 100%;
 	cursor: col-resize;
 	z-index: 95;
 	background: transparent;
 	transition: background-color 0.15s ease;
 	pointer-events: auto;
-}
-
-.resize-handle:hover,
-body.resizing .resize-handle,
-.resize-handle.active {
-	background: var(--color-primary);
 }
 
 /* Pull tab - positioned absolutely outside the nav menu */
@@ -228,32 +324,40 @@ body.resizing .resize-handle,
 	background: #9EA7B3;
 	border-radius: 0 4px 4px 0;
 	transform: translateY(-50%);
-	opacity: 0.6;
-	transition: opacity 0.2s ease, width 0.2s ease, right 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	opacity: 0.7;
+	transition: opacity 0.2s ease, width 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 	box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
 	z-index: 96;
 	pointer-events: auto;
 }
 
-/* State when navigation is NOT collapsed */
-#chapter-nav:not(.collapsed) .pull-tab {
-	right: -14px;
-}
-
-/* State when navigation is collapsed - more visible and sticks out more */
+/* State when navigation is collapsed - more visible */
 #chapter-nav.collapsed .pull-tab {
-	opacity: 0.8;
-	right: -14px;
+	opacity: 0.85;
 	box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Pull tab hover/active state */
 .resize-handle:hover .pull-tab,
 body.resizing .pull-tab,
 .resize-handle.active .pull-tab {
 	opacity: 1;
 	width: 16px;
-	right: -16px;
 	background: var(--color-primary);
+	box-shadow: 3px 0 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Mobile adjustments for pull tab */
+@media (max-width: 768px) {
+	#chapter-nav.collapsed .pull-tab {
+		width: 14px;
+		height: 70px;
+	}
+}
+
+/* Hide the nav toggle button as we're using the pull tab exclusively */
+.show-nav-toggle {
+	display: none !important;
 }
 
 /* Main content */
@@ -573,83 +677,6 @@ body.nav-collapsed main {
 	text-overflow: ellipsis;
 }
 
-/* Toggle button to show navigation */
-.show-nav-toggle {
-	position: fixed;
-	top: 10px;
-	left: 10px;
-	width: 40px;
-	height: 40px;
-	border-radius: 6px;
-	background: var(--color-bg-primary);
-	border: 1px solid var(--color-mid-light);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	z-index: 100;
-	opacity: 0;
-	pointer-events: none;
-	box-shadow: 0 2px 8px rgba(74, 101, 129, 0.15);
-	color: var(--color-mid-dark);
-	transition: all 0.2s ease;
-}
-
-.show-nav-toggle:hover {
-	background: white;
-	color: var(--color-primary);
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.show-nav-toggle:active {
-	transform: translateY(1px);
-	box-shadow: 0 1px 3px rgba(74, 101, 129, 0.2);
-}
-
-body.nav-collapsed .show-nav-toggle {
-	opacity: 1;
-	pointer-events: all;
-}
-
-@media (max-width: 768px) {
-	.show-nav-toggle {
-		width: 44px;
-		height: 44px;
-		top: 12px;
-		left: 12px;
-		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-	}
-}
-
-#chapter-nav h1 {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	transition: font-size 0.2s ease;
-	color: var(--color-mid-dark);
-}
-
-/* Responsive adaptations for narrow sidebar */
-@media (max-width: 200px) {
-	#chapter-nav:not(.collapsed) h1 {
-		font-size: var(--step-0);
-	}
-
-	.chapter-link {
-		padding: var(--space-2xs);
-	}
-
-	.section-link {
-		padding: var(--space-3xs) var(--space-2xs);
-	}
-
-	.chapter-number,
-	.section-number {
-		min-width: 1em;
-	}
-}
-
 /* Search bar styles */
 .search-container {
 	margin: var(--space-m) 0;
@@ -904,5 +931,31 @@ body.nav-collapsed .show-nav-toggle {
 	.secondary-button {
 		width: 100%;
 		text-align: center;
+	}
+}
+
+/* Mobile width classes */
+@media (max-width: 768px) {
+
+	#chapter-nav.width-100,
+	#chapter-nav.width-150,
+	#chapter-nav.width-200,
+	#chapter-nav.width-250,
+	#chapter-nav.width-280,
+	#chapter-nav.width-300,
+	#chapter-nav.width-350,
+	#chapter-nav.width-400,
+	#chapter-nav.width-450,
+	#chapter-nav.width-500,
+	#chapter-nav.width-550,
+	#chapter-nav.width-600 {
+		width: 280px;
+		/* On mobile, we always use 280px for expanded state */
+	}
+
+	/* When collapsed, ensure width is 0 */
+	#chapter-nav.collapsed {
+		width: 0 !important;
+		transform: translateX(-100%);
 	}
 }

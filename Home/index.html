@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chapters - VistaKine</title>
-    <link rel="stylesheet" href="styles/main.css">
+    <title>VistaKine - Home</title>
+    <link rel="stylesheet" href="../styles/main.css">
     <!-- Add resize handle pull tab setup script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -46,37 +46,43 @@
 
             <ul id="chapter-list">
                 <li class="chapter-item">
-                    <a href="index.html" class="chapter-link">
+                    <a href="../" class="chapter-link">
                         <span class="chapter-number">•</span>
                         <span class="chapter-title">Cover Page</span>
                     </a>
                 </li>
                 <li class="chapter-item">
-                    <a href="about.html" class="chapter-link">
+                    <a href="#" class="chapter-link active">
+                        <span class="chapter-number">•</span>
+                        <span class="chapter-title">Home</span>
+                    </a>
+                </li>
+                <li class="chapter-item">
+                    <a href="../About/" class="chapter-link">
                         <span class="chapter-number">•</span>
                         <span class="chapter-title">About</span>
                     </a>
                 </li>
                 <li class="chapter-item">
-                    <a href="#" class="chapter-link active">
+                    <a href="../Chapters/" class="chapter-link">
                         <span class="chapter-number">1</span>
                         <span class="chapter-title">Introduction to Kinematics</span>
                     </a>
                     <ul class="section-list">
                         <li class="section-item">
-                            <a href="#1.1" class="section-link active">
+                            <a href="../Chapters/#1.1" class="section-link">
                                 <span class="section-number">1.1</span>
                                 <span class="section-title">Basic Concepts</span>
                             </a>
                         </li>
                         <li class="section-item">
-                            <a href="#1.2" class="section-link">
+                            <a href="../Chapters/#1.2" class="section-link">
                                 <span class="section-number">1.2</span>
                                 <span class="section-title">Linear Motion</span>
                             </a>
                         </li>
                         <li class="section-item">
-                            <a href="#1.3" class="section-link">
+                            <a href="../Chapters/#1.3" class="section-link">
                                 <span class="section-number">1.3</span>
                                 <span class="section-title">Acceleration and Velocity</span>
                             </a>
@@ -84,19 +90,19 @@
                     </ul>
                 </li>
                 <li class="chapter-item">
-                    <a href="#2" class="chapter-link">
+                    <a href="../Chapters/#2" class="chapter-link">
                         <span class="chapter-number">2</span>
                         <span class="chapter-title">Forces and Motion</span>
                     </a>
                     <ul class="section-list">
                         <li class="section-item">
-                            <a href="#2.1" class="section-link">
+                            <a href="../Chapters/#2.1" class="section-link">
                                 <span class="section-number">2.1</span>
                                 <span class="section-title">Newton's Laws</span>
                             </a>
                         </li>
                         <li class="section-item">
-                            <a href="#2.2" class="section-link">
+                            <a href="../Chapters/#2.2" class="section-link">
                                 <span class="section-number">2.2</span>
                                 <span class="section-title">Friction</span>
                             </a>
@@ -104,19 +110,19 @@
                     </ul>
                 </li>
                 <li class="chapter-item">
-                    <a href="#3" class="chapter-link">
+                    <a href="../Chapters/#3" class="chapter-link">
                         <span class="chapter-number">3</span>
                         <span class="chapter-title">Energy and Work</span>
                     </a>
                     <ul class="section-list">
                         <li class="section-item">
-                            <a href="#3.1" class="section-link">
+                            <a href="../Chapters/#3.1" class="section-link">
                                 <span class="section-number">3.1</span>
                                 <span class="section-title">Kinetic Energy</span>
                             </a>
                         </li>
                         <li class="section-item">
-                            <a href="#3.2" class="section-link">
+                            <a href="../Chapters/#3.2" class="section-link">
                                 <span class="section-number">3.2</span>
                                 <span class="section-title">Potential Energy</span>
                             </a>
@@ -128,46 +134,21 @@
     </nav>
 
     <main>
-        <!-- Chapter Intro Template -->
-        <div class="u-container chapter-intro">
-            <div class="chapter-hero">
-                <img src="https://picsum.photos/1200/520?gravity=center" alt="Chapter Introduction Image">
+        <!-- Home Page Content -->
+        <div class="u-container cover-page">
+            <div class="cover-hero">
+                <img src="https://picsum.photos/1200/600?gravity=center" alt="VistaKine Cover Image">
             </div>
-            <div class="chapter-content">
-                <header class="content-header">
-                    <div class="chapter-meta">Chapter 1</div>
-                    <h2>Introduction to Kinematics</h2>
-                </header>
-                <div class="content-body">
-                    <p>Chapter introduction and overview content goes here. This section provides a high-level summary of what will be covered in the chapter.</p>
-                    <div class="chapter-sections">
-                        <h3>Chapter Sections</h3>
-                        <ul>
-                            <li>1.1 Basic Concepts</li>
-                            <li>1.2 Linear Motion</li>
-                            <li>1.3 Acceleration and Velocity</li>
-                        </ul>
-                    </div>
+            <div class="cover-content">
+                <h1 class="cover-title">VistaKine</h1>
+                <h2 class="cover-subtitle">Interactive Kinematics Learning</h2>
+                <p class="cover-description">
+                    VistaKine reimagines physics education through interactive 3D visualizations that build intuitive understanding. Experience kinematics in a whole new way—manipulate variables, observe cause-and-effect relationships in real-time, and develop deeper insights than traditional textbooks can offer. Whether you're a student struggling with abstract concepts or an educator looking for better teaching tools, VistaKine bridges the gap between theory and practical understanding.
+                </p>
+                <div class="cover-actions">
+                    <a href="../Chapters/" class="primary-button">Start Learning</a>
+                    <a href="../About/" class="secondary-button">Learn More</a>
                 </div>
-            </div>
-        </div>
-
-        <!-- Interactive Content Template (Hidden by default) -->
-        <div class="u-container interactive-content" id="1.1">
-            <div class="content-wrapper">
-                <section id="scene-container">
-                    <!-- 3D scene will be rendered here -->
-                </section>
-
-                <section id="content-container">
-                    <div class="content-header">
-                        <div class="chapter-meta">Section 1.1</div>
-                        <h2>Basic Concepts</h2>
-                    </div>
-                    <div class="content-body">
-                        <!-- Interactive content will be dynamically populated -->
-                    </div>
-                </section>
             </div>
         </div>
     </main>
@@ -177,6 +158,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 
     <!-- Core Application -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="../js/app.js"></script>
 </body>
 </html>
