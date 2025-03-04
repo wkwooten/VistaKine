@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - VistaKine</title>
+
+    <!-- CSS links -->
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/content-loader.css">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- JavaScript libraries -->
+    <script src="../js/navigation.js" defer></script>
+    <script src="../js/content-loader.js" defer></script>
+</head>
+<body>
+    <!-- Navigation sidebar - preserved as requested -->
+    <nav id="navigation">
+        <div class="nav-toggle" onclick="toggleNavigation()">
+            <i class="ph ph-list"></i>
+        </div>
+        <div class="container">
+            <header>
+                <h1><i class="ph ph-projector-screen-chart"></i> VistaKine</h1>
+                <div class="search">
+                    <input type="text" placeholder="Search...">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                </div>
+            </header>
+
+            <!-- Chapter navigation -->
+            <div class="chapter-navigation">
+                <ul>
+                    <li>
+                        <a href="../index.html" class="nav-link" data-content-id="cover">
+                            <span class="chapter-number"><i class="ph ph-house"></i></span>
+                            <span class="chapter-title">Cover Page</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="../About/index.html" class="nav-link" data-content-id="about">
+                            <span class="chapter-number"><i class="ph ph-info"></i></span>
+                            <span class="chapter-title">About</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="../Chapters/index.html" class="nav-link" data-content-id="chapters">
+                            <span class="chapter-number"><i class="ph ph-books"></i></span>
+                            <span class="chapter-title">Chapters</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link" data-content-id="kinematics-intro">
+                            <span class="chapter-number"><i class="ph ph-ruler"></i></span>
+                            <span class="chapter-title">Introduction to Kinematics</span>
+                        </a>
+                        <ul class="section-list">
+                            <li>
+                                <a href="#" class="section-link" data-content-id="basic-concepts">
+                                    <span class="section-number"><i class="ph ph-atom-simple"></i></span>
+                                    <span class="section-title">Basic Concepts</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="section-link" data-content-id="position-displacement">
+                                    <span class="section-number"><i class="ph ph-arrow-line-right"></i></span>
+                                    <span class="section-title">Position and Displacement</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="section-link" data-content-id="velocity">
+                                    <span class="section-number"><i class="ph ph-gauge"></i></span>
+                                    <span class="section-title">Velocity</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content container -->
+    <main id="main-content">
+        <!-- Content will be dynamically loaded here -->
+        <div id="interactive-content" class="interactive-content">
+            <!-- Loading state shown initially -->
+            <div class="loading-indicator">Loading content...</div>
+
+            <!-- Content container -->
+            <div class="content-container">
+                <!-- Placeholder/initial content -->
+                <h2>Welcome to VistaKine</h2>
+                <p>Select a chapter or section from the navigation menu to get started.</p>
+            </div>
+
+            <!-- Progress navigation -->
+            <div class="progress-nav">
+                <button class="progress-prev" disabled>
+                    <i class="ph ph-caret-left"></i>
+                </button>
+                <div class="progress-indicator">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <button class="progress-next" disabled>
+                    <i class="ph ph-caret-right"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Template snippets for different content types (hidden, used by JS) -->
+    <template id="theory-card-template">
+        <div class="theory-card">
+            <div class="card-header">
+                <i class="ph ph-book-open card-icon"></i>
+                <h4>Theory</h4>
+                <span class="card-number"></span>
+            </div>
+            <div class="card-content"></div>
+        </div>
+    </template>
+
+    <template id="example-card-template">
+        <div class="example-card">
+            <div class="card-header">
+                <i class="ph ph-presentation-chart card-icon"></i>
+                <h4>Example</h4>
+                <span class="card-number"></span>
+            </div>
+            <div class="card-content"></div>
+        </div>
+    </template>
+
+    <template id="problem-card-template">
+        <div class="problem-card">
+            <div class="card-header">
+                <i class="ph ph-lightbulb card-icon"></i>
+                <h4>Problem</h4>
+                <span class="card-number"></span>
+            </div>
+            <div class="card-content"></div>
+        </div>
+    </template>
+
+    <template id="visualization-card-template">
+        <div class="visualization-card">
+            <div class="card-header">
+                <i class="ph ph-chart-line card-icon"></i>
+                <h4>Interactive Visualization</h4>
+                <span class="card-number"></span>
+            </div>
+            <div class="visualization-container"></div>
+            <div class="visualization-controls"></div>
+        </div>
+    </template>
+</body>
+</html>

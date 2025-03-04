@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - VistaKine</title>
     <link rel="stylesheet" href="../styles/main.css">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Add resize handle pull tab setup script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -23,23 +25,16 @@
 </head>
 <body>
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6h16"></path>
-            <path d="M4 12h16"></path>
-            <path d="M4 18h16"></path>
-        </svg>
+        <i class="ph ph-list"></i>
     </button>
 
     <nav id="chapter-nav">
         <div class="u-container">
-            <h1>VistaKine</h1>
+            <h1><i class="ph ph-projector-screen-chart"></i> VistaKine</h1>
 
             <div class="search-container">
                 <div class="search-bar">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
+                    <i class="ph ph-magnifying-glass search-icon"></i>
                     <input type="text" placeholder="Search textbook..." class="search-input">
                 </div>
             </div>
@@ -47,19 +42,13 @@
             <ul id="chapter-list">
                 <li class="chapter-item">
                     <a href="../" class="chapter-link">
-                        <span class="chapter-number">•</span>
+                        <span class="chapter-number"><i class="ph ph-house"></i></span>
                         <span class="chapter-title">Cover Page</span>
                     </a>
                 </li>
                 <li class="chapter-item">
-                    <a href="../Home/" class="chapter-link">
-                        <span class="chapter-number">•</span>
-                        <span class="chapter-title">Home</span>
-                    </a>
-                </li>
-                <li class="chapter-item">
                     <a href="#" class="chapter-link active">
-                        <span class="chapter-number">•</span>
+                        <span class="chapter-number"><i class="ph ph-info"></i></span>
                         <span class="chapter-title">About</span>
                     </a>
                 </li>

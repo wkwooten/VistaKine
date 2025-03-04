@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chapters - VistaKine</title>
     <link rel="stylesheet" href="../styles/main.css">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Add resize handle pull tab setup script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -23,23 +25,16 @@
 </head>
 <body>
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6h16"></path>
-            <path d="M4 12h16"></path>
-            <path d="M4 18h16"></path>
-        </svg>
+        <i class="ph ph-list"></i>
     </button>
 
     <nav id="chapter-nav">
         <div class="u-container">
-            <h1>VistaKine</h1>
+            <h1><i class="ph ph-projector-screen-chart"></i> VistaKine</h1>
 
             <div class="search-container">
                 <div class="search-bar">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
+                    <i class="ph ph-magnifying-glass search-icon"></i>
                     <input type="text" placeholder="Search textbook..." class="search-input">
                 </div>
             </div>
@@ -47,19 +42,13 @@
             <ul id="chapter-list">
                 <li class="chapter-item">
                     <a href="../" class="chapter-link">
-                        <span class="chapter-number">•</span>
+                        <span class="chapter-number"><i class="ph ph-house"></i></span>
                         <span class="chapter-title">Cover Page</span>
                     </a>
                 </li>
                 <li class="chapter-item">
-                    <a href="../Home/" class="chapter-link">
-                        <span class="chapter-number">•</span>
-                        <span class="chapter-title">Home</span>
-                    </a>
-                </li>
-                <li class="chapter-item">
                     <a href="../About/" class="chapter-link">
-                        <span class="chapter-number">•</span>
+                        <span class="chapter-number"><i class="ph ph-info"></i></span>
                         <span class="chapter-title">About</span>
                     </a>
                 </li>
@@ -134,46 +123,48 @@
     </nav>
 
     <main>
-        <!-- Chapter Intro Template -->
-        <div class="u-container chapter-intro">
-            <div class="chapter-hero">
-                <img src="https://picsum.photos/1200/520?gravity=center" alt="Chapter Introduction Image">
-            </div>
-            <div class="chapter-content">
-                <header class="content-header">
-                    <div class="chapter-meta">Chapter 1</div>
-                    <h2>Introduction to Kinematics</h2>
-                </header>
-                <div class="content-body">
-                    <p>Chapter introduction and overview content goes here. This section provides a high-level summary of what will be covered in the chapter.</p>
-                    <div class="chapter-sections">
-                        <h3>Chapter Sections</h3>
-                        <ul>
-                            <li>1.1 Basic Concepts</li>
-                            <li>1.2 Linear Motion</li>
-                            <li>1.3 Acceleration and Velocity</li>
-                        </ul>
+        <!-- Interactive Chapter Content -->
+        <div class="u-container interactive-content">
+            <section id="1.1" class="chapter-intro">
+                <div class="chapter-hero">
+                    <img src="https://picsum.photos/1200/500?gravity=center" alt="Chapter 1.1 - Basic Concepts">
+                </div>
+                <div class="chapter-content">
+                    <header class="content-header">
+                        <div class="chapter-meta">Chapter 1.1</div>
+                        <h2>Basic Concepts in Kinematics</h2>
+                    </header>
+                    <div class="content-body">
+                        <p>Chapter introduction and overview content goes here. This section provides a high-level summary of what will be covered in the chapter.</p>
+                        <div class="chapter-sections">
+                            <h3>Chapter Sections</h3>
+                            <ul>
+                                <li>1.1 Basic Concepts</li>
+                                <li>1.2 Linear Motion</li>
+                                <li>1.3 Acceleration and Velocity</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Interactive Content Template (Hidden by default) -->
-        <div class="u-container interactive-content" id="1.1">
-            <div class="content-wrapper">
-                <section id="scene-container">
-                    <!-- 3D scene will be rendered here -->
-                </section>
+            <!-- Interactive Content Template (Hidden by default) -->
+            <div class="u-container interactive-content" id="1.1">
+                <div class="content-wrapper">
+                    <section id="scene-container">
+                        <!-- 3D scene will be rendered here -->
+                    </section>
 
-                <section id="content-container">
-                    <div class="content-header">
-                        <div class="chapter-meta">Section 1.1</div>
-                        <h2>Basic Concepts</h2>
-                    </div>
-                    <div class="content-body">
-                        <!-- Interactive content will be dynamically populated -->
-                    </div>
-                </section>
+                    <section id="content-container">
+                        <div class="content-header">
+                            <div class="chapter-meta">Section 1.1</div>
+                            <h2>Basic Concepts</h2>
+                        </div>
+                        <div class="content-body">
+                            <!-- Interactive content will be dynamically populated -->
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
     </main>

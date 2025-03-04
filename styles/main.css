@@ -1,6 +1,43 @@
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
+/* Phosphor Icons Styling */
+.ph {
+	vertical-align: middle;
+	display: inline-block;
+	line-height: 1;
+}
+
+/* Adjust icon sizing in different contexts */
+h1 .ph {
+	margin-right: 0.5rem;
+	font-size: 1.2em;
+}
+
+h2 .ph,
+h3 .ph {
+	margin-right: 0.4rem;
+	font-size: 0.9em;
+}
+
+.chapter-number .ph,
+.section-number .ph {
+	font-size: 1em;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-icon.ph {
+	font-size: 1.2rem;
+	position: absolute;
+	left: var(--space-xs);
+	color: var(--color-mid);
+	pointer-events: none;
+	transition: color 0.2s ease;
+}
+
 /* Typography Variables */
 :root {
 	/* Font sizes */
@@ -175,14 +212,16 @@ body {
 	border-right: 1px solid rgba(194, 208, 224, 0.5);
 	box-shadow: 0 0 15px rgba(74, 101, 129, 0.1);
 	height: 100vh;
-	width: fit-content;
 	position: fixed;
 	flex-shrink: 0;
 	overflow: visible;
+	/* Always visible for the pull tab */
 	z-index: 10;
-	transition: width 0.2s ease-out, left 0.2s ease-out, opacity 0.15s ease;
+	/* No transition here - we're handling this with JS animation */
 	left: 0;
 	top: 0;
+	will-change: width;
+	/* Optimize for animation */
 }
 
 /* Make sure only the container has overflow:auto, not the entire nav */
@@ -191,9 +230,39 @@ body {
 	width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
+	/* Always keep x hidden to prevent horizontal overflow */
 	padding: var(--grid-gutter);
 	opacity: 1;
-	transition: opacity 0.15s ease;
+	/* No transition here - we're handling this with JS animation */
+	transform-origin: left center;
+	/* For scale effect */
+	will-change: opacity, transform;
+	/* Optimize for animation */
+	/* Ensure content is completely hidden when nav is very narrow */
+	visibility: visible;
+}
+
+/* Container collapsed state - ensure complete invisibility */
+#chapter-nav .u-container.collapsed {
+	opacity: 0;
+	width: 0;
+	padding: 0;
+	overflow: hidden;
+	pointer-events: none;
+	visibility: hidden;
+}
+
+/* Only hide content for very narrow widths - much more selective */
+#chapter-nav[style*="width: 20px"] .u-container,
+#chapter-nav[style*="width:20px"] .u-container,
+#chapter-nav[style*="width: 25px"] .u-container,
+#chapter-nav[style*="width:25px"] .u-container {
+	visibility: hidden;
+}
+
+/* Make all widths show content unless explicitly hidden by JavaScript */
+#chapter-nav[style*="width:"] .u-container:not([style*="visibility: hidden"]) {
+	visibility: visible;
 }
 
 /* Custom width class to handle JavaScript-defined widths without inline styles */
@@ -261,45 +330,6 @@ body {
        but actual styling will come from the classes above */
 }
 
-/* Expanded state styling */
-#chapter-nav.expanded {
-	border-right: 1px solid rgba(194, 208, 224, 0.5);
-	box-shadow: 0 0 15px rgba(74, 101, 129, 0.1);
-	clip-path: none;
-}
-
-#chapter-nav.collapsed {
-	width: 0;
-	border-right: none;
-	overflow: visible;
-	box-shadow: none;
-	left: 0;
-	clip-path: inset(0 100% 0 0);
-}
-
-/* Opacity classes for the container */
-#chapter-nav .u-container.opacity-0 {
-	opacity: 0;
-}
-
-#chapter-nav .u-container.opacity-low {
-	opacity: 0.3;
-}
-
-#chapter-nav .u-container.opacity-med {
-	opacity: 0.6;
-}
-
-#chapter-nav .u-container.opacity-high {
-	opacity: 1;
-}
-
-/* Ensure container is invisible when navigation is collapsed */
-#chapter-nav.collapsed .u-container {
-	opacity: 0;
-	pointer-events: none;
-}
-
 /* Resize handle with pull tab - always visible */
 .resize-handle {
 	position: absolute;
@@ -335,6 +365,9 @@ body {
 #chapter-nav.collapsed .pull-tab {
 	opacity: 0.85;
 	box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
+	/* Ensure pull tab is always visible and clickable when nav is collapsed */
+	pointer-events: auto;
+	z-index: 100;
 }
 
 /* Pull tab hover/active state */
@@ -368,48 +401,48 @@ main {
 	overflow-y: auto;
 	padding: var(--space-m);
 	transition: margin-left 0.2s ease-out;
+	will-change: margin-left;
+	/* Optimize for animation */
 }
 
 body.nav-collapsed main {
-	margin-left: 0;
+	margin-left: 20px;
+	/* Leave room for the pull tab */
 }
 
-/* Remove all mobile-specific styles */
+/* Mobile adjustments */
 @media (max-width: 768px) {
 	#chapter-nav {
 		box-shadow: 0 0 20px rgba(74, 101, 129, 0.15);
 		width: 280px;
 		transform: translateX(0);
-		transition: transform 0.3s ease, width 0.2s ease-out;
+		transition: transform 0.2s ease-out, width 0.2s ease-out;
 	}
 
-	#chapter-nav.collapsed {
-		transform: translateX(-100%);
+	/* When container is collapsed, reduce width for pull tab */
+	#chapter-nav .u-container.collapsed {
+		opacity: 0;
 		width: 0;
+		padding: 0;
 	}
 
-	/* Make pull tab more prominent on mobile */
-	#chapter-nav.collapsed .pull-tab {
+	/* Keep pull tab more visible on mobile */
+	.pull-tab {
 		opacity: 0.8;
-		right: -12px;
-		/* Position further out for easier access */
-		width: 12px;
-		height: 60px;
+		height: 70px;
 		/* Taller on mobile for easier targeting */
-		box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
 	}
 
+	/* Content spacing */
 	main {
 		margin-left: 0;
+		/* On mobile content takes full width */
 		padding: var(--space-s);
 	}
 
+	/* Collapsed state content spacing */
 	body.nav-collapsed main {
-		margin-left: 0;
-	}
-
-	.show-nav-toggle {
-		display: flex;
+		margin-left: 20px;
 	}
 }
 

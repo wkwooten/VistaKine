@@ -1,0 +1,139 @@
+{
+  "id": "position-displacement",
+  "title": "Position and Displacement",
+  "description": "Understanding the concepts of position and displacement in kinematics, including vectors and mathematical representations.",
+  "prerequisite_ids": ["basic-concepts"],
+  "next_content_id": "velocity",
+  "prev_content_id": "basic-concepts",
+  "estimated_time_minutes": 20,
+  "sections": [
+    {
+      "id": "section-introduction",
+      "title": "Introduction to Position and Displacement",
+      "content": "<p>Position and displacement are fundamental concepts in kinematics that describe where an object is located and how its location changes over time. These concepts form the foundation for understanding velocity and acceleration.</p>",
+      "type": "introduction"
+    },
+    {
+      "id": "section-position",
+      "title": "Position",
+      "content": "<p><strong>Position</strong> refers to the location of an object relative to a chosen reference point (origin) in a given coordinate system. Position is a vector quantity, meaning it has both magnitude and direction.</p><p>In a Cartesian coordinate system, the position of a point in three-dimensional space is represented by the coordinates (x, y, z), where:</p><ul><li>x is the distance along the x-axis</li><li>y is the distance along the y-axis</li><li>z is the distance along the z-axis</li></ul>",
+      "type": "theory",
+      "number": 1
+    },
+    {
+      "id": "section-position-vector",
+      "title": "Position Vector",
+      "content": "<p>The <strong>position vector</strong> (denoted by $\\vec{r}$) points from the origin of the coordinate system to the object's location. In Cartesian coordinates, the position vector is:</p><div class='equation'>\\vec{r} = x\\hat{i} + y\\hat{j} + z\\hat{k}</div><p>where $\\hat{i}$, $\\hat{j}$, and $\\hat{k}$ are unit vectors in the x, y, and z directions, respectively.</p>",
+      "type": "theory",
+      "number": 2
+    },
+    {
+      "id": "section-displacement",
+      "title": "Displacement",
+      "content": "<p><strong>Displacement</strong> is the change in position of an object. It is a vector quantity that points from the initial position to the final position. Displacement is defined as:</p><div class='equation'>\\vec{\\Delta r} = \\vec{r}_f - \\vec{r}_i</div><p>where $\\vec{r}_i$ is the initial position vector and $\\vec{r}_f$ is the final position vector.</p><p>In Cartesian coordinates, the displacement vector is:</p><div class='equation'>\\vec{\\Delta r} = (x_f - x_i)\\hat{i} + (y_f - y_i)\\hat{j} + (z_f - z_i)\\hat{k}</div>",
+      "type": "theory",
+      "number": 3
+    },
+    {
+      "id": "section-displacement-vs-distance",
+      "title": "Displacement vs. Distance",
+      "content": "<p>It's important to distinguish between <strong>displacement</strong> and <strong>distance</strong>:</p><ul><li><strong>Displacement</strong> is a vector quantity that depends only on the starting and ending positions, regardless of the path taken.</li><li><strong>Distance</strong> is a scalar quantity that measures the total length of the path traveled by an object, regardless of direction.</li></ul><div class='callout info'><p>For example, if you walk 3 km east and then 4 km north, your displacement is 5 km northeast (calculated using the Pythagorean theorem), but the total distance traveled is 7 km (3 km + 4 km).</p></div>",
+      "type": "theory",
+      "number": 4
+    },
+    {
+      "id": "example-calculating-displacement",
+      "title": "Example: Calculating Displacement",
+      "content": "<p>A particle moves from position (2 m, 3 m, 1 m) to position (5 m, 7 m, 4 m). Find the displacement vector and the magnitude of the displacement.</p>",
+      "solution": "<p>The displacement vector is:</p><div class='equation'>\\vec{\\Delta r} = \\vec{r}_f - \\vec{r}_i = (5 - 2)\\hat{i} + (7 - 3)\\hat{j} + (4 - 1)\\hat{k} = 3\\hat{i} + 4\\hat{j} + 3\\hat{k}</div><p>The magnitude of the displacement (the distance between the two points) is:</p><div class='equation'>|\\vec{\\Delta r}| = \\sqrt{3^2 + 4^2 + 3^2} = \\sqrt{9 + 16 + 9} = \\sqrt{34} \\approx 5.83 \\text{ m}</div>",
+      "type": "example",
+      "number": 1
+    },
+    {
+      "id": "visualization-displacement",
+      "title": "Interactive Visualization: Position and Displacement",
+      "content": "<p>Use the controls below to explore how displacement is calculated for different initial and final positions.</p>",
+      "type": "visualization",
+      "visualization_data": {
+        "id": "displacement-viz",
+        "type": "vector-displacement",
+        "controls": [
+          {
+            "id": "initial-x",
+            "label": "Initial X Position",
+            "type": "slider",
+            "min": -10,
+            "max": 10,
+            "step": 0.5,
+            "default": 2
+          },
+          {
+            "id": "initial-y",
+            "label": "Initial Y Position",
+            "type": "slider",
+            "min": -10,
+            "max": 10,
+            "step": 0.5,
+            "default": 3
+          },
+          {
+            "id": "final-x",
+            "label": "Final X Position",
+            "type": "slider",
+            "min": -10,
+            "max": 10,
+            "step": 0.5,
+            "default": 5
+          },
+          {
+            "id": "final-y",
+            "label": "Final Y Position",
+            "type": "slider",
+            "min": -10,
+            "max": 10,
+            "step": 0.5,
+            "default": 7
+          }
+        ]
+      },
+      "number": 1
+    },
+    {
+      "id": "section-trajectory",
+      "title": "Trajectory and Path",
+      "content": "<p>The <strong>trajectory</strong> or <strong>path</strong> of an object is the sequence of positions that the object occupies during its motion. Mathematically, we can represent the trajectory as a function of time:</p><div class='equation'>\\vec{r}(t) = x(t)\\hat{i} + y(t)\\hat{j} + z(t)\\hat{k}</div><p>where x(t), y(t), and z(t) are the coordinates of the object at time t.</p>",
+      "type": "theory",
+      "number": 5
+    },
+    {
+      "id": "practice-problem-displacement",
+      "title": "Practice Problem: Calculating Displacement and Distance",
+      "content": "<p>A hiker walks 2 km east, then 3 km north, and finally 1 km west. Calculate:</p><ol><li>The final displacement vector from the starting point (in component form)</li><li>The magnitude of the displacement</li><li>The total distance traveled</li></ol>",
+      "solution": "<p>Let's define east as the positive x-direction and north as the positive y-direction.</p><p>1. The final displacement vector:</p><div class='equation'>\\vec{\\Delta r} = (2 - 1)\\hat{i} + 3\\hat{j} = 1\\hat{i} + 3\\hat{j}</div><p>2. The magnitude of the displacement:</p><div class='equation'>|\\vec{\\Delta r}| = \\sqrt{1^2 + 3^2} = \\sqrt{1 + 9} = \\sqrt{10} \\approx 3.16 \\text{ km}</div><p>3. The total distance traveled:</p><div class='equation'>\\text{Distance} = 2 + 3 + 1 = 6 \\text{ km}</div>",
+      "type": "problem",
+      "number": 1
+    },
+    {
+      "id": "section-relative-position",
+      "title": "Relative Position",
+      "content": "<p>The <strong>relative position</strong> of object B with respect to object A is the position vector that points from A to B:</p><div class='equation'>\\vec{r}_{BA} = \\vec{r}_B - \\vec{r}_A</div><p>where $\\vec{r}_A$ is the position vector of object A and $\\vec{r}_B$ is the position vector of object B.</p><p>Relative position is important when analyzing systems with multiple objects or when changing reference frames.</p>",
+      "type": "theory",
+      "number": 6
+    },
+    {
+      "id": "section-summary",
+      "title": "Summary",
+      "content": "<p>In this section, we covered:</p><ul><li>Position as a vector quantity that describes location relative to an origin</li><li>The position vector and its representation in Cartesian coordinates</li><li>Displacement as the change in position</li><li>The difference between displacement and distance traveled</li><li>Trajectory as a function of time</li><li>Relative position between objects</li></ul><p>These concepts provide the foundation for understanding velocity and acceleration, which we'll explore in the next sections.</p>",
+      "type": "summary"
+    }
+  ],
+  "keywords": [
+    "position",
+    "displacement",
+    "position vector",
+    "distance",
+    "trajectory",
+    "relative position",
+    "vector quantities"
+  ]
+}
