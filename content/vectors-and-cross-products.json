@@ -1,0 +1,196 @@
+{
+  "id": "vectors-and-cross-products",
+  "title": "Vectors and Cross Products in 3D Space",
+  "description": "A comprehensive exploration of vectors in three-dimensional space and the cross product operation.",
+  "content": [
+    {
+      "type": "header",
+      "level": 1,
+      "content": "Vectors and Cross Products in 3D Space"
+    },
+    {
+      "type": "paragraph",
+      "content": "Three-dimensional vectors are fundamental to physics, providing a way to represent quantities that have both magnitude and direction in space. This module explores how vectors behave in 3D and focuses particularly on the cross product operation, which is essential for understanding angular momentum, torque, and many other physical phenomena."
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "Building Blocks: Vectors in 3D Space"
+    },
+    {
+      "type": "paragraph",
+      "content": "A 3D vector can be represented as a directed line segment from one point to another in three-dimensional space. Mathematically, we often write a vector using component notation: 𝐯 = (v₁, v₂, v₃) or 𝐯 = v₁𝐢 + v₂𝐣 + v₃𝐤, where 𝐢, 𝐣, and 𝐤 are unit vectors along the x, y, and z axes respectively."
+    },
+    {
+      "type": "callout",
+      "style": "intro",
+      "title": "Let's Get Hands-On with Cross Products!",
+      "content": "Imagine you could grab two vectors in space and see exactly what happens when you take their cross product. Well, now you can! In the interactive visualization below, you can drag the red and green vectors around in 3D space and watch how their cross product (the blue vector) instantly responds. Before diving in, here's what to look for:\n\n• The blue vector is always perpendicular to both the red and green vectors\n• The blue vector's length shows the area of the parallelogram formed by the other two vectors\n• When the red and green vectors are parallel or nearly parallel, the blue vector becomes very small\n\nTry dragging the vectors around, and notice how the cross product behaves. Don't worry about understanding everything right away - just experiment and observe!"
+    },
+    {
+      "type": "visualization",
+      "id": "cross-product-vis",
+      "caption": "Interactive visualization of vectors in 3D space and their cross product.",
+      "height": 500,
+      "script": "cross-product"
+    },
+    {
+      "type": "container",
+      "class": "explanation-navigation",
+      "content": [
+        {
+          "type": "button",
+          "id": "jump-to-explanation",
+          "text": "Jump to Full Explanation",
+          "action": "scrollToElement",
+          "target": "full-explanation"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "In the visualization above, you can drag the red and green vectors to change their direction and magnitude. The blue vector represents their cross product, which is always perpendicular to both original vectors. The shaded area shows the parallelogram formed by the two vectors, with the area of this parallelogram equal to the magnitude of the cross product."
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "The Cross Product: Definition and Geometric Interpretation",
+      "id": "full-explanation"
+    },
+    {
+      "type": "paragraph",
+      "content": "So what exactly is this cross product thing? Imagine you have two wooden sticks (representing your vectors). If you place them so they start at the same point but point in different directions, they define a plane. The cross product gives you a third stick that pokes straight out of that plane (perpendicular to both sticks), with a length proportional to the area of the parallelogram formed by your original sticks."
+    },
+    {
+      "type": "list",
+      "style": "unordered",
+      "items": [
+        "It is perpendicular to both 𝐀 and 𝐁 - like the normal vector to the plane they create",
+        "Its magnitude is |𝐀||𝐁|sin(θ), where θ is the angle between 𝐀 and 𝐁 - this equals the area of that parallelogram we keep mentioning",
+        "Its direction follows the right-hand rule - nature's way of establishing a consistent convention for 3D space"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "The remarkable thing about the cross product is how often it appears in physics. When you ride a bicycle, the torque you generate by pedaling is a cross product. When a charged particle moves through a magnetic field, the force it experiences is a cross product. Even the angular momentum that keeps Earth spinning day after day is calculated using a cross product. It's one of those mathematical tools that, once you understand it, you start seeing everywhere in nature."
+    },
+    {
+      "type": "callout",
+      "style": "info",
+      "title": "The Right-Hand Rule - Nature's 3D Direction Finder",
+      "content": "Here's a simple way to visualize the direction of a cross product: Point the fingers of your right hand in the direction of the first vector (A), then curl them toward the second vector (B). Your thumb now points in the direction of A × B. This isn't just a mathematical convention - it reflects a fundamental property of our three-dimensional space. Try the 'Demonstrate Right-Hand Rule' button in the visualization to see this in action!"
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "Mathematical Formulation of the Cross Product"
+    },
+    {
+      "type": "paragraph",
+      "content": "The geometric picture is beautiful, but sometimes we need to actually calculate cross products. If 𝐀 = (A₁, A₂, A₃) and 𝐁 = (B₁, B₂, B₃), then their cross product has a surprisingly neat pattern:"
+    },
+    {
+      "type": "equation",
+      "content": "𝐀 × 𝐁 = (A₂B₃ - A₃B₂, A₃B₁ - A₁B₃, A₁B₂ - A₂B₁)"
+    },
+    {
+      "type": "paragraph",
+      "content": "This might look complicated at first, but there's a beautiful pattern here. Each component of the result is made by taking the other two components from each vector and multiplying them in a certain way. It's like a dance where the x-component of the result depends on the y and z components of the original vectors, and so on in a circular pattern."
+    },
+    {
+      "type": "paragraph",
+      "content": "Another way to think about this is through the interactions of the standard basis vectors 𝐢, 𝐣, and 𝐤:"
+    },
+    {
+      "type": "equation",
+      "content": "𝐢 × 𝐣 = 𝐤, 𝐣 × 𝐤 = 𝐢, 𝐤 × 𝐢 = 𝐣"
+    },
+    {
+      "type": "equation",
+      "content": "𝐣 × 𝐢 = -𝐤, 𝐤 × 𝐣 = -𝐢, 𝐢 × 𝐤 = -𝐣"
+    },
+    {
+      "type": "paragraph",
+      "content": "Notice the cyclic pattern? It's like a game of rock-paper-scissors in three dimensions. And when you cross a vector with itself? You always get zero!"
+    },
+    {
+      "type": "equation",
+      "content": "𝐢 × 𝐢 = 𝐣 × 𝐣 = 𝐤 × 𝐤 = 𝟎"
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "The Cross Product and Area - Why Do They Connect?"
+    },
+    {
+      "type": "paragraph",
+      "content": "One of the most beautiful insights about the cross product is its connection to area. When you compute |𝐀 × 𝐁|, you're essentially finding the area of the parallelogram formed by these two vectors. Think about it - if two vectors are pointing in the same direction (parallel), they don't enclose any area, and indeed, their cross product is zero. If they're perpendicular, they form a rectangle with maximum area for vectors of those lengths, and the cross product reaches its maximum magnitude."
+    },
+    {
+      "type": "paragraph",
+      "content": "This geometric interpretation extends even further. If you take a third vector 𝐂 and compute the dot product (𝐀 × 𝐁) · 𝐂, you get the volume of the parallelepiped (a 3D parallelogram) formed by all three vectors. It's as if the cross product helps us climb from 2D areas to 3D volumes."
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "Connection to Matrices and Determinants - The Hidden Pattern"
+    },
+    {
+      "type": "paragraph",
+      "content": "There's another way to view the cross product that connects it to the world of matrices. The cross product can be expressed as a determinant:"
+    },
+    {
+      "type": "equation",
+      "content": "𝐀 × 𝐁 = det[ 𝐢  𝐣  𝐤 ]\n     [ A₁ A₂ A₃ ]\n     [ B₁ B₂ B₃ ]"
+    },
+    {
+      "type": "paragraph",
+      "content": "If you compute this determinant (using the method you've likely seen in your matrix algebra course), you'll get exactly the same formula we saw earlier. This isn't a coincidence - determinants also represent geometric quantities related to area and volume, which is why they connect so naturally to cross products. If you understand one, you get insight into the other!"
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "Applications in Physics - Cross Products in the Wild"
+    },
+    {
+      "type": "paragraph",
+      "content": "Cross products aren't just mathematical curiosities - they're the language in which nature expresses many physical laws. Here are some places you'll encounter them:"
+    },
+    {
+      "type": "list",
+      "style": "unordered",
+      "items": [
+        "Angular momentum (𝐋 = 𝐫 × 𝐩): When an object moves in a circle, the cross product tells you how much it tends to keep rotating",
+        "Torque (𝛕 = 𝐫 × 𝐅): When you tighten a bolt with a wrench, the cross product determines how effectively your force translates into rotational effect",
+        "Magnetic force (𝐅 = q𝐯 × 𝐁): The reason charged particles spiral in magnetic fields is elegantly described by a cross product",
+        "Ampère's law in electromagnetism: The behavior of magnetic fields around current-carrying wires involves cross products",
+        "Normal vectors to surfaces: To find which way a surface points, we take cross products of tangent vectors"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "Understanding the cross product isn't just about passing a physics test - it's about gaining insight into how the physical world operates, from the orbit of satellites to the design of electric motors."
+    },
+    {
+      "type": "header",
+      "level": 2,
+      "content": "Practice Problems"
+    },
+    {
+      "type": "problem",
+      "id": "cross-product-problem-1",
+      "question": "Calculate the cross product of 𝐀 = (3, 0, 2) and 𝐁 = (1, 2, -1).",
+      "answer": "Let's work through this step by step using our formula:\n\nA₁ = 3, A₂ = 0, A₃ = 2\nB₁ = 1, B₂ = 2, B₃ = -1\n\nFor the first component: A₂B₃ - A₃B₂ = 0·(-1) - 2·2 = 0 - 4 = -4\n\nFor the second component: A₃B₁ - A₁B₃ = 2·1 - 3·(-1) = 2 + 3 = 5\n\nFor the third component: A₁B₂ - A₂B₁ = 3·2 - 0·1 = 6 - 0 = 6\n\nPutting it all together: 𝐀 × 𝐁 = (-4, 5, 6)"
+    },
+    {
+      "type": "problem",
+      "id": "cross-product-problem-2",
+      "question": "Two forces 𝐅₁ = (2, 3, 1) N and 𝐅₂ = (4, 0, 2) N act at a point located at position 𝐫 = (0, 1, 2) m from the origin. Calculate the net torque about the origin.",
+      "answer": "To solve this problem, we need to find the torque created by each force and then add them.\n\nFor the first force:\n𝛕₁ = 𝐫 × 𝐅₁ = (0, 1, 2) × (2, 3, 1)\n\nFirst component: 1·1 - 2·3 = 1 - 6 = -5\nSecond component: 2·2 - 0·1 = 4 - 0 = 4\nThird component: 0·3 - 1·2 = 0 - 2 = -2\n\nSo 𝛕₁ = (-5, 4, -2) N·m\n\nFor the second force:\n𝛕₂ = 𝐫 × 𝐅₂ = (0, 1, 2) × (4, 0, 2)\n\nFirst component: 1·2 - 2·0 = 2 - 0 = 2\nSecond component: 2·4 - 0·2 = 8 - 0 = 8\nThird component: 0·0 - 1·4 = 0 - 4 = -4\n\nSo 𝛕₂ = (2, 8, -4) N·m\n\nThe net torque is the sum:\n𝛕 = 𝛕₁ + 𝛕₂ = (-5, 4, -2) + (2, 8, -4) = (-3, 12, -6) N·m"
+    },
+    {
+      "type": "summary",
+      "content": "In this exploration of 3D vectors and cross products, we've seen how the cross product gives us a perpendicular vector whose magnitude equals the area of the parallelogram formed by the original vectors. We've connected this operation to geometry (areas and volumes), to algebra (determinants), and to physics (torque, angular momentum, and magnetic forces). The cross product isn't just a formula to memorize—it's a powerful tool that lets us understand how direction matters in our three-dimensional world."
+    }
+  ]
+}

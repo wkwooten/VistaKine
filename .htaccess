@@ -1,0 +1,10 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# If an existing asset or directory exists, serve it
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+RewriteRule ^ - [L]
+
+# Redirect all other URLs to app.html for the single-page application
+RewriteRule ^ app.html [L]

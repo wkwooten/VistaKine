@@ -1,0 +1,60 @@
+{
+  "id": "chapters",
+  "title": "VistaKine Chapters",
+  "description": "A comprehensive overview of all chapters and sections available in the VistaKine platform.",
+  "prerequisite_ids": [],
+  "next_content_id": "kinematics-intro",
+  "prev_content_id": "about",
+  "estimated_time_minutes": 5,
+  "sections": [
+    {
+      "id": "section-introduction",
+      "title": "Introduction to Chapters",
+      "content": "<p>VistaKine is organized into chapters and sections that follow a logical progression through physics concepts. Each chapter builds upon previous knowledge, providing a structured learning path from basic principles to more complex applications.</p>",
+      "type": "introduction"
+    },
+    {
+      "id": "section-chapter-list",
+      "title": "Available Chapters",
+      "content": "<div class='chapter-grid'><!-- Kinematics Chapter --><div class='chapter-card'><div class='chapter-header'><i class='ph ph-ruler'></i><h3>Introduction to Kinematics</h3></div><p class='chapter-description'>The study of motion without considering the forces that cause the motion.</p><div class='section-list'><a href='#' class='section-link' data-content-id='basic-concepts'><i class='ph ph-atom-simple'></i> Basic Concepts</a><a href='#' class='section-link' data-content-id='position-displacement'><i class='ph ph-arrow-line-right'></i> Position and Displacement</a><a href='#' class='section-link' data-content-id='velocity'><i class='ph ph-gauge'></i> Velocity</a><span class='coming-soon'><i class='ph ph-hourglass'></i> Acceleration (Coming Soon)</span><span class='coming-soon'><i class='ph ph-hourglass'></i> Projectile Motion (Coming Soon)</span></div><a href='#' class='chapter-link' data-content-id='kinematics-intro'>View Chapter Overview</a></div><!-- Forces Chapter --><div class='chapter-card coming-soon'><div class='chapter-header'><i class='ph ph-arrow-fat-lines'></i><h3>Forces and Newton's Laws</h3></div><p class='chapter-description'>Understanding the causes of motion and the relationship between force, mass, and acceleration.</p><div class='badge'>Coming Soon</div></div><!-- Energy Chapter --><div class='chapter-card coming-soon'><div class='chapter-header'><i class='ph ph-lightning'></i><h3>Work and Energy</h3></div><p class='chapter-description'>Exploring energy transformations, conservation principles, and their applications.</p><div class='badge'>Coming Soon</div></div><!-- Momentum Chapter --><div class='chapter-card coming-soon'><div class='chapter-header'><i class='ph ph-football'></i><h3>Momentum and Collisions</h3></div><p class='chapter-description'>Analyzing the motion of objects before and after collisions using momentum principles.</p><div class='badge'>Coming Soon</div></div><!-- Rotation Chapter --><div class='chapter-card coming-soon'><div class='chapter-header'><i class='ph ph-circle-dashed'></i><h3>Rotational Motion</h3></div><p class='chapter-description'>Extending linear motion concepts to objects that rotate around an axis.</p><div class='badge'>Coming Soon</div></div><!-- Waves Chapter --><div class='chapter-card coming-soon'><div class='chapter-header'><i class='ph ph-wave-sine'></i><h3>Wave Motion</h3></div><p class='chapter-description'>Understanding mechanical waves, sound, and wave phenomena.</p><div class='badge'>Coming Soon</div></div></div>",
+      "type": "theory",
+      "number": 1
+    },
+    {
+      "id": "section-learning-paths",
+      "title": "Suggested Learning Paths",
+      "content": "<p>While you can explore chapters in any order, we recommend these learning paths for different goals:</p><div class='learning-path-grid'><div class='learning-path-card'><h4>Introductory Physics</h4><p>Follow the chapters in order, starting with Basic Concepts in Kinematics and progressing through each chapter sequentially.</p><div class='path-steps'><div class='path-step'>1. Basic Concepts</div><div class='path-arrow'><i class='ph ph-caret-down'></i></div><div class='path-step'>2. Position and Displacement</div><div class='path-arrow'><i class='ph ph-caret-down'></i></div><div class='path-step'>3. Velocity</div><div class='path-arrow'><i class='ph ph-caret-down'></i></div><div class='path-step'>4. Acceleration</div></div></div><div class='learning-path-card'><h4>Mechanics Review</h4><p>For students who need to quickly review key mechanics concepts, focus on these essential topics.</p><div class='path-steps'><div class='path-step'>1. Position and Displacement</div><div class='path-arrow'><i class='ph ph-arrow-right'></i></div><div class='path-step'>2. Velocity and Acceleration</div><div class='path-arrow'><i class='ph ph-arrow-right'></i></div><div class='path-step'>3. Newton's Laws</div><div class='path-arrow'><i class='ph ph-arrow-right'></i></div><div class='path-step'>4. Energy Conservation</div></div></div></div>",
+      "type": "theory",
+      "number": 2
+    },
+    {
+      "id": "section-categories",
+      "title": "Content Categories",
+      "content": "<p>Each chapter contains different types of content to support your learning:</p><div class='category-list'><div class='category-item'><i class='ph ph-book-open'></i><h4>Theory</h4><p>Clear explanations of physics concepts and principles.</p></div><div class='category-item'><i class='ph ph-presentation-chart'></i><h4>Examples</h4><p>Worked problems demonstrating concept applications.</p></div><div class='category-item'><i class='ph ph-lightbulb'></i><h4>Problems</h4><p>Practice exercises with step-by-step solutions.</p></div><div class='category-item'><i class='ph ph-chart-line'></i><h4>Visualizations</h4><p>Interactive simulations to build intuition.</p></div></div>",
+      "type": "theory",
+      "number": 3
+    },
+    {
+      "id": "section-progress-tracking",
+      "title": "Tracking Your Progress",
+      "content": "<p>VistaKine helps you track your learning progress throughout the platform:</p><ul><li>Completed sections show a checkmark in the navigation menu</li><li>The progress bar indicates your position within a chapter</li><li>Your reading progress is saved for each chapter</li></ul><p>Future updates will include more personalized progress tracking and achievement features.</p>",
+      "type": "theory",
+      "number": 4
+    },
+    {
+      "id": "section-summary",
+      "title": "Start Your Learning Journey",
+      "content": "<p>Ready to begin? Select a chapter or specific section from the list above to start exploring physics concepts through VistaKine's interactive approach.</p><div class='cta-buttons'><a href='#' class='button primary' data-content-id='basic-concepts'>Start with Basic Concepts</a><a href='#' class='button secondary' data-content-id='kinematics-intro'>View Kinematics Chapter</a></div>",
+      "type": "summary"
+    }
+  ],
+  "keywords": [
+    "chapters",
+    "topics",
+    "overview",
+    "content",
+    "learning path",
+    "curriculum",
+    "structure"
+  ]
+}

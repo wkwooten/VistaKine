@@ -1,0 +1,90 @@
+{
+  "id": "about",
+  "title": "About VistaKine",
+  "description": "Information about the VistaKine platform, its purpose, and how to use it.",
+  "prerequisite_ids": [],
+  "next_content_id": "chapters",
+  "prev_content_id": "cover",
+  "estimated_time_minutes": 5,
+  "sections": [
+    {
+      "id": "section-introduction",
+      "title": "Introduction to VistaKine",
+      "content": "<p>Welcome to VistaKine, an innovative educational platform designed to make kinematics and physics concepts more accessible through interactive visualizations and clear, structured content.</p>",
+      "type": "introduction"
+    },
+    {
+      "id": "section-purpose",
+      "title": "Purpose",
+      "content": "<p>VistaKine was created to address the challenges many students face when learning physics concepts, particularly in kinematics. Our goal is to provide a visual, interactive learning experience that complements traditional textbooks and classroom instruction.</p><p>By combining clear explanations with interactive visualizations, we aim to help students build intuition and deeper understanding of physics concepts that can often seem abstract.</p>",
+      "type": "theory",
+      "number": 1
+    },
+    {
+      "id": "section-features",
+      "title": "Key Features",
+      "content": "<ul><li><strong>Interactive Visualizations:</strong> Manipulate variables and see physics concepts in action</li><li><strong>Structured Learning Path:</strong> Progress through concepts in a logical sequence</li><li><strong>Problem Examples:</strong> Learn through worked solutions to common physics problems</li><li><strong>Practice Problems:</strong> Test your understanding with challenging exercises</li><li><strong>Dynamic Content:</strong> Content that adjusts to your screen size and learning needs</li></ul>",
+      "type": "theory",
+      "number": 2
+    },
+    {
+      "id": "section-navigation",
+      "title": "How to Use VistaKine",
+      "content": "<p>Navigating VistaKine is designed to be intuitive:</p><ul><li>Use the sidebar <strong>chapter navigation</strong> to move between major topics</li><li>Expand chapters to see and select <strong>section topics</strong></li><li>Use the <strong>progress bar</strong> at the top of content pages to track your reading and move between related topics</li><li>Interact with <strong>visualizations</strong> using the provided controls</li><li>The <strong>search feature</strong> allows you to quickly find relevant content</li></ul>",
+      "type": "theory",
+      "number": 3
+    },
+    {
+      "id": "section-team",
+      "title": "Development Team",
+      "content": "<p>VistaKine is developed by a passionate team of educators, physicists, and web developers committed to improving physics education. We continuously work to enhance the platform based on student feedback and educational research.</p>",
+      "type": "theory",
+      "number": 4
+    },
+    {
+      "id": "section-feedback",
+      "title": "Feedback and Contributions",
+      "content": "<p>We welcome feedback and suggestions for improving VistaKine. If you have ideas for new visualizations, spot any errors, or want to contribute content, please reach out to us at <a href='mailto:feedback@vistakine.edu'>feedback@vistakine.edu</a>.</p>",
+      "type": "theory",
+      "number": 5
+    },
+    {
+      "id": "section-technology",
+      "title": "Technology",
+      "content": "<p>Interactions have been created using three.js and cannon.js</p>",
+      "type": "theory",
+      "number": 6
+    },
+    {
+      "id": "section-attribution",
+      "title": "Attribution and Licensing",
+      "content": "<p>VistaKine's content is available under a Creative Commons BY-NC-SA license, meaning you're free to use and adapt our materials for non-commercial purposes, as long as you provide attribution and share under the same license.</p><p>Some visualizations incorporate open-source libraries and resources, with specific attributions provided in the relevant sections.</p>",
+      "type": "theory",
+      "number": 7
+    },
+    {
+      "id": "section-updates",
+      "title": "Updates and Roadmap",
+      "content": "<p>VistaKine is continuously evolving. Upcoming features include:</p><ul><li>Additional topics covering dynamics, energy, and more advanced physics concepts</li><li>Enhanced visualization capabilities</li><li>Personalized learning tracks</li><li>Integration with common learning management systems</li><li>Offline access capabilities</li></ul>",
+      "type": "theory",
+      "number": 8
+    },
+    {
+      "id": "section-summary",
+      "title": "Join Our Community",
+      "content": "<p>VistaKine is more than just a learning platform—it's a community of educators and learners passionate about physics education. We invite you to explore our content, share your experiences, and join us in making physics more accessible and engaging for students everywhere.</p>",
+      "type": "summary"
+    }
+  ],
+  "keywords": [
+    "about",
+    "information",
+    "purpose",
+    "team",
+    "features",
+    "navigation",
+    "feedback",
+    "technology",
+    "licensing"
+  ]
+}

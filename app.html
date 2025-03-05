@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VistaKine - Interactive Kinematics Learning</title>
+
+    <!-- Script to generate proper resource paths -->
+    <script>
+        // Function to get the correct path for resources
+        function getResourcePath(path) {
+            // For local file protocol
+            if (window.location.protocol === 'file:') {
+                return path.replace(/^\//, '');
+            }
+            // For Live Server or similar local development servers
+            else if (window.location.host.includes('127.0.0.1') ||
+                     window.location.host.includes('localhost') ||
+                     /:\d{4,5}$/.test(window.location.host)) {
+                return path.replace(/^\//, '');
+            }
+            return path;
+        }
+
+        // Dynamically create stylesheet link
+        document.write('<link rel="stylesheet" href="' + getResourcePath('/styles/main.css') + '">');
+        document.write('<link rel="stylesheet" href="' + getResourcePath('/styles/content-loader.css') + '">');
+    </script>
+
+    <!-- Fallback for CSS if the dynamic loading fails -->
+    <noscript>
+        <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="styles/content-loader.css">
+    </noscript>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Three.js for visualizations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Content loader as regular script -->
+    <script>
+        document.write('<script src="' + getResourcePath('/js/content-loader.js') + '"><\/script>');
+    </script>
+
+    <!-- Import Navigation module -->
+    <script type="module">
+        import Navigation from './js/navigation.js';
+
+        // Make it available globally
+        window.Navigation = Navigation;
+
+        // Initialize everything when modules are loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize navigation first (after module is loaded)
+            window.navigation = new Navigation();
+
+            // Initialize content loader
+            if (typeof initializeContentLoader === 'function') {
+                initializeContentLoader();
+
+                // Load the content based on the URL or default to cover
+                const route = window.location.pathname.replace(/^\/|\/$/g, '');
+                const hash = window.location.hash.substring(1);
+
+                if (hash) {
+                    // If we have a hash, load that content
+                    loadContent(hash);
+                } else if (route === '' || route === 'index.html' || route === 'app.html') {
+                    // If it's the root, load the cover page
+                    loadContent('cover');
+                } else if (route === 'about') {
+                    loadContent('about');
+                } else if (route === 'chapters') {
+                    loadContent('vectors-and-cross-products'); // Default chapter content
+                } else if (route === 'vectors') {
+                    loadContent('vectors-and-cross-products');
+                } else {
+                    // Default fallback
+                    loadContent('cover');
+                }
+            }
+
+            // Ensure the pull tab always exists
+            setTimeout(function() {
+                const resizeHandle = document.querySelector('.resize-handle');
+                if (resizeHandle && !resizeHandle.querySelector('.pull-tab')) {
+                    const pullTab = document.createElement('div');
+                    pullTab.className = 'pull-tab';
+                    resizeHandle.appendChild(pullTab);
+                }
+            }, 100);
+        });
+    </script>
+</head>
+<body>
+    <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
+        <i class="ph ph-list"></i>
+    </button>
+
+    <nav id="chapter-nav">
+        <div class="u-container">
+            <h1><i class="ph ph-projector-screen-chart"></i> VistaKine</h1>
+
+            <div class="search-container">
+                <div class="search-bar">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                    <input type="text" placeholder="Search textbook..." class="search-input">
+                </div>
+            </div>
+
+            <ul id="chapter-list">
+                <li class="chapter-item">
+                    <a href="#cover" class="chapter-link" data-content-id="cover">
+                        <span class="chapter-number"><i class="ph ph-house"></i></span>
+                        <span class="chapter-title">Cover Page</span>
+                    </a>
+                </li>
+                <li class="chapter-item">
+                    <a href="#about" class="chapter-link" data-content-id="about">
+                        <span class="chapter-number"><i class="ph ph-info"></i></span>
+                        <span class="chapter-title">About</span>
+                    </a>
+                </li>
+
+                <!-- Core Topics -->
+                <li class="chapter-header">Core Topics</li>
+
+                <li class="chapter-item active expanded">
+                    <a href="#vectors-and-cross-products" class="chapter-link" data-content-id="vectors-and-cross-products">
+                        <span class="chapter-number">1</span>
+                        <span class="chapter-title">Vectors and Cross Products</span>
+                    </a>
+                    <ul class="section-list">
+                        <li class="section-item">
+                            <a href="#basic-vectors" class="section-link" data-content-id="vectors-and-cross-products" data-section-id="basic-vectors">
+                                <span class="section-number">1.1</span>
+                                <span class="section-title">Building Blocks: Vectors in 3D</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="#cross-product-definition" class="section-link" data-content-id="vectors-and-cross-products" data-section-id="cross-product-definition">
+                                <span class="section-number">1.2</span>
+                                <span class="section-title">Cross Product Definition</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="#applications" class="section-link" data-content-id="vectors-and-cross-products" data-section-id="applications">
+                                <span class="section-number">1.3</span>
+                                <span class="section-title">Applications in Physics</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="chapter-item">
+                    <a href="#matrix-operations" class="chapter-link" data-content-id="matrix-operations">
+                        <span class="chapter-number">2</span>
+                        <span class="chapter-title">Introduction to Kinematics</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main id="interactive-content" class="loading">
+        <div class="content-loading">
+            <div class="spinner"></div>
+            <p>Loading interactive content...</p>
+        </div>
+    </main>
+</body>
+</html>

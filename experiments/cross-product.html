@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross Product Visualization - VistaKine</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .visualization-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        #cross-product-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .explanation {
+            background-color: #f1f8ff;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .formula {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            #cross-product-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cross Product Visualization</h1>
+
+        <div class="visualization-container">
+            <div id="cross-product-container"></div>
+
+            <div class="controls">
+                <button id="reset-btn">Reset Vectors</button>
+                <button id="right-hand-rule-btn">Demonstrate Right-Hand Rule</button>
+            </div>
+        </div>
+
+        <div class="explanation">
+            <h2>Understanding Cross Products</h2>
+            <p>The cross product of two vectors produces a third vector that is perpendicular to both of the original vectors. The magnitude of this new vector equals the area of the parallelogram formed by the two original vectors.</p>
+
+            <h3>Key Properties:</h3>
+            <ul>
+                <li>The cross product vector is perpendicular to both input vectors</li>
+                <li>The direction follows the right-hand rule</li>
+                <li>The magnitude equals the area of the parallelogram</li>
+                <li>Cross products are anti-commutative: A × B = -(B × A)</li>
+            </ul>
+
+            <h3>Mathematical Formula:</h3>
+            <div class="formula">
+                A × B = |A||B|sin(θ)n̂
+            </div>
+            <p>Where θ is the angle between vectors and n̂ is the unit vector perpendicular to the plane containing A and B.</p>
+
+            <div class="formula">
+                A × B = (A<sub>y</sub>B<sub>z</sub> - A<sub>z</sub>B<sub>y</sub>, A<sub>z</sub>B<sub>x</sub> - A<sub>x</sub>B<sub>z</sub>, A<sub>x</sub>B<sub>y</sub> - A<sub>y</sub>B<sub>x</sub>)
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+
+    <!-- Load our visualization script -->
+    <script src="../js/visualizations/cross-product.js"></script>
+
+    <script>
+        // Wait for the DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the visualization
+            const visualization = initializeCrossProductVisualization('cross-product-container');
+
+            // Set up button handlers
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                visualization.reset();
+            });
+
+            document.getElementById('right-hand-rule-btn').addEventListener('click', function() {
+                visualization.demonstrateRightHandRule();
+            });
+        });
+    </script>
+</body>
+</html>

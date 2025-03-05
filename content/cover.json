@@ -1,0 +1,43 @@
+{
+  "id": "cover",
+  "title": "VistaKine: Interactive Physics Education",
+  "description": "A modern platform for learning kinematics and physics through interactive visualizations.",
+  "prerequisite_ids": [],
+  "next_content_id": "about",
+  "prev_content_id": null,
+  "estimated_time_minutes": 2,
+  "sections": [
+    {
+      "id": "section-welcome",
+      "title": "Welcome to VistaKine",
+      "content": "<div class='cover-hero'><h1>VistaKine</h1><p class='tagline'>See Physics in Motion</p></div><p class='cover-intro'>Welcome to VistaKine, an interactive educational platform designed to make kinematics and physics concepts more accessible and engaging through dynamic visualizations, clear explanations, and structured learning paths.</p>",
+      "type": "introduction"
+    },
+    {
+      "id": "section-get-started",
+      "title": "Get Started",
+      "content": "<p>To begin exploring VistaKine:</p><div class='cover-buttons'><a href='#' class='button primary' data-content-id='about'>About VistaKine</a><a href='#' class='button secondary' data-content-id='chapters'>Browse Chapters</a><a href='#' class='button accent' data-content-id='basic-concepts'>Start Learning</a></div>",
+      "type": "summary"
+    },
+    {
+      "id": "section-featured",
+      "title": "Featured Content",
+      "content": "<div class='featured-grid'><div class='featured-item'><i class='ph ph-atom'></i><h3>Basic Concepts</h3><p>Fundamental principles and definitions in kinematics.</p><a href='#' data-content-id='basic-concepts'>Explore &rarr;</a></div><div class='featured-item'><i class='ph ph-arrow-line-right'></i><h3>Position & Displacement</h3><p>Understanding object locations and movement in space.</p><a href='#' data-content-id='position-displacement'>Explore &rarr;</a></div><div class='featured-item'><i class='ph ph-gauge'></i><h3>Velocity</h3><p>How fast objects move and in what direction.</p><a href='#' data-content-id='velocity'>Explore &rarr;</a></div></div>",
+      "type": "summary"
+    },
+    {
+      "id": "section-testimonials",
+      "title": "What Students Say",
+      "content": "<div class='testimonial-slider'><div class='testimonial'><p>\"The interactive visualizations helped me understand kinematics concepts that I've been struggling with for weeks. Now I can actually see what's happening!\"</p><div class='testimonial-author'>— Physics Student</div></div><div class='testimonial'><p>\"I love how I can manipulate variables and immediately see the effects. This platform makes physics feel less abstract and more tangible.\"</p><div class='testimonial-author'>— Engineering Major</div></div><div class='testimonial'><p>\"The clear explanations paired with visual demonstrations have completely changed how I understand motion concepts.\"</p><div class='testimonial-author'>— High School Student</div></div></div>",
+      "type": "summary"
+    }
+  ],
+  "keywords": [
+    "cover",
+    "welcome",
+    "introduction",
+    "homepage",
+    "overview",
+    "getting started"
+  ]
+}
