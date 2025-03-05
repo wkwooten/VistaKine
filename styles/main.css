@@ -1,3 +1,18 @@
+/**
+ * VistaKine Main Styles
+ *
+ * This file contains:
+ * - Global base styles (reset, typography, colors)
+ * - General layout and grid utilities
+ * - UI components used across the site
+ * - Main navigation and chapter navigation styles
+ * - Page-specific styles for cover, about, etc.
+ *
+ * Note: Specific book and sidebar styles are in book.css
+ * Components shared across files are prefixed with their context
+ * to avoid selector conflicts.
+ */
+
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -711,11 +726,11 @@ body.nav-collapsed main {
 }
 
 /* Search bar styles */
-.search-container {
-	margin: var(--space-m) 0;
+.main-search-container {
+	/* Replaces general search container */
 }
 
-.search-bar {
+.main-search-bar {
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -729,19 +744,19 @@ body.nav-collapsed main {
 	overflow: hidden;
 }
 
-.search-bar:hover {
+.main-search-bar:hover {
 	background: rgba(255, 255, 255, 0.7);
 	box-shadow: 0 3px 8px rgba(59, 130, 246, 0.15), 0 0 2px rgba(59, 130, 246, 0.1);
 	border-color: rgba(59, 130, 246, 0.2);
 }
 
-.search-bar:focus-within {
+.main-search-bar:focus-within {
 	background: rgba(255, 255, 255, 0.8);
 	box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2), 0 0 4px rgba(59, 130, 246, 0.1);
 	border-color: rgba(59, 130, 246, 0.3);
 }
 
-.search-icon {
+.main-search-icon {
 	position: absolute;
 	left: var(--space-xs);
 	color: var(--color-mid);
@@ -749,11 +764,11 @@ body.nav-collapsed main {
 	transition: color 0.2s ease;
 }
 
-.search-bar:focus-within .search-icon {
+.main-search-bar:focus-within .main-search-icon {
 	color: var(--color-primary);
 }
 
-.search-input {
+.main-search-input {
 	width: 100%;
 	padding: var(--space-xs) var(--space-xs) var(--space-xs) calc(var(--space-xs) * 2 + 16px);
 	border: none;
@@ -763,9 +778,8 @@ body.nav-collapsed main {
 	outline: none;
 }
 
-.search-input::placeholder {
-	color: var(--color-mid);
-	opacity: 0.7;
+.main-search-input::placeholder {
+	color: var(--color-text-tertiary);
 }
 
 /* Cover Page Styles */

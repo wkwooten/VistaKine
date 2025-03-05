@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - VistaKine</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Add resize handle pull tab setup script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure the pull tab exists by the time the page loads
+            // This just adds the element - all styling is handled by CSS
+            setTimeout(function() {
+                const resizeHandle = document.querySelector('.resize-handle');
+                if (resizeHandle && !resizeHandle.querySelector('.pull-tab')) {
+                    const pullTab = document.createElement('div');
+                    pullTab.className = 'pull-tab';
+                    resizeHandle.appendChild(pullTab);
+                }
+            }, 100); // Small delay to ensure resize handle is created
+        });
+    </script>
+</head>
+<body>
+    <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
+        <i class="ph ph-list"></i>
+    </button>
+
+    <nav id="chapter-nav">
+        <div class="u-container">
+            <h1><i class="ph ph-projector-screen-chart"></i> VistaKine</h1>
+
+            <div class="main-search-container">
+                <div class="main-search-bar">
+                    <i class="ph ph-magnifying-glass main-search-icon"></i>
+                    <input type="text" placeholder="Search textbook..." class="main-search-input">
+                </div>
+            </div>
+
+            <ul id="chapter-list">
+                <li class="chapter-item">
+                    <a href="../" class="chapter-link">
+                        <span class="chapter-number"><i class="ph ph-house"></i></span>
+                        <span class="chapter-title">Cover Page</span>
+                    </a>
+                </li>
+                <li class="chapter-item">
+                    <a href="#" class="chapter-link active">
+                        <span class="chapter-number"><i class="ph ph-info"></i></span>
+                        <span class="chapter-title">About</span>
+                    </a>
+                </li>
+                <li class="chapter-item">
+                    <a href="../Chapters/" class="chapter-link">
+                        <span class="chapter-number">1</span>
+                        <span class="chapter-title">Introduction to Kinematics</span>
+                    </a>
+                    <ul class="section-list">
+                        <li class="section-item">
+                            <a href="../Chapters/#1.1" class="section-link">
+                                <span class="section-number">1.1</span>
+                                <span class="section-title">Basic Concepts</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="../Chapters/#1.2" class="section-link">
+                                <span class="section-number">1.2</span>
+                                <span class="section-title">Linear Motion</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="../Chapters/#1.3" class="section-link">
+                                <span class="section-number">1.3</span>
+                                <span class="section-title">Acceleration and Velocity</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="chapter-item">
+                    <a href="../Chapters/#2" class="chapter-link">
+                        <span class="chapter-number">2</span>
+                        <span class="chapter-title">Forces and Motion</span>
+                    </a>
+                    <ul class="section-list">
+                        <li class="section-item">
+                            <a href="../Chapters/#2.1" class="section-link">
+                                <span class="section-number">2.1</span>
+                                <span class="section-title">Newton's Laws</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="../Chapters/#2.2" class="section-link">
+                                <span class="section-number">2.2</span>
+                                <span class="section-title">Friction</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="chapter-item">
+                    <a href="../Chapters/#3" class="chapter-link">
+                        <span class="chapter-number">3</span>
+                        <span class="chapter-title">Energy and Work</span>
+                    </a>
+                    <ul class="section-list">
+                        <li class="section-item">
+                            <a href="../Chapters/#3.1" class="section-link">
+                                <span class="section-number">3.1</span>
+                                <span class="section-title">Kinetic Energy</span>
+                            </a>
+                        </li>
+                        <li class="section-item">
+                            <a href="../Chapters/#3.2" class="section-link">
+                                <span class="section-number">3.2</span>
+                                <span class="section-title">Potential Energy</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- About Page Content -->
+        <div class="u-container about-page">
+            <div class="about-hero">
+                <img src="https://picsum.photos/1200/400?gravity=center" alt="About VistaKine">
+            </div>
+            <div class="about-content">
+                <header class="content-header">
+                    <h2>About VistaKine</h2>
+                </header>
+                <div class="content-body">
+                    <section class="about-section">
+                        <h3>What is VistaKine?</h3>
+                        <div class="about-text">
+                            <p>VistaKine is an interactive learning platform designed to transform how people understand and experience kinematics and physics. We combine modern web technologies with immersive 3D visualizations to create an intuitive, hands-on learning experience that bridges the gap between abstract concepts and practical understanding.</p>
+                            <p>Unlike traditional textbooks that rely solely on static diagrams and equations, VistaKine allows you to manipulate variables in real-time, observe cause-and-effect relationships, and develop a deeper intuition about how physics works in the real world.</p>
+                        </div>
+                    </section>
+
+                    <section class="about-section">
+                        <h3>Our Mission</h3>
+                        <div class="about-text">
+                            <p>Our mission is to make physics education more engaging, intuitive, and effective through interactive experiences that foster genuine understanding rather than rote memorization.</p>
+                            <p>We believe that truly understanding physics concepts requires more than just solving equations—it demands developing a feel for how systems behave and respond to changes. By providing interactive simulations with thoughtful UX design, we aim to help students build that intuition in a way that's both educational and enjoyable.</p>
+                        </div>
+                    </section>
+
+                    <section class="about-section">
+                        <h3>Why We Created This</h3>
+                        <div class="about-text">
+                            <p>As a mechanical engineering student, I spent countless hours poring over dense textbooks, working through problem sets, and trying to visualize complex physical systems in my mind. While I found satisfaction in solving difficult problems, I often felt that traditional learning methods weren't optimized for building true understanding.</p>
+                            <p>The interactive problems in some assignments were where I learned the most. By experimenting with the physics—changing variables and seeing immediate results—I developed intuition that no static textbook could provide. However, these experiences often felt limited, with clunky interfaces and restricted interaction.</p>
+                            <p>VistaKine was born from this realization: that by combining the rigorous content of traditional textbooks with immersive, well-designed 3D visualizations, we could create learning experiences that are not just more engaging, but fundamentally more effective at building deep understanding.</p>
+                        </div>
+                    </section>
+
+                    <section class="about-section">
+                        <h3>How To Use This Resource</h3>
+                        <div class="about-text">
+                            <p>VistaKine is designed to be both a comprehensive learning resource and an interactive playground:</p>
+                            <ul>
+                                <li><strong>Explore the chapters</strong> - Work through the content sequentially to build your knowledge systematically, or jump to specific topics of interest.</li>
+                                <li><strong>Interact with visualizations</strong> - Every concept is accompanied by interactive 3D models. Don't just read about physics—experiment with it by adjusting parameters and observing the effects.</li>
+                                <li><strong>Challenge yourself</strong> - Test your understanding with built-in problems and exercises that provide immediate feedback.</li>
+                                <li><strong>Build intuition</strong> - Take time to play with the simulations. Try extreme values, test edge cases, and develop a feel for how systems behave under different conditions.</li>
+                            </ul>
+                            <p>The platform works on desktop and mobile devices, though a larger screen provides the best experience for the 3D visualizations.</p>
+                        </div>
+                    </section>
+
+                    <section class="about-section">
+                        <h3>Contact & Feedback</h3>
+                        <div class="about-text">
+                            <p>VistaKine is continuously evolving, and your feedback is invaluable to its improvement. We're particularly interested in hearing about:</p>
+                            <ul>
+                                <li>Concepts you'd like to see visualized</li>
+                                <li>Suggestions for improving interactive elements</li>
+                                <li>Additional features that would enhance your learning experience</li>
+                            </ul>
+                            <p>To provide feedback or get in touch, please reach out via <a href="https://williamkwooten.com" target="_blank" class="contact-link">williamkwooten.com</a>.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+
+    <!-- Core Application -->
+    <script type="module" src="../js/app.js"></script>
+</body>
+</html>

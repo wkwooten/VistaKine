@@ -1,0 +1,72 @@
+<div class="section-inner">
+    <div class="cross-products-page">
+        <header class="content-header">
+            <h2>Cross Products</h2>
+            <p class="chapter-description">Understand the cross product operation between vectors and its applications in physics.</p>
+        </header>
+
+        <div class="chapter-content">
+            <section class="content-section">
+                <h3>What is the Cross Product?</h3>
+                <p>The cross product is a binary operation on two vectors in three-dimensional space that results in a vector that is perpendicular to both of the vectors being multiplied.</p>
+
+                <div class="formula-container">
+                    <p>For two vectors <strong>a</strong> and <strong>b</strong>, the cross product <strong>a</strong> × <strong>b</strong> is defined as:</p>
+                    <div class="formula">
+                        |<strong>a</strong> × <strong>b</strong>| = |<strong>a</strong>| |<strong>b</strong>| sin(θ)
+                    </div>
+                    <p>where θ is the angle between the vectors.</p>
+                </div>
+
+                <div class="visualization-container" data-threejs="cross-product-basic">
+                    <!-- Three.js visualization will be rendered here -->
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Properties of Cross Products</h3>
+                <ul class="properties-list">
+                    <li><strong>Anti-commutativity:</strong> <strong>a</strong> × <strong>b</strong> = -(<strong>b</strong> × <strong>a</strong>)</li>
+                    <li><strong>Distributivity:</strong> <strong>a</strong> × (<strong>b</strong> + <strong>c</strong>) = <strong>a</strong> × <strong>b</strong> + <strong>a</strong> × <strong>c</strong></li>
+                    <li><strong>Scalar multiplication:</strong> (k<strong>a</strong>) × <strong>b</strong> = k(<strong>a</strong> × <strong>b</strong>) = <strong>a</strong> × (k<strong>b</strong>)</li>
+                    <li><strong>Perpendicularity:</strong> <strong>a</strong> × <strong>b</strong> is perpendicular to both <strong>a</strong> and <strong>b</strong></li>
+                </ul>
+
+                <div class="visualization-container" data-threejs="cross-product-properties">
+                    <!-- Three.js visualization will be rendered here -->
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Applications in Physics</h3>
+                <p>The cross product has numerous applications in physics, including:</p>
+
+                <div class="applications-grid">
+                    <div class="application-card">
+                        <h4>Torque</h4>
+                        <p>Torque is calculated as the cross product of the position vector and the force vector: τ = r × F</p>
+                        <div class="visualization-container" data-threejs="torque-demo">
+                            <!-- Three.js visualization will be rendered here -->
+                        </div>
+                    </div>
+
+                    <div class="application-card">
+                        <h4>Angular Momentum</h4>
+                        <p>Angular momentum is calculated as the cross product of the position vector and the linear momentum: L = r × p</p>
+                        <div class="visualization-container" data-threejs="angular-momentum">
+                            <!-- Three.js visualization will be rendered here -->
+                        </div>
+                    </div>
+
+                    <div class="application-card">
+                        <h4>Magnetic Force</h4>
+                        <p>The magnetic force on a moving charged particle is calculated as: F = q(v × B)</p>
+                        <div class="visualization-container" data-threejs="magnetic-force">
+                            <!-- Three.js visualization will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
