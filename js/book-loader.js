@@ -265,29 +265,58 @@ async function loadSectionContent(section) {
         return;
     }
 
-    // Improved GitHub Pages path handling
-    if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
-        const repoName = window.vistaKineConfig.repoName;
-        console.log(`GitHub Pages detected, repo name: ${repoName}`);
+    const isGitHubPages = window.vistaKineConfig && window.vistaKineConfig.isGitHubPages;
+    console.log(`Environment: ${isGitHubPages ? 'GitHub Pages' : 'Local Development'}`);
 
-        // Make sure the path is relative (no leading slash) for GitHub Pages
-        contentPath = contentPath.replace(/^\//, '');
+    // Create a copy of the original path for local development
+    const originalPath = contentPath;
+
+    // Only modify paths for GitHub Pages
+    if (isGitHubPages) {
+        const repoName = window.vistaKineConfig.repoName;
+        console.log(`GitHub Pages detected, repo name: "${repoName}", original path: "${contentPath}"`);
+
+        // First, strip any leading slashes
+        contentPath = contentPath.replace(/^\/+/, '');
+        console.log(`Path after stripping leading slashes: "${contentPath}"`);
 
         // Add repo name prefix if not already present and we have a repo name
-        if (repoName && !contentPath.startsWith(repoName + '/')) {
+        if (repoName && !contentPath.startsWith(repoName + '/') && !contentPath.startsWith('/'+repoName+'/')) {
+            // Ensure no double slashes
             contentPath = `${repoName}/${contentPath}`;
-            console.log(`Adjusted path for GitHub Pages: ${contentPath}`);
+            console.log(`Path after adding repo prefix: "${contentPath}"`);
+        }
+
+        // IMPORTANT: Check for paths that might need encoding
+        // GitHub Pages can have issues with parentheses and certain characters
+        if (contentPath.includes('(') || contentPath.includes(')')) {
+            console.log(`Path contains parentheses, original: "${contentPath}"`);
+
+            // Extract the filename and directory parts
+            const pathParts = contentPath.split('/');
+            const fileName = pathParts.pop();
+            const directory = pathParts.join('/');
+
+            // Replace problematic characters in the filename
+            const encodedFileName = fileName
+                .replace(/\(/g, '%28')
+                .replace(/\)/g, '%29')
+                .replace(/\s/g, '%20');
+
+            // Reconstruct the path
+            contentPath = directory ? `${directory}/${encodedFileName}` : encodedFileName;
+            console.log(`Path after encoding special characters: "${contentPath}"`);
         }
     }
 
-    // Add cache busting for GitHub Pages
+    // Use a timestamp-based cache buster to avoid caching issues
     const cacheBuster = `?_=${Date.now()}`;
     const finalPath = contentPath + cacheBuster;
+    console.log(`Final path with cache buster: "${finalPath}"`);
 
     try {
         // Show loading state
         contentElement.classList.add('loading');
-        console.log(`Fetching content from: ${finalPath}`);
 
         // Fetch the content with proper options
         const fetchOptions = {
@@ -299,51 +328,87 @@ async function loadSectionContent(section) {
             cache: 'no-store'
         };
 
-        // Try to fetch the content
-        let response;
-        try {
-            response = await fetch(finalPath, fetchOptions);
-        } catch (initialError) {
-            console.warn(`Initial fetch failed, trying alternative paths: ${initialError.message}`);
+        // Try to fetch the content with progressive fallbacks
+        let response = null;
+        let usedPath = '';
 
-            // Try alternative paths if the first attempt fails
-            const alternativePaths = [
-                contentPath, // Original path without cache busting
-                contentPath.replace(/^\//, ''), // Without leading slash
-                `/${contentPath}`, // With leading slash
-                window.location.origin + '/' + contentPath.replace(/^\//, ''), // With origin, ensuring no double slash
-                // Try with explicit https://[username].github.io/[repo] format if on GitHub Pages
-                window.vistaKineConfig && window.vistaKineConfig.isGitHubPages ?
-                    `https://${window.location.hostname}/${contentPath.replace(/^\//, '')}` : null
-            ].filter(Boolean); // Remove null entries
+        // Create an array of paths to try, starting with most likely to work
+        const pathsToTry = [];
 
-            // Try each alternative path
-            let succeeded = false;
-            for (const altPath of alternativePaths) {
-                try {
-                    console.log(`Trying alternative path: ${altPath}`);
-                    response = await fetch(altPath, fetchOptions);
-                    if (response.ok) {
-                        console.log(`Alternative path succeeded: ${altPath}`);
-                        succeeded = true;
-                        break;
-                    }
-                } catch (e) {
-                    console.warn(`Alternative path ${altPath} failed: ${e.message}`);
-                }
-            }
+        if (isGitHubPages) {
+            // GitHub Pages paths (already processed)
+            pathsToTry.push(
+                finalPath,
+                contentPath,
+                `/${contentPath.replace(/^\/+/, '')}`
+            );
+        } else {
+            // Local development paths (use original paths)
+            pathsToTry.push(
+                originalPath + cacheBuster, // Original with cache buster
+                originalPath,               // Original without cache buster
+                // Also try without leading slash for local too
+                originalPath.replace(/^\//, '') + cacheBuster
+            );
+        }
 
-            if (!succeeded) {
-                throw new Error(`All fetch attempts failed for section ${sectionId}`);
+        // Add more fallback paths that work in both environments
+        pathsToTry.push(
+            contentPath.replace(/^\/+/, ''),       // No leading slash
+            `/${contentPath.replace(/^\/+/, '')}`, // With leading slash
+            // Absolute URL paths
+            new URL(contentPath.replace(/^\/+/, ''), window.location.origin).href
+        );
+
+        // For GitHub Pages specifically, add more GitHub-specific options
+        if (isGitHubPages && window.vistaKineConfig.repoName) {
+            const repoName = window.vistaKineConfig.repoName;
+
+            // Add repo-specific paths
+            pathsToTry.push(
+                `/${repoName}/${contentPath.replace(/^\/+/, '').replace(`${repoName}/`, '')}`, // Ensure no duplicate repo name
+                `https://${window.location.hostname}/${repoName}/${contentPath.replace(/^\/+/, '').replace(`${repoName}/`, '')}` // Full GitHub Pages URL
+            );
+
+            // Try with different section file naming conventions
+            if (contentPath.includes('(') || contentPath.includes(')')) {
+                // Try the path with parentheses removed
+                const withoutParentheses = contentPath.replace(/\([^)]*\)/g, '');
+                pathsToTry.push(
+                    withoutParentheses,
+                    `/${repoName}/${withoutParentheses.replace(/^\/+/, '').replace(`${repoName}/`, '')}`
+                );
             }
         }
 
-        if (!response.ok) {
-            throw new Error(`Failed to load content: ${response.status} ${response.statusText}`);
+        // Log the paths we're going to try
+        console.log("Paths to try:", JSON.stringify(pathsToTry, null, 2));
+
+        // Try each path until one works
+        for (const path of pathsToTry) {
+            try {
+                console.log(`Trying path: "${path}"`);
+                response = await fetch(path, fetchOptions);
+
+                if (response.ok) {
+                    usedPath = path;
+                    console.log(`✅ Success with path: "${path}"`);
+                    break;
+                } else {
+                    console.log(`❌ Failed with path: "${path}", status: ${response.status}`);
+                }
+            } catch (error) {
+                console.warn(`❌ Error fetching "${path}":`, error.message);
+            }
+        }
+
+        // If none of the paths worked, throw an error
+        if (!response || !response.ok) {
+            throw new Error(`Failed to load content for section ${sectionId} after trying multiple paths`);
         }
 
         const htmlContent = await response.text();
-        console.log(`Successfully loaded content for ${sectionId}, length: ${htmlContent.length} chars`);
+        console.log(`✅ Successfully loaded content for "${sectionId}", length: ${htmlContent.length} chars, from: "${usedPath}"`);
 
         // Insert the content
         contentElement.innerHTML = htmlContent;

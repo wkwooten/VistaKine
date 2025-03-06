@@ -7,36 +7,98 @@
 
     <!-- GitHub Pages compatibility script -->
     <script>
-    // Add meta info for GitHub Pages compatibility
+    // Add meta info for GitHub Pages compatibility with enhanced detection
     window.vistaKineConfig = {
         // Detect if we're on GitHub Pages
-        isGitHubPages: window.location.hostname.includes('github.io'),
-        // Store the repository name for path resolution - improved to handle more cases
+        isGitHubPages: window.location.hostname.endsWith('github.io') || window.location.hostname.endsWith('githubusercontent.com'),
+
+        // Store the repository name for path resolution with improved detection
         repoName: (function() {
-            // Extract repo name from the path
+            // Get hostname and path
+            const hostname = window.location.hostname;
             const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
 
-            // If we're on GitHub Pages, the first path part should be the repo name
-            if (window.location.hostname.includes('github.io') && pathParts.length > 0) {
-                return pathParts[0];
+            // GitHub Pages hostname pattern: username.github.io
+            const isUserSite = hostname.endsWith('github.io') && hostname.split('.').length === 3;
+
+            if (isUserSite) {
+                // User site: username.github.io/repo-name/...
+                if (pathParts.length > 0) {
+                    console.log(`Detected user GitHub Pages site, repo: ${pathParts[0]}`);
+                    return pathParts[0];
+                }
+            } else if (hostname.endsWith('github.io')) {
+                // Project site: username.github.io/repo-name/...
+                if (pathParts.length > 0) {
+                    console.log(`Detected project GitHub Pages site, repo: ${pathParts[0]}`);
+                    return pathParts[0];
+                }
             }
 
-            // For local development or other scenarios, return empty string
+            // Default case for local development or other scenarios
+            console.log('Could not detect GitHub Pages repository from URL, using empty string');
             return '';
         })(),
+
         // Debug mode for development
-        debug: true
+        debug: true,
+
+        // Base path for resources
+        basePath: function() {
+            if (this.isGitHubPages && this.repoName) {
+                return `/${this.repoName}/`;
+            }
+            return '/';
+        },
+
+        // Generate a full URL for a resource path
+        getResourcePath: function(path) {
+            // Strip leading slashes for consistency
+            const cleanPath = path.replace(/^\/+/, '');
+
+            if (this.isGitHubPages && this.repoName) {
+                // Ensure path doesn't already contain the repo name
+                if (cleanPath.startsWith(this.repoName + '/')) {
+                    return '/' + cleanPath;
+                }
+                return `/${this.repoName}/${cleanPath}`;
+            }
+
+            return '/' + cleanPath;
+        }
     };
 
     // Log configuration for debugging
     if (window.vistaKineConfig.debug) {
         console.log('VistaKine Config:', window.vistaKineConfig);
+        console.log('Base Path:', window.vistaKineConfig.basePath());
+        console.log('Example Resource Path:', window.vistaKineConfig.getResourcePath('sections/about.html'));
     }
     </script>
 
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/book.css">
+    <!-- CSS Files with improved path handling for GitHub Pages -->
+    <script>
+        // Function to create a properly linked stylesheet
+        function addStylesheet(href) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+
+            // Use the config helper for GitHub Pages compatibility
+            if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+                link.href = window.vistaKineConfig.getResourcePath(href);
+            } else {
+                link.href = href;
+            }
+
+            document.head.appendChild(link);
+            console.log(`Added stylesheet: ${link.href}`);
+        }
+
+        // Add our stylesheets
+        addStylesheet('styles/main.css');
+        addStylesheet('styles/book.css');
+    </script>
+
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- External Libraries -->
@@ -245,9 +307,7 @@
         </button>
     </div>
 
-    <script src="js/sidebar-resize.js"></script>
-    <script src="js/book-loader.js"></script>
-    <script src="js/visualization-engine.js"></script>
+    <!-- Script loading is now handled by the dynamic script loader below -->
 
     <!-- Page navigation script -->
     <script>
@@ -640,7 +700,102 @@
         });
     </script>
 
-    <!-- JavaScript Files -->
+    <!-- JavaScript Files with GitHub Pages path correction -->
+    <script>
+        // Function to load a script with the correct path for GitHub Pages
+        function loadScript(src, callback) {
+            // Create a copy of the original source for local development
+            const originalSrc = src;
+
+            // Only modify paths for GitHub Pages
+            if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+                src = window.vistaKineConfig.getResourcePath(src);
+                console.log(`GitHub Pages: Adjusted script path from "${originalSrc}" to "${src}"`);
+            } else {
+                console.log(`Local development: Using original script path "${src}"`);
+            }
+
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = function() {
+                console.log(`✅ Successfully loaded script: ${script.src}`);
+                if (callback) callback();
+            };
+            script.onerror = function() {
+                console.error(`❌ Failed to load script: ${src}`);
+
+                // Progressive fallbacks for script loading
+                const fallbackPaths = [];
+
+                // Try the original path if we're on GitHub Pages and modified it
+                if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+                    fallbackPaths.push(originalSrc);
+                }
+
+                // Try with and without leading slash
+                fallbackPaths.push(
+                    src.replace(/^\/+/, ''),     // No leading slash
+                    '/' + src.replace(/^\/+/, '') // With leading slash
+                );
+
+                // Try with repo name explicitly (for GitHub Pages)
+                if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages && window.vistaKineConfig.repoName) {
+                    const repoName = window.vistaKineConfig.repoName;
+                    fallbackPaths.push(
+                        `/${repoName}/${src.replace(/^\/+/, '').replace(`${repoName}/`, '')}`,
+                        `/${repoName}/${originalSrc.replace(/^\/+/, '')}`
+                    );
+                }
+
+                console.log("Trying fallback paths:", fallbackPaths);
+
+                // Try each fallback path
+                tryNextFallback(fallbackPaths, 0, callback);
+            };
+            document.body.appendChild(script);
+        }
+
+        // Helper function to try fallback paths in sequence
+        function tryNextFallback(paths, index, callback) {
+            if (index >= paths.length) {
+                console.error("All fallback paths failed");
+                return; // All paths failed
+            }
+
+            const path = paths[index];
+            console.log(`Trying fallback path ${index + 1}/${paths.length}: ${path}`);
+
+            const fallbackScript = document.createElement('script');
+            fallbackScript.src = path;
+
+            fallbackScript.onload = function() {
+                console.log(`✅ Fallback path succeeded: ${path}`);
+                if (callback) callback();
+            };
+
+            fallbackScript.onerror = function() {
+                console.error(`❌ Fallback path failed: ${path}`);
+                // Try next fallback
+                tryNextFallback(paths, index + 1, callback);
+            };
+
+            document.body.appendChild(fallbackScript);
+        }
+
+        // Load scripts in sequence with proper dependency order
+        console.log("Starting script loading sequence...");
+        loadScript('js/sidebar-resize.js', function() {
+            console.log("Sidebar resize script loaded, loading book loader...");
+            loadScript('js/book-loader.js', function() {
+                console.log("Book loader script loaded, loading visualization engine...");
+                loadScript('js/visualization-engine.js', function() {
+                    console.log("All scripts loaded successfully!");
+                });
+            });
+        });
+    </script>
+
+    <!-- Reading progress indicator setup -->
     <script>
         // Initialize reading progress indicator
         const progressBar = document.getElementById('reading-progress');
