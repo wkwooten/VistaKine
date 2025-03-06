@@ -702,6 +702,136 @@
 
     <!-- JavaScript Files with GitHub Pages path correction -->
     <script>
+        // Fallback initialization function in case the book-loader.js file fails to load
+        window.initializeBookLoader = window.initializeBookLoader || function() {
+            console.log("Using fallback initialization function");
+
+            // Force load the first visible section directly
+            const sections = document.querySelectorAll('.section-container');
+            if (sections.length > 0) {
+                const firstSection = sections[0];
+                console.log(`Directly loading first section: ${firstSection.id}`);
+
+                // Simple content loading function
+                (async function loadContent(section) {
+                    const sectionId = section.id;
+                    const contentElement = section.querySelector('.section-content');
+
+                    if (!contentElement) {
+                        console.error(`Section ${sectionId} has no content element`);
+                        return;
+                    }
+
+                    const contentPath = contentElement.getAttribute('data-src');
+                    if (!contentPath) {
+                        console.error(`Section ${sectionId} has no data-src attribute`);
+                        return;
+                    }
+
+                    console.log(`Loading content for section ${sectionId} from ${contentPath}`);
+
+                    try {
+                        // Use config helper if available
+                        let finalPath = contentPath;
+                        if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+                            finalPath = window.vistaKineConfig.getResourcePath(contentPath);
+                        }
+
+                        console.log(`Fetching from path: ${finalPath}`);
+                        const response = await fetch(finalPath);
+
+                        if (!response.ok) {
+                            throw new Error(`Failed to load content: ${response.status}`);
+                        }
+
+                        const htmlContent = await response.text();
+                        contentElement.innerHTML = htmlContent;
+                        console.log(`Successfully loaded content for section ${sectionId}`);
+                    } catch (error) {
+                        console.error(`Error loading content:`, error);
+                        contentElement.innerHTML = `
+                            <div class="error-message">
+                                <h2>Error Loading Content</h2>
+                                <p>Failed to load content for this section: ${error.message}</p>
+                                <p>Path: ${contentPath}</p>
+                                <button onclick="window.location.reload()">Reload Page</button>
+                            </div>
+                        `;
+                    }
+                })(firstSection);
+
+                // Try to load other visible sections
+                for (let i = 1; i < Math.min(sections.length, 3); i++) {
+                    const section = sections[i];
+                    setTimeout(() => {
+                        console.log(`Loading additional section: ${section.id}`);
+                        // Use an immediately invoked async function for each section
+                        (async function(section) {
+                            const sectionId = section.id;
+                            const contentElement = section.querySelector('.section-content');
+
+                            if (!contentElement) {
+                                console.error(`Section ${sectionId} has no content element`);
+                                return;
+                            }
+
+                            const contentPath = contentElement.getAttribute('data-src');
+                            if (!contentPath) {
+                                console.error(`Section ${sectionId} has no data-src attribute`);
+                                return;
+                            }
+
+                            console.log(`Loading content for section ${sectionId} from ${contentPath}`);
+
+                            try {
+                                // Use config helper if available
+                                let finalPath = contentPath;
+                                if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+                                    finalPath = window.vistaKineConfig.getResourcePath(contentPath);
+                                }
+
+                                console.log(`Fetching from path: ${finalPath}`);
+                                const response = await fetch(finalPath);
+
+                                if (!response.ok) {
+                                    throw new Error(`Failed to load content: ${response.status}`);
+                                }
+
+                                const htmlContent = await response.text();
+                                contentElement.innerHTML = htmlContent;
+                                console.log(`Successfully loaded content for section ${sectionId}`);
+                            } catch (error) {
+                                console.error(`Error loading content:`, error);
+                                contentElement.innerHTML = `
+                                    <div class="error-message">
+                                        <h2>Error Loading Content</h2>
+                                        <p>Failed to load content for this section: ${error.message}</p>
+                                        <p>Path: ${contentPath}</p>
+                                        <button onclick="window.location.reload()">Reload Page</button>
+                                    </div>
+                                `;
+                            }
+                        })(section);
+                    }, i * 500); // Stagger loading to avoid overwhelming network
+                }
+            }
+        };
+
+        // Track script loading state
+        window.scriptLoadingState = {
+            scriptsLoaded: false,
+            initialized: false
+        };
+
+        // Ultimate fallback - if all script loading fails
+        setTimeout(function() {
+            if (!window.scriptLoadingState.initialized) {
+                console.warn("No initialization after 5 seconds, forcing content loading");
+                window.initializeBookLoader();
+                window.scriptLoadingState.initialized = true;
+            }
+        }, 5000);
+
         // Function to load a script with the correct path for GitHub Pages
         function loadScript(src, callback) {
             // Create a copy of the original source for local development
@@ -790,6 +920,7 @@
                 console.log("Book loader script loaded, loading visualization engine...");
                 loadScript('js/visualization-engine.js', function() {
                     console.log("All scripts loaded successfully!");
+                    window.scriptLoadingState.scriptsLoaded = true;
 
                     // Ensure initialization happens after all scripts are loaded
                     // Use a slight delay to ensure DOM is fully ready
@@ -797,6 +928,7 @@
                         console.log("Manually initializing book loader...");
                         if (window.initializeBookLoader) {
                             window.initializeBookLoader();
+                            window.scriptLoadingState.initialized = true;
                         } else {
                             console.error("initializeBookLoader function not found");
                         }
