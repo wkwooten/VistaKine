@@ -1,40 +1,72 @@
 <div class="section-inner section-page">
+    <!-- Page divider at top -->
+    <div class="page-divider">
+        <div class="page-number">1</div>
+    </div>
+
     <div class="content-header">
         <h1>1.1 Introduction to 3D Coordinates</h1>
+        <div class="subtitle">Explore the fundamentals of spatial representation in three dimensions</div>
+        <div class="section-size">
+            <span class="label">Section length:</span>
+            <div class="dots">
+                <span class="dot active"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
     </div>
 
     <div class="content-section">
         <h2>Navigating 3D Space</h2>
         <div class="section-text">
-            <p>Welcome to your first interactive lesson! This section introduces the basic concepts of 3D coordinate systems.</p>
-            <p>Learn how to navigate and control the 3D visualization space using your mouse or touch controls.</p>
+            <p>Welcome to your first interactive lesson! This section introduces the basic concepts of 3D coordinate systems. Understanding how to navigate and represent points in three-dimensional space is fundamental to visualizing physics concepts.</p>
+
+            <p>The interactive visualization below demonstrates a 3D Cartesian coordinate system. You can:</p>
+            <ul>
+                <li><strong>Rotate:</strong> Click and drag with your mouse</li>
+                <li><strong>Zoom:</strong> Use your scroll wheel or pinch gesture</li>
+                <li><strong>Pan:</strong> Hold Shift while dragging</li>
+            </ul>
+            <p>Try each of these controls to get comfortable with 3D navigation.</p>
         </div>
 
-        <!-- Placeholder for Three.js visualization -->
+        <!-- Three.js visualization with expand button -->
         <div data-threejs="coordinate-intro" class="visualization-container">
             <!-- Three.js content will be loaded here -->
         </div>
 
         <div class="section-text">
-            <p>The visualization above demonstrates the X, Y, and Z axes in 3D space. You can rotate the view by clicking and dragging, zoom with the scroll wheel, and pan by holding Shift while dragging.</p>
+            <p>In the visualization above, notice:</p>
+            <ul>
+                <li>The <span style="color: #ff0000">X-axis</span> (red), <span style="color: #00ff00">Y-axis</span> (green), and <span style="color: #0000ff">Z-axis</span> (blue) extend from the origin point (0,0,0).</li>
+                <li>The orange point at coordinates (2,3,1) shows how a position is specified in 3D space.</li>
+                <li>The dashed lines show how this point's position is determined by its distance along each axis.</li>
+            </ul>
+            <p>Click the expand button in the top-right corner of the visualization to view it in fullscreen mode for a more immersive experience.</p>
         </div>
-    </div>
-
-    <!-- Page divider with number -->
-    <div class="page-divider">
-        <div class="page-number">1</div>
     </div>
 
     <div class="content-section">
         <h2>The Cartesian Coordinate System</h2>
         <div class="section-text">
-            <p>The Cartesian coordinate system uses three perpendicular axes to specify positions in 3D space.</p>
-            <p>Each position is defined by three coordinates (x, y, z) that represent distances along each axis.</p>
+            <p>The Cartesian coordinate system uses three perpendicular axes to specify positions in 3D space. This system, named after mathematician René Descartes, provides a standardized way to describe locations in space.</p>
+
+            <p>Each position is defined by three coordinates (x, y, z) that represent distances along each axis:</p>
+            <ul>
+                <li><strong>x-coordinate:</strong> Distance along the x-axis (left/right)</li>
+                <li><strong>y-coordinate:</strong> Distance along the y-axis (up/down in most 3D software)</li>
+                <li><strong>z-coordinate:</strong> Distance along the z-axis (forward/backward)</li>
+            </ul>
+
+            <p>In physics and mathematics, we typically use a <strong>right-handed coordinate system</strong>. You can visualize this by pointing your right thumb along the positive x-axis, your index finger along the positive y-axis, and your middle finger along the positive z-axis, with all fingers perpendicular to each other.</p>
+
+            <p>This coordinate system forms the foundation for all the concepts we'll explore in this course, including vectors, forces, and motion in three-dimensional space.</p>
         </div>
     </div>
 
-    <!-- Page divider with number -->
+    <!-- Page divider at bottom -->
     <div class="page-divider">
-        <div class="page-number">2</div>
+        <div class="page-number">1</div>
     </div>
 </div>

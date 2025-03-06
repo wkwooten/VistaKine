@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 </head>
 <body>
@@ -19,19 +20,28 @@
 
     <!-- Navigation toggle button -->
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
-        <i class="ph ph-list"></i>
+        <i class="ph ph-list"><span></span></i>
     </button>
 
-    <!-- Sidebar navigation -->
-    <div class="sidebar">
+    <!-- Main sidebar -->
+    <aside class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
                 <i class="ph ph-projector-screen-chart"></i>
                 <h1>VistaKine</h1>
             </div>
-            <button class="mobile-toggle" aria-label="Toggle navigation">
-                <i class="ph ph-list"></i>
-            </button>
+            <div class="sidebar-actions">
+                <button class="color-legend-toggle" aria-label="Show color legend" title="Color legend">
+                    <i class="ph ph-palette"></i>
+                </button>
+                <!-- Add close button for mobile -->
+                <button class="sidebar-close" aria-label="Close sidebar">
+                    <i class="ph ph-x"></i>
+                </button>
+                <button class="mobile-toggle" aria-label="Toggle navigation">
+                    <i class="ph ph-list"></i>
+                </button>
+            </div>
         </div>
 
         <div class="search-container">
@@ -54,6 +64,34 @@
                 <div class="chapter-number">C</div>
                 <span>Chapters</span>
             </a>
+
+            <!-- Color legend moved next to chapters tab -->
+            <div class="color-legend sidebar-panel">
+                <h3>Section Color Guide</h3>
+                <p>Sections use a grayscale color scheme to help you identify where you are in the book.</p>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="color-sample" style="background-color: var(--section-cover-bg);"></div>
+                        <span>Cover</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-sample" style="background-color: var(--section-about-bg);"></div>
+                        <span>About</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-sample" style="background-color: var(--section-chapter1-bg);"></div>
+                        <span>Chapter 1</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-sample" style="background-color: var(--section-chapter2-bg);"></div>
+                        <span>Chapter 2</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-sample" style="background-color: var(--section-chapter3-bg);"></div>
+                        <span>Chapter 3</span>
+                    </div>
+                </div>
+            </div>
 
             <a href="#chapter1-intro" class="nav-chapter">
                 <div class="chapter-number">1</div>
@@ -93,7 +131,7 @@
         <div class="sidebar-resize-handle" data-tooltip="Expand sidebar">
             <div class="resize-handle-line"></div>
         </div>
-    </div>
+    </aside>
 
     <!-- Main content container -->
     <main id="book-content">
@@ -221,7 +259,15 @@
                 if (index > 2) {
                     const pageNum = document.createElement('span');
                     pageNum.className = 'page-num';
-                    pageNum.textContent = index - 2; // Adjust page number to start after non-numbered sections
+
+                    // Create icon element
+                    const icon = document.createElement('i');
+                    icon.className = 'ph ph-hash';
+
+                    // Add icon and number to the page number element
+                    pageNum.appendChild(icon);
+                    pageNum.appendChild(document.createTextNode(index - 2)); // Add the number after the icon
+
                     link.appendChild(pageNum);
                 }
             });
@@ -271,6 +317,304 @@
             // Call this initially and whenever the hash changes
             updateCurrentSection();
             window.addEventListener('hashchange', updateCurrentSection);
+
+            // Calculate reading time when content is loaded
+            function calculateReadingTime(content) {
+                // Average reading speed (words per minute)
+                const wordsPerMinute = 200;
+
+                // Count words in the content (rough estimate)
+                const text = content.textContent || content.innerText;
+                const wordCount = text.trim().split(/\s+/).length;
+
+                // Calculate reading time in minutes
+                const readingTime = Math.ceil(wordCount / wordsPerMinute);
+
+                return readingTime < 1 ? '< 1 min read' : readingTime + ' min read';
+            }
+
+            // Update reading time for each section when loaded
+            function updateReadingTime(sectionContent) {
+                const readingTimeElement = sectionContent.querySelector('.reading-time span');
+                if (readingTimeElement && sectionContent) {
+                    const textContent = sectionContent.querySelector('.section-text');
+                    if (textContent) {
+                        readingTimeElement.textContent = calculateReadingTime(textContent);
+                    }
+                }
+            }
+
+            // When section content is loaded, calculate reading time
+            // This would be integrated with your existing content loading system
+            document.addEventListener('section-loaded', function(e) {
+                if (e.detail && e.detail.sectionElement) {
+                    updateReadingTime(e.detail.sectionElement);
+                }
+            });
+
+            // For demonstration/testing - manually update any existing reading times
+            document.querySelectorAll('.section-inner').forEach(section => {
+                updateReadingTime(section);
+            });
+
+            // URL Parameter Handler to reset sidebar state if needed
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('reset_sidebar')) {
+                console.log('Resetting sidebar state based on URL parameter');
+                localStorage.removeItem('sidebarWidth');
+                // Redirect to the same page without the parameter
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            // MOBILE NAVIGATION DEBUGGING HELPER
+            // Create a small debug panel that can be toggled on/off
+            const debugHelper = document.createElement('div');
+            debugHelper.style.position = 'fixed';
+            debugHelper.style.bottom = '10px';
+            debugHelper.style.right = '10px';
+            debugHelper.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            debugHelper.style.color = 'white';
+            debugHelper.style.padding = '8px';
+            debugHelper.style.fontSize = '10px';
+            debugHelper.style.zIndex = '9999';
+            debugHelper.style.display = 'none';
+            debugHelper.id = 'mobile-debug';
+            document.body.appendChild(debugHelper);
+
+            // Toggle debug panel with triple tap on bottom right corner
+            let tapCount = 0;
+            document.addEventListener('touchend', function(e) {
+                const x = e.changedTouches[0].clientX;
+                const y = e.changedTouches[0].clientY;
+                const screenW = window.innerWidth;
+                const screenH = window.innerHeight;
+
+                if (x > screenW - 50 && y > screenH - 50) {
+                    tapCount++;
+                    if (tapCount === 3) {
+                        debugHelper.style.display = debugHelper.style.display === 'none' ? 'block' : 'none';
+                        tapCount = 0;
+                    }
+
+                    setTimeout(() => {
+                        if (tapCount > 0) tapCount--;
+                    }, 1000);
+                }
+            });
+
+            // Log important events to the debug panel
+            function logDebug(msg) {
+                const time = new Date().toTimeString().split(' ')[0];
+                debugHelper.innerHTML += `<div>[${time}] ${msg}</div>`;
+                debugHelper.scrollTop = debugHelper.scrollHeight;
+                console.log(`[DEBUG] ${msg}`);
+
+                // Keep only the last 10 messages
+                const messages = debugHelper.querySelectorAll('div');
+                if (messages.length > 10) {
+                    for (let i = 0; i < messages.length - 10; i++) {
+                        messages[i].remove();
+                    }
+                }
+            }
+
+            // Force enable mobile navigation
+            function forceMobileNav() {
+                // This is our last resort option if nothing else works
+                logDebug("Forcing mobile navigation");
+
+                // Get elements
+                const navToggle = document.getElementById('show-nav-toggle');
+                const sidebar = document.querySelector('.sidebar');
+
+                if (!navToggle || !sidebar) {
+                    logDebug("ERROR: Critical elements missing");
+                    return;
+                }
+
+                // Force override any handlers on the button
+                navToggle.onclick = null;
+                navToggle.ontouchend = null;
+
+                // Reapply onclick directly
+                navToggle.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.add('active');
+                    logDebug("Sidebar opened via force handler");
+                };
+
+                // Make button highly visible in debug mode
+                if (debugHelper.style.display !== 'none') {
+                    navToggle.style.boxShadow = '0 0 0 3px red';
+                }
+            }
+
+            // Initialize mobile navigation with enhanced touch support
+            const sidebar = document.querySelector('.sidebar');
+            const showNavToggle = document.getElementById('show-nav-toggle');
+            const sidebarClose = document.querySelector('.sidebar-close');
+
+            // Log initial state
+            if (showNavToggle) {
+                logDebug("Nav toggle found");
+            } else {
+                logDebug("ERROR: Nav toggle not found!");
+            }
+
+            // More robust event handling for showing sidebar
+            function openSidebar(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                sidebar.classList.add('active');
+                logDebug("Sidebar opened");
+            }
+
+            // More robust event handling for hiding sidebar
+            function closeSidebar(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                sidebar.classList.remove('active');
+                logDebug("Sidebar closed");
+            }
+
+            // Apply multiple event listeners for better mobile compatibility
+            if (showNavToggle) {
+                // Remove any existing handlers first
+                showNavToggle.removeEventListener('click', openSidebar);
+
+                // Add click event
+                showNavToggle.addEventListener('click', openSidebar);
+
+                // Add touch events
+                showNavToggle.addEventListener('touchstart', function(e) {
+                    e.preventDefault(); // Prevent default touch behavior
+                    logDebug("Touch detected on nav toggle");
+                });
+
+                showNavToggle.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    openSidebar(e);
+                });
+
+                // Fallback - try direct attribute
+                showNavToggle.setAttribute('onclick', "document.querySelector('.sidebar').classList.add('active'); console.log('Sidebar opened via onclick attribute');");
+            }
+
+            // Enhanced close button functionality
+            if (sidebarClose) {
+                sidebarClose.addEventListener('click', closeSidebar);
+                sidebarClose.addEventListener('touchend', closeSidebar);
+            }
+
+            // Close sidebar when clicking outside (but not when clicking the toggle)
+            document.addEventListener('click', function(event) {
+                if (sidebar.classList.contains('active') &&
+                    !sidebar.contains(event.target) &&
+                    event.target !== showNavToggle &&
+                    !showNavToggle.contains(event.target)) {
+                    closeSidebar();
+                }
+            });
+
+            // Make menu button more obviously clickable
+            if (showNavToggle) {
+                showNavToggle.style.cursor = 'pointer';
+                showNavToggle.setAttribute('role', 'button');
+                showNavToggle.setAttribute('tabindex', '0');
+            }
+
+            // Extra fallbacks after a delay to ensure everything is loaded
+            setTimeout(forceMobileNav, 1000);
+
+            // Check if we're on a mobile device (for proper behavior)
+            function isMobileDevice() {
+                return (window.innerWidth <= 768) ||
+                       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // Apply mobile styles if needed
+            function checkMobileView() {
+                if (isMobileDevice()) {
+                    // Disable progressive sidebar for mobile
+                    sidebar.classList.remove('mini-collapsed');
+                    sidebar.classList.remove('collapsed');
+
+                    // Ensure main content is properly positioned
+                    document.querySelector('.main-content').style.marginLeft = '0';
+                }
+            }
+
+            // Check on load and resize
+            checkMobileView();
+            window.addEventListener('resize', checkMobileView);
+        });
+    </script>
+
+    <!-- JavaScript Files -->
+    <script src="js/content-loader.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/visualization-engine.js"></script>
+    <script>
+        // Initialize reading progress indicator
+        const progressBar = document.getElementById('reading-progress');
+        window.addEventListener('scroll', () => {
+            const scrollPosition = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight - windowHeight;
+            const progress = (scrollPosition / documentHeight) * 100;
+            progressBar.style.width = `${progress}%`;
+        });
+
+        // Better mobile FAB behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            const fab = document.querySelector('.show-nav-toggle');
+
+            // Hide FAB when scrolling down, show when scrolling up
+            let lastScrollTop = 0;
+            let fabVisible = true;
+
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                // Only apply this behavior on mobile
+                if (window.innerWidth <= 768) {
+                    // Determine scroll direction
+                    if (scrollTop > lastScrollTop && scrollTop > 200) {
+                        // Scrolling down and not at the top
+                        if (fabVisible) {
+                            fab.style.transform = 'translateY(-100px)';
+                            fabVisible = false;
+                        }
+                    } else {
+                        // Scrolling up or at top
+                        if (!fabVisible) {
+                            fab.style.transform = 'translateY(0)';
+                            fabVisible = true;
+                        }
+                    }
+
+                    lastScrollTop = scrollTop;
+                }
+            });
+
+            // Make sure the FAB is visible when at the top or bottom of the page
+            window.addEventListener('scrollend', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollHeight = document.documentElement.scrollHeight;
+                const windowHeight = window.innerHeight;
+
+                // Show FAB when at top or bottom of page
+                if (scrollTop < 100 || (scrollTop + windowHeight >= scrollHeight - 100)) {
+                    fab.style.transform = 'translateY(0)';
+                    fabVisible = true;
+                }
+            });
         });
     </script>
 </body>

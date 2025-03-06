@@ -45,6 +45,19 @@
 	--hover-color: #d1d5db;
 	--active-bg: rgba(37, 99, 235, 0.08);
 
+	/* Section color scheme - grayscale progression */
+	--section-cover-bg: #ffffff;
+	--section-about-bg: #fafafa;
+	--section-chapters-bg: #f7f7f7;
+	--section-chapter1-bg: #f3f3f3;
+	--section-chapter2-bg: #ececec;
+	--section-chapter3-bg: #e5e5e5;
+	--section-chapter4-bg: #dedede;
+	--section-chapter5-bg: #d7d7d7;
+
+	/* Text color for darker backgrounds */
+	--text-on-dark: #333;
+
 	/* Other */
 	--transition-fast: 0.15s ease;
 	--transition-normal: 0.3s ease;
@@ -78,11 +91,49 @@
 }
 
 .section-container {
-	min-height: 100vh;
+	min-height: auto;
 	padding: var(--spacing-xl);
 	border-bottom: 1px solid #eee;
 	scroll-margin-top: var(--spacing-md);
 	background-color: #f9fafb;
+	transition: background-color 0.5s ease;
+}
+
+/* Section container background colors */
+#cover.section-container {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+#about.section-container {
+	background-color: rgba(250, 250, 250, 0.7);
+}
+
+#chapters.section-container {
+	background-color: rgba(247, 247, 247, 0.7);
+}
+
+/* Chapter 1 sections container backgrounds */
+#chapter1-intro.section-container,
+#chapter1-coordinates.section-container,
+#chapter1-matrices.section-container,
+#chapter1-matrix-lab.section-container {
+	background-color: rgba(243, 243, 243, 0.7);
+}
+
+/* Chapter 2 sections container backgrounds */
+#chapter2-intro.section-container,
+#chapter2-operations.section-container,
+#chapter2-dot-products.section-container,
+#chapter2-applications.section-container {
+	background-color: rgba(236, 236, 236, 0.7);
+}
+
+/* Chapter 3 sections container backgrounds */
+#chapter3-definition.section-container,
+#chapter3-geometric.section-container,
+#chapter3-applications.section-container,
+#chapter3-triple.section-container {
+	background-color: rgba(229, 229, 229, 0.7);
 }
 
 .section-container:last-child {
@@ -96,7 +147,7 @@
 /* Common content containers */
 .section-content {
 	max-width: var(--wide-content-width);
-	margin: 0 auto;
+	margin: var(--spacing-md) auto;
 }
 
 /* Section inner styling - paper-like elevation */
@@ -106,8 +157,57 @@
 	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
 	padding: var(--spacing-lg);
 	margin-bottom: var(--spacing-lg);
-	transition: box-shadow 0.3s ease, transform 0.3s ease;
+	transition: box-shadow 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
 	position: relative;
+}
+
+/* Grayscale background color scheme for sections */
+#cover .section-inner {
+	background-color: var(--section-cover-bg);
+}
+
+#about .section-inner {
+	background-color: var(--section-about-bg);
+}
+
+#chapters .section-inner {
+	background-color: var(--section-chapters-bg);
+}
+
+/* Chapter 1 sections */
+#chapter1-intro .section-inner,
+#chapter1-coordinates .section-inner,
+#chapter1-matrices .section-inner,
+#chapter1-matrix-lab .section-inner {
+	background-color: var(--section-chapter1-bg);
+}
+
+/* Chapter 2 sections */
+#chapter2-intro .section-inner,
+#chapter2-operations .section-inner,
+#chapter2-dot-products .section-inner,
+#chapter2-applications .section-inner {
+	background-color: var(--section-chapter2-bg);
+}
+
+/* Chapter 3 sections */
+#chapter3-definition .section-inner,
+#chapter3-geometric .section-inner,
+#chapter3-applications .section-inner,
+#chapter3-triple .section-inner {
+	background-color: var(--section-chapter3-bg);
+}
+
+/* Section header indicator - small colored bar that matches section background */
+.content-header::before {
+	content: "";
+	display: block;
+	width: 50px;
+	height: 5px;
+	margin-bottom: var(--spacing-md);
+	border-radius: 2px;
+	background-color: inherit;
+	opacity: 0.7;
 }
 
 .section-inner:hover {
@@ -131,12 +231,63 @@
 .reading-progress {
 	position: fixed;
 	top: 0;
-	left: var(--sidebar-width);
+	left: 0;
+	width: 0%;
 	height: 4px;
-	background-color: var(--primary-color);
-	width: 0;
+	background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
 	z-index: 1000;
-	transition: width 0.1s ease;
+	transition: width 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Reading time estimator */
+.reading-time {
+	display: flex;
+	align-items: center;
+	font-size: 0.875rem;
+	color: var(--text-light);
+	margin-bottom: var(--spacing-md);
+	line-height: 1;
+}
+
+.reading-time i {
+	margin-right: 4px;
+	font-size: 1rem;
+	color: var(--accent-color);
+}
+
+/* Section size indicator */
+.section-size {
+	display: flex;
+	align-items: center;
+	margin-bottom: var(--spacing-md);
+	font-size: 0.875rem;
+	color: var(--text-light);
+}
+
+.section-size .label {
+	margin-right: 8px;
+	opacity: 0.85;
+}
+
+.section-size .dots {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.section-size .dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background-color: var(--border-color);
+	opacity: 0.5;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.section-size .dot.active {
+	background-color: var(--accent-color);
+	opacity: 1;
 }
 
 /* ========== SIDEBAR ========== */
@@ -150,28 +301,30 @@
 	width: var(--sidebar-width);
 	background-color: var(--bg-light);
 	border-right: 1px solid var(--border-color);
+	z-index: 100;
 	display: flex;
 	flex-direction: column;
-	z-index: 100;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 	overflow: hidden;
 	--search-icon-opacity: 1;
-	transition: var(--transition-normal);
+	transition-property: width, background-color, box-shadow;
+	transition-duration: 0.4s;
+	transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* Logo and header styling */
 .sidebar-header {
 	display: flex;
 	align-items: center;
-	padding: 1.2rem var(--spacing-lg);
+	justify-content: space-between;
+	padding: var(--spacing-md);
 	border-bottom: 1px solid var(--border-color);
-	transition: var(--transition-normal);
 }
 
 .logo {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--spacing-xs);
 }
 
 .logo i {
@@ -191,7 +344,7 @@
 	padding: var(--spacing-md) var(--spacing-lg);
 	border-bottom: 1px solid var(--border-color);
 	position: relative;
-	transition: var(--transition-normal);
+	transition: all 0.3s ease;
 }
 
 .sidebar .search-container input {
@@ -216,20 +369,20 @@
 	flex: 1;
 	overflow-y: auto;
 	padding: var(--spacing-md) 0;
-	transition: var(--transition-normal);
+	transition: all 0.3s ease;
 }
 
 /* Chapter items with circle numbers */
 .nav-chapter {
 	display: flex;
 	align-items: center;
-	text-decoration: none;
-	color: var(--text-color);
-	padding: var(--spacing-sm) var(--spacing-lg);
-	border-left: 3px solid transparent;
-	transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-	font-weight: 500;
 	position: relative;
+	padding: 0.5rem 45px 0.5rem 0.75rem;
+	color: var(--text-color);
+	text-decoration: none;
+	border-left: 3px solid transparent;
+	transition: background-color 0.2s ease;
+	font-weight: 500;
 }
 
 .nav-chapter:hover {
@@ -241,7 +394,6 @@
 	background-color: var(--active-bg);
 	border-left-color: var(--primary-color);
 	color: var(--primary-color);
-	font-weight: 600;
 }
 
 .nav-chapter.active::after {
@@ -286,13 +438,13 @@
 
 .nav-subchapter {
 	display: block;
-	padding: 0.5rem 0.5rem 0.5rem 3rem;
+	padding: 0.5rem 45px 0.5rem 3rem;
 	color: var(--text-light);
 	text-decoration: none;
-	font-size: 0.9rem;
-	transition: background-color 0.2s, color 0.2s;
-	border-left: 3px solid transparent;
 	position: relative;
+	transition: all 0.2s ease;
+	font-size: 0.9rem;
+	border-left: 3px solid transparent;
 }
 
 .nav-subchapter:hover {
@@ -301,10 +453,9 @@
 }
 
 .nav-subchapter.active {
-	color: var(--primary-color);
 	background-color: var(--active-bg);
 	border-left-color: var(--primary-color);
-	font-weight: 500;
+	color: var(--primary-color);
 }
 
 .nav-subchapter.active::before {
@@ -326,20 +477,51 @@
 	transform: translateY(-50%);
 	font-size: 0.75rem;
 	color: var(--text-light);
-	opacity: 0.6;
+	opacity: 0.8;
+	padding: 2px 8px;
+	background-color: rgba(0, 0, 0, 0.04);
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
 }
 
-/* Resize handle and pull tab */
+.nav-subchapter .page-num i {
+	font-size: 0.7rem;
+	opacity: 0.7;
+}
+
+.nav-chapter .page-num {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.75rem;
+	color: var(--text-light);
+	opacity: 0.8;
+	padding: 2px 8px;
+	background-color: rgba(0, 0, 0, 0.04);
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.nav-chapter .page-num i {
+	font-size: 0.7rem;
+	opacity: 0.7;
+}
+
+/* Sidebar resize handle */
 .sidebar-resize-handle {
 	position: absolute;
 	top: 0;
-	right: -3px;
-	width: 6px;
+	right: -5px;
+	width: 10px;
 	height: 100%;
 	cursor: ew-resize;
-	z-index: 10;
-	background: transparent;
-	transition: var(--transition-normal);
+	z-index: 200;
+	transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* Pull tab */
@@ -407,7 +589,7 @@
 .sidebar .search-container,
 .sidebar .sidebar-nav,
 .main-content {
-	transition: var(--transition-normal);
+	transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .sidebar.collapsed .sidebar-resize-handle::before {
@@ -430,7 +612,9 @@
 .main-content {
 	margin-left: var(--sidebar-width);
 	padding: var(--spacing-xl);
-	transition: var(--transition-normal);
+	transition-property: margin-left;
+	transition-duration: 0.4s;
+	transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .sidebar.collapsed + .main-content,
@@ -597,31 +781,36 @@
 /* Content headers */
 .content-header {
 	margin-bottom: var(--spacing-xl);
-	border-bottom: 1px solid #eee;
-	padding-bottom: var(--spacing-md);
+	max-width: 68ch;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .content-header h1 {
+	line-height: 1.3;
 	margin: 0;
 	font-size: 2.5rem;
 	color: var(--text-color);
+	margin-bottom: var(--spacing-sm);
 }
 
 .content-header h2 {
 	margin: 0;
 	font-size: 2.5rem;
+	line-height: 1.3;
 }
 
 .content-header .subtitle {
 	color: var(--text-light);
 	font-size: 1.2rem;
 	margin-top: var(--spacing-sm);
+	line-height: 1.5;
 }
 
 /* Content sections */
 .content-section {
 	margin-bottom: var(--spacing-xxl);
-	padding: var(--spacing-md);
+	padding: var(--spacing-md) var(--spacing-lg);
 	border-radius: 6px;
 	background-color: #ffffff;
 	border-left: 4px solid var(--accent-color);
@@ -635,21 +824,28 @@
 
 .content-section h2,
 .content-section h3 {
-	font-size: 1.8rem;
-	margin: 0 0 var(--spacing-md);
-	color: var(--primary-color);
+	margin-top: 0;
+	margin-bottom: var(--spacing-md);
+	color: var(--text-color);
 }
 
+/* Optimized text container for readability */
 .section-text {
-	margin-bottom: var(--spacing-lg);
+	max-width: 68ch;
+	/* Optimal line length for readability - approx 66 characters */
+	margin: 0 auto var(--spacing-lg) auto;
+	color: var(--text-color);
 }
 
 .section-text p {
-	margin: 0 0 var(--spacing-md);
 	line-height: 1.6;
-	color: #444;
+	margin-bottom: var(--spacing-md);
+	font-size: 1.125rem;
+	/* 18px on standard browsers */
+	hyphens: auto;
 }
 
+/* Ensure consistent paragraph spacing and line length */
 .section-text:last-child p:last-child {
 	margin-bottom: 0;
 }
@@ -667,12 +863,151 @@
 .visualization-container {
 	width: 100%;
 	height: 400px;
-	background-color: var(--bg-lighter);
+	background-color: #f5f5f5;
 	border-radius: 8px;
-	margin: var(--spacing-lg) 0;
+	margin: var(--spacing-md) 0;
 	position: relative;
 	overflow: hidden;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+}
+
+.visualization-container canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* Fullscreen state for visualization container */
+.visualization-container.fullscreen {
+	position: fixed;
+	top: 20px;
+	left: 0;
+	width: 100vw;
+	height: calc(100vh - 40px);
+	/* Leave 20px margins top and bottom */
+	z-index: 1000;
+	margin: 0;
+	border-radius: 0;
+	background-color: white;
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure canvas fills the container in fullscreen mode */
+.visualization-container.fullscreen canvas {
+	width: 100% !important;
+	height: 100% !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+/* Expand button for visualization */
+.viz-expand-button {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background-color: rgba(255, 255, 255, 0.7);
+	border: none;
+	border-radius: 4px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 10;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.viz-expand-button:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+}
+
+.viz-expand-button i {
+	font-size: 18px;
+	color: #333;
+}
+
+/* Close button for fullscreen mode */
+.viz-close-button {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background-color: rgba(255, 255, 255, 0.8);
+	border: none;
+	border-radius: 4px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 20;
+	/* Higher than expand button */
+	transition: background-color 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.viz-close-button:hover {
+	background-color: rgba(255, 255, 255, 1);
+}
+
+.viz-close-button i {
+	font-size: 18px;
+	color: #333;
+}
+
+/* Grid toggle button */
+.viz-grid-toggle {
+	position: absolute;
+	top: 10px;
+	right: 52px;
+	/* Position next to expand button */
+	background-color: rgba(255, 255, 255, 0.7);
+	border: none;
+	border-radius: 4px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 10;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.viz-grid-toggle:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+}
+
+.viz-grid-toggle i {
+	font-size: 18px;
+	color: #333;
+}
+
+.visualization-container.fullscreen .viz-grid-toggle {
+	right: 52px;
+}
+
+.visualization-container.fullscreen .viz-expand-button {
+	display: none;
+}
+
+/* Visualization message (for errors or loading) */
+.viz-message {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background-color: rgba(255, 255, 255, 0.9);
+	padding: 15px 20px;
+	border-radius: 8px;
+	font-size: 14px;
+	color: #333;
+	text-align: center;
+	max-width: 80%;
 }
 
 .section-preview-card .visualization-container {
@@ -1008,125 +1343,477 @@
 }
 
 .show-nav-toggle {
-	display: none;
+	display: none !important;
+	position: fixed;
+	top: 20px;
+	left: 20px;
+	width: 40px;
+	height: 40px;
+	background-color: var(--primary-color);
+	color: white;
+	border: none;
+	border-radius: 50%;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+	z-index: 9999;
+	transition: transform 0.3s ease, background-color 0.2s ease;
+	cursor: pointer;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0.2);
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	touch-action: manipulation;
 }
 
-/* Mobile Styles */
+.show-nav-toggle i {
+	font-size: 1.8rem;
+	color: #ffffff;
+}
+
+/* Create a custom hamburger menu icon that doesn't rely on the icon font */
+.show-nav-toggle i.ph-list {
+	position: relative;
+	width: 24px;
+	height: 24px;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.show-nav-toggle i.ph-list::before {
+	content: "";
+	display: block;
+}
+
+/* Create three lines for the hamburger icon */
+.show-nav-toggle i.ph-list span,
+.show-nav-toggle i.ph-list span::before,
+.show-nav-toggle i.ph-list span::after {
+	display: block;
+	position: absolute;
+	width: 24px;
+	height: 3px;
+	border-radius: 3px;
+	background-color: white;
+}
+
+.show-nav-toggle i.ph-list span {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.show-nav-toggle i.ph-list span::before {
+	content: "";
+	top: -8px;
+}
+
+.show-nav-toggle i.ph-list span::after {
+	content: "";
+	bottom: -8px;
+}
+
+/* Force active state to be visually different */
+.show-nav-toggle:active {
+	background-color: var(--primary-dark-color);
+	transform: scale(0.95);
+}
+
+/* Mobile styles - phones and small tablets */
 @media (max-width: 768px) {
 
-	/* Navigation */
+	/* Navigation panel */
 	#chapter-nav {
-		transform: translateX(-100%);
 		position: fixed;
 		top: 0;
-		left: 0;
-		width: 280px;
-		height: 100vh;
-		z-index: 1000;
-		background-color: white;
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-		transition: transform 0.3s ease;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(255, 255, 255, 0.97);
+		z-index: 100;
+		overflow-y: auto;
+		transition: left 0.3s ease;
+		padding: var(--spacing-sm);
 	}
 
 	#chapter-nav.active {
-		transform: translateX(0);
-	}
-
-	/* Layout adjustments */
-	#book-content {
-		margin-left: 0;
-	}
-
-	.reading-progress {
 		left: 0;
 	}
 
+	/* Book content spacing */
+	#book-content {
+		margin: 0;
+		padding-bottom: 50px;
+	}
+
+	/* Section containers */
+	.section-container {
+		padding: 0.5rem 0.75rem;
+		margin-bottom: 2rem;
+		border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+	}
+
+	/* Section content */
+	.section-content {
+		margin: var(--spacing-xs) auto;
+	}
+
+	/* Inner section padding */
+	.section-inner {
+		padding: var(--spacing-md);
+		margin-bottom: 2rem;
+		box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+	}
+
+	/* Content sections */
+	.content-section {
+		padding: var(--spacing-xs);
+		margin-bottom: var(--spacing-sm);
+	}
+
+	/* Text spacing */
+	.section-text {
+		margin-bottom: var(--spacing-sm);
+	}
+
+	.section-text p {
+		font-size: 1rem;
+		line-height: 1.5;
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Header sizes */
+	.content-header h1 {
+		font-size: 1.6rem;
+	}
+
+	.content-header .subtitle {
+		font-size: 1.1rem;
+	}
+
+	.content-section h2 {
+		font-size: 1.3rem;
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Visualization containers */
+	.visualization-container {
+		height: 250px;
+		margin: var(--spacing-sm) 0;
+	}
+
+	/* Reading progress */
+	.reading-progress {
+		display: none;
+	}
+
+	/* Complete replacement of sidebar behavior for mobile */
 	.sidebar {
-		transform: translateX(-100%);
+		position: fixed;
+		top: 0;
+		left: -100%;
+		/* Start off-screen */
+		width: 85%;
+		max-width: 300px;
+		height: 100%;
+		background-color: white;
+		overflow-y: auto;
+		z-index: 1000;
+		box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+		transition: left 0.3s ease;
+		padding: var(--spacing-sm);
 	}
 
 	.sidebar.active {
-		transform: translateX(0);
+		left: 0;
 	}
 
+	/* Force normal display of all sidebar elements on mobile */
+	.sidebar.mini-collapsed,
+	.sidebar.collapsed {
+		width: 85%;
+		max-width: 300px;
+		left: -100%;
+		/* Hide when not active */
+	}
+
+	.sidebar.mini-collapsed.active,
+	.sidebar.collapsed.active {
+		left: 0;
+	}
+
+	/* Ensure all sidebar content is visible */
+	.sidebar .logo h1,
+	.sidebar.mini-collapsed .logo h1,
+	.sidebar.collapsed .logo h1,
+	.sidebar .nav-chapter span,
+	.sidebar.mini-collapsed .nav-chapter span,
+	.sidebar.collapsed .nav-chapter span,
+	.sidebar .subchapter-list,
+	.sidebar.mini-collapsed .subchapter-list,
+	.sidebar.collapsed .subchapter-list {
+		opacity: 1;
+		visibility: visible;
+		width: auto;
+		height: auto;
+		margin: initial;
+		transform: none;
+		display: block;
+	}
+
+	/* Reset icon positions */
+	.sidebar .logo i,
+	.sidebar.mini-collapsed .logo i,
+	.sidebar.collapsed .logo i,
+	.sidebar .chapter-number,
+	.sidebar.mini-collapsed .chapter-number,
+	.sidebar.collapsed .chapter-number {
+		transform: none;
+		margin: initial;
+	}
+
+	/* Main content area */
 	.main-content {
 		margin-left: 0;
+		width: 100%;
 	}
 
 	/* Hide resize handle on mobile */
 	.sidebar-resize-handle {
-		display: none;
+		display: none !important;
 	}
 
-	/* Show mobile toggle */
-	.show-nav-toggle {
-		display: flex;
-		position: fixed;
-		top: 1rem;
-		left: 1rem;
-		z-index: 999;
-		background-color: white;
-		border: none;
+	/* Add close button for sidebar */
+	.sidebar-close {
+		display: block;
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		width: 50px;
+		height: 50px;
+		background-color: #e74c3c;
+		color: white;
 		border-radius: 50%;
-		width: 40px;
-		height: 40px;
+		text-align: center;
+		line-height: 50px;
+		font-size: 20px;
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-		cursor: pointer;
-		align-items: center;
+		z-index: 10;
+	}
+
+	/* Mobile navigation toggle button - Floating Action Button style */
+	.show-nav-toggle {
+		display: flex !important;
 		justify-content: center;
+		align-items: center;
 	}
 
-	.show-nav-toggle i {
-		font-size: 1.5rem;
-	}
-
+	/* Mobile toggle button styling */
 	.mobile-toggle {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		font-size: 1.5rem;
-		cursor: pointer;
-		padding: var(--spacing-sm);
+		display: block;
+		padding: 14px;
+		border-radius: 4px;
+		background-color: #ecf0f1;
+		text-align: center;
+		margin: var(--spacing-sm) 0;
+		font-weight: 500;
+		min-height: 50px;
 	}
 
 	.mobile-toggle:hover {
-		color: var(--primary-color);
+		background-color: #e0e5e6;
 	}
 
-	/* Layout adjustments */
+	/* CTA container for mobile */
 	.cta-container {
 		flex-direction: column;
 	}
 
+	/* Feature list for mobile */
 	.feature-list {
 		flex-direction: column;
-		align-items: center;
 	}
 
+	/* Feature item for mobile */
 	.feature-item {
-		width: 100%;
-		max-width: 100%;
+		margin-bottom: var(--spacing-sm);
 	}
 
+	/* Applications grid for mobile */
 	.applications-grid {
 		grid-template-columns: 1fr;
 	}
 
+	/* Chapter sections for mobile */
 	.chapter-sections {
 		grid-template-columns: 1fr;
 	}
 
+	/* Navigation buttons for mobile */
 	.navigation-buttons {
 		flex-direction: column;
-		gap: var(--spacing-md);
+		gap: var(--spacing-xs);
 	}
 
+	/* Nav buttons for mobile */
 	.nav-button {
 		width: 100%;
+		padding: 16px;
 		justify-content: center;
+		min-height: 50px;
+	}
+
+	/* Page divider for mobile */
+	.page-divider {
+		margin: var(--spacing-sm) 0;
+	}
+
+	/* Bottom navigation for mobile */
+	.bottom-nav {
+		padding: var(--spacing-xs);
+	}
+
+	/* Mobile bottom navigation buttons */
+	.bottom-nav-button {
+		padding: 12px 16px;
+		min-height: 50px;
+	}
+
+	/* Table responsiveness */
+	table {
+		display: block;
+		width: 100%;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		margin: var(--spacing-sm) 0;
+	}
+
+	/* List adjustments */
+	ul,
+	ol {
+		padding-left: 20px;
+	}
+
+	/* Code blocks */
+	pre,
+	code {
+		font-size: 0.9rem;
+		padding: 8px;
+		white-space: pre-wrap;
+		word-break: break-all;
+	}
+
+	/* Image responsiveness */
+	img {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* Formula containers */
+	.formula-container {
+		padding: var(--spacing-xs);
+		margin: var(--spacing-sm) 0;
+		overflow-x: auto;
+	}
+
+	/* Interactive elements - improved touch targets */
+	button,
+	.cta-button,
+	.nav-chapter,
+	.nav-subchapter,
+	.feature-item,
+	.section-preview-card,
+	.mobile-toggle,
+	.viz-expand-button,
+	.viz-close-button,
+	.viz-grid-toggle {
+		min-height: 50px;
+		min-width: 50px;
+		padding: 14px;
+		margin: 4px 0;
+	}
+
+	/* Search input for mobile */
+	.search-container input {
+		height: 50px;
+		font-size: 16px;
+		/* Prevents zoom on iOS */
+		padding: 0 15px;
+	}
+
+	/* Nav items touch target enhancements */
+	.nav-chapter,
+	.nav-subchapter {
+		margin: 8px 0;
+	}
+
+	/* Visualization controls */
+	.viz-controls button {
+		margin: 6px;
+		padding: 14px;
+		min-height: 50px;
+		min-width: 50px;
+	}
+}
+
+/* Extra small screens - phones */
+@media (max-width: 480px) {
+
+	/* Section containers */
+	.section-container {
+		padding: 0.25rem 0.5rem;
+		margin-bottom: 2.5rem;
+	}
+
+	/* Inner section padding */
+	.section-inner {
+		padding: var(--spacing-sm);
+		margin-bottom: 2.5rem;
+		border-radius: 6px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	}
+
+	/* Content sections */
+	.content-section {
+		padding: var(--spacing-xs) 0;
+		/* Zero horizontal padding */
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Visualization containers */
+	.visualization-container {
+		height: 200px;
+	}
+
+	/* Header sizes for smaller screens */
+	.content-header h1 {
+		font-size: 1.4rem;
+	}
+
+	.content-header .subtitle {
+		font-size: 1rem;
+		margin-top: 0;
+	}
+
+	/* Bottom navigation adjustments */
+	.bottom-nav {
+		border-radius: 0;
+	}
+
+	.bottom-nav-section {
+		display: none;
+		/* Hide section names to save space */
+	}
+
+	/* Page divider for tiny screens */
+	.page-divider {
+		margin: var(--spacing-xs) 0;
+	}
+
+	/* Mobile navigation toggle positioning */
+	.show-nav-toggle {
+		top: 10px;
+		left: 10px;
+		width: 44px;
+		/* Slightly larger on small screens for easier tapping */
+		height: 44px;
 	}
 }
 
@@ -1237,4 +1924,275 @@
 
 .bottom-nav-button:hover {
 	background-color: rgba(var(--primary-color-rgb), 0.08);
+}
+
+/* Add color indicators to the sidebar navigation */
+.nav-chapter::before {
+	content: "";
+	display: block;
+	width: 4px;
+	height: 16px;
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	border-radius: 0 2px 2px 0;
+	opacity: 0.7;
+}
+
+/* Cover link indicator */
+.nav-chapter[href="#cover"]::before {
+	background-color: var(--section-cover-bg);
+	border: 1px solid var(--border-color);
+}
+
+/* About link indicator */
+.nav-chapter[href="#about"]::before {
+	background-color: var(--section-about-bg);
+}
+
+/* Chapters link indicator */
+.nav-chapter[href="#chapters"]::before {
+	background-color: var(--section-chapters-bg);
+}
+
+/* Chapter 1 link indicator */
+.nav-chapter[href="#chapter1-intro"]::before {
+	background-color: var(--section-chapter1-bg);
+}
+
+/* Chapter 2 link indicator */
+.nav-chapter[href="#chapter2-intro"]::before {
+	background-color: var(--section-chapter2-bg);
+}
+
+/* Chapter 3 link indicator */
+.nav-chapter[href="#chapter3-definition"]::before {
+	background-color: var(--section-chapter3-bg);
+}
+
+/* Sidebar actions container */
+.sidebar-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+}
+
+/* Color legend toggle button */
+.color-legend-toggle {
+	display: none;
+}
+
+/* Update color legend styles to be a sidebar panel instead of tooltip */
+.color-legend {
+	background-color: rgba(255, 255, 255, 0.95);
+	border-radius: 8px;
+	padding: var(--spacing-sm) var(--spacing-md);
+	margin: 0 var(--spacing-sm) var(--spacing-md);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	font-size: 0.9rem;
+	position: relative;
+	width: auto;
+	display: block;
+	z-index: 10;
+	opacity: 1;
+	pointer-events: auto;
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Remove existing tooltip styles */
+.sidebar.mini-collapsed .color-legend,
+.sidebar.collapsed .color-legend {
+	display: none;
+}
+
+/* Update heading styles for the panel */
+.color-legend h3 {
+	font-size: 0.9rem;
+	margin: 0 0 var(--spacing-xs);
+	color: var(--text-primary);
+}
+
+.color-legend p {
+	margin: 0 0 var(--spacing-xs);
+	font-size: 0.8rem;
+}
+
+/* Mini-collapsed state - hide the color legend */
+.sidebar.mini-collapsed .color-legend {
+	display: none;
+}
+
+/* Legend items styling */
+.legend-items {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.color-sample {
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar panel class for consistent styling */
+.sidebar-panel {
+	background-color: rgba(255, 255, 255, 0.95);
+	border-radius: 8px;
+	margin: 0 var(--spacing-sm) var(--spacing-md);
+	padding: var(--spacing-sm);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Sidebar collapsed state - ultra minimal view */
+.sidebar.mini-collapsed {
+	width: 60px;
+	overflow: hidden;
+}
+
+/* Hide most elements in mini-collapsed state */
+.sidebar.mini-collapsed .sidebar-header,
+.sidebar.mini-collapsed .sidebar-nav,
+.sidebar.mini-collapsed .search-container,
+.sidebar.mini-collapsed .sidebar-actions {
+	overflow: hidden;
+}
+
+/* Adjust logo in mini-collapsed state */
+.sidebar.mini-collapsed .logo h1 {
+	display: none;
+}
+
+.sidebar.mini-collapsed .logo {
+	justify-content: center;
+	padding: var(--spacing-sm);
+	width: 100%;
+	display: flex;
+	align-items: center;
+}
+
+.sidebar.mini-collapsed .logo i {
+	margin: 0;
+	/* Remove any margin that might cause misalignment */
+	font-size: 22px;
+	/* Standardize icon size */
+}
+
+/* Show only chapter circles in mini-collapsed state */
+.sidebar.mini-collapsed .nav-chapter span,
+.sidebar.mini-collapsed .nav-chapter .page-num,
+.sidebar.mini-collapsed .nav-subchapter {
+	display: none;
+}
+
+.sidebar.mini-collapsed .nav-chapter {
+	justify-content: center;
+	padding: var(--spacing-xs) 0;
+	height: auto;
+}
+
+.sidebar.mini-collapsed .subchapter-list {
+	display: none;
+}
+
+/* Make chapter numbers more prominent */
+.sidebar.mini-collapsed .chapter-number {
+	margin: 0;
+	width: 36px;
+	/* Fixed width to prevent cutoff */
+	height: 36px;
+	/* Fixed height to prevent cutoff */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Adjust sidebar actions in mini-collapsed state */
+.sidebar.mini-collapsed .sidebar-actions {
+	justify-content: center;
+	padding: var(--spacing-sm) 0;
+}
+
+/* Adjust resize handle for mini-collapsed state */
+.sidebar.mini-collapsed .sidebar-resize-handle {
+	right: 0;
+}
+
+/* Adjust main content margin for mini-collapsed state */
+.sidebar.mini-collapsed + .main-content {
+	margin-left: 60px;
+}
+
+/* Improve interactivity for mini-collapsed elements */
+.sidebar.mini-collapsed .chapter-number,
+.sidebar.mini-collapsed .logo i,
+.sidebar.mini-collapsed .search-container i {
+	cursor: pointer;
+	transform: scale(1);
+	transition: transform 0.2s ease;
+}
+
+.sidebar.mini-collapsed .chapter-number:hover,
+.sidebar.mini-collapsed .logo i:hover,
+.sidebar.mini-collapsed .search-container i:hover {
+	transform: scale(1.15);
+}
+
+/* Improve sidebar transitions for all elements */
+.sidebar .logo,
+.sidebar .sidebar-header,
+.sidebar .sidebar-nav,
+.sidebar .sidebar-actions,
+.sidebar .search-container,
+.sidebar .chapter-number,
+.sidebar .nav-chapter span,
+.sidebar .nav-chapter .page-num,
+.sidebar .nav-subchapter {
+	transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Add transition classes for specific states */
+.sidebar.mini-collapsed,
+.sidebar.collapsed {
+	transition-duration: 0.4s;
+	transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Center search icon in mini-collapsed state */
+.sidebar.mini-collapsed .search-container {
+	padding: var(--spacing-sm) 0;
+	justify-content: center;
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.sidebar.mini-collapsed .search-container input {
+	display: none;
+}
+
+.sidebar.mini-collapsed .search-container i {
+	position: static;
+	margin: 0 auto;
+	padding: var(--spacing-sm);
+	cursor: pointer;
+	color: var(--text-color);
+	opacity: 1;
+	font-size: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Sidebar close button - hidden by default (only for mobile) */
+.sidebar-close {
+	display: none;
 }

@@ -106,6 +106,16 @@ function updateActiveSection(sectionId) {
 
     // Handle Three.js scenes
     manageScenesVisibility();
+
+    // Dispatch section-loaded event to notify other components (like sidebar)
+    const sectionLoadedEvent = new CustomEvent('section-loaded', {
+        detail: {
+            sectionId: sectionId,
+            timestamp: Date.now()
+        }
+    });
+    console.log('Dispatching section-loaded event for:', sectionId);
+    document.dispatchEvent(sectionLoadedEvent);
 }
 
 /**
@@ -157,32 +167,68 @@ function setupLazyLoading() {
 }
 
 /**
- * Set up Intersection Observer to track the active section during scrolling
+ * Set up the scroll observer to detect active section
  */
 function setupScrollObserver() {
-    // Create an Intersection Observer for scrolling
+    console.log('Setting up scroll observer');
+
+    // Get all section containers
+    const sectionContainers = document.querySelectorAll('.section-container');
+
+    // Update to use IntersectionObserver for better performance
     state.scrollObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            // If section is in view
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
                 const sectionId = entry.target.id;
+                console.log('Section scrolled into view:', sectionId);
 
-                // Update the URL hash without triggering a scroll
-                if (history.pushState && window.location.hash !== `#${sectionId}`) {
-                    history.pushState(null, null, `#${sectionId}`);
+                if (state.activeSection !== sectionId) {
+                    updateActiveSection(sectionId);
                 }
-
-                // Update active section
-                updateActiveSection(sectionId);
             }
         });
     }, {
-        threshold: [0.3, 0.7] // Trigger at these visibility thresholds
+        root: document.getElementById('book-content'),
+        rootMargin: '0px',
+        threshold: 0.5 // Element is considered visible when 50% visible
     });
 
-    // Start observing all section containers
-    document.querySelectorAll('.section-container').forEach(section => {
+    // Observe all section containers
+    sectionContainers.forEach(section => {
         state.scrollObserver.observe(section);
+    });
+
+    // Also handle manual scroll events as a fallback
+    document.getElementById('book-content').addEventListener('scroll', () => {
+        // Throttle the function to improve performance
+        if (!state.scrollThrottle) {
+            state.scrollThrottle = setTimeout(() => {
+                const visibleSections = Array.from(sectionContainers).filter(section => {
+                    const rect = section.getBoundingClientRect();
+                    const contentTop = document.getElementById('book-content').getBoundingClientRect().top;
+                    return rect.top < window.innerHeight / 2 && rect.bottom > contentTop;
+                });
+
+                if (visibleSections.length > 0) {
+                    // Sort by which section is most visible
+                    visibleSections.sort((a, b) => {
+                        const aRect = a.getBoundingClientRect();
+                        const bRect = b.getBoundingClientRect();
+                        const aVisible = Math.min(aRect.bottom, window.innerHeight) - Math.max(aRect.top, 0);
+                        const bVisible = Math.min(bRect.bottom, window.innerHeight) - Math.max(bRect.top, 0);
+                        return bVisible - aVisible;
+                    });
+
+                    const mostVisibleSection = visibleSections[0].id;
+                    if (state.activeSection !== mostVisibleSection) {
+                        console.log('Detected new active section via scroll:', mostVisibleSection);
+                        updateActiveSection(mostVisibleSection);
+                    }
+                }
+
+                state.scrollThrottle = null;
+            }, 200);
+        }
     });
 }
 
@@ -243,6 +289,17 @@ async function loadSectionContent(section) {
         contentElement.classList.remove('loading');
 
         console.log(`Loaded content for section: ${sectionId}`);
+
+        // Dispatch section-loaded event after content is fully loaded
+        const sectionLoadedEvent = new CustomEvent('section-loaded', {
+            detail: {
+                sectionId: sectionId,
+                timestamp: Date.now(),
+                loaded: true
+            }
+        });
+        console.log('Dispatching section-loaded event after content loaded for:', sectionId);
+        document.dispatchEvent(sectionLoadedEvent);
     } catch (error) {
         console.error(`Error loading section ${sectionId}:`, error);
 
@@ -276,89 +333,60 @@ function initializeThreeJs(section) {
             return; // No scene ID or already initialized
         }
 
-        // Here you would call your Three.js initialization code
-        // This is a placeholder for your specific Three.js setup
+        // Use the visualization engine to initialize the scene
         console.log(`Initializing Three.js scene: ${sceneId}`);
 
         try {
-            // Placeholder for Three.js scene initialization
-            // In reality, you would create your scene, camera, renderer, etc.
-            const scene = {
+            // Create a global visualization engine instance if not already created
+            if (!window.visualizationEngine) {
+                window.visualizationEngine = new VisualizationEngine();
+                window.visualizationEngine.init();
+            }
+
+            // Get the engine to handle this container
+            const vizEngine = window.visualizationEngine;
+
+            // Use the engine's initializeContainer method which adds the expand button
+            // and creates the appropriate visualization
+            vizEngine.initializeContainer(container, sceneId);
+
+            // Add this scene to our tracked scenes
+            state.threeJsScenes.set(sceneId, {
                 id: sceneId,
                 container,
-                isVisible: false,
-                animationFrameId: null,
+                isVisible: true,
+                // Store a reference to get scene data from the engine if needed
+                getSceneData: () => vizEngine.scenes.get(sceneId)
+            });
 
-                // Mock renderer and scene objects
-                renderer: {
-                    domElement: document.createElement('canvas'),
-                    render: () => {},
-                    setSize: () => {},
-                    dispose: () => {}
-                },
-                scene: { children: [] },
-                camera: {},
+            // Add resize event handler
+            window.addEventListener('resize', () => {
+                vizEngine.handleResize();
+            });
 
-                // Animation loop function
-                animate: function() {
-                    if (!this.isVisible) return;
-
-                    // Your animation code would go here
-
-                    // Request next frame if still visible
-                    if (this.isVisible) {
-                        this.animationFrameId = requestAnimationFrame(() => this.animate());
-                    }
-                },
-
-                // Start rendering
-                start: function() {
-                    if (!this.isVisible) {
-                        this.isVisible = true;
-                        this.animate();
-                    }
-                },
-
-                // Stop rendering
-                stop: function() {
-                    if (this.isVisible) {
-                        this.isVisible = false;
-                        if (this.animationFrameId) {
-                            cancelAnimationFrame(this.animationFrameId);
-                            this.animationFrameId = null;
-                        }
-                    }
-                },
-
-                // Clean up resources
-                dispose: function() {
-                    this.stop();
-                    this.renderer.dispose();
-                    // Clean up geometries, materials, etc.
+            // Dispatch event that visualization is ready
+            const event = new CustomEvent('visualization-ready', {
+                detail: {
+                    id: sceneId,
+                    container
                 }
-            };
+            });
+            document.dispatchEvent(event);
 
-            // Append the canvas to the container
-            container.appendChild(scene.renderer.domElement);
-
-            // Store the scene
-            state.threeJsScenes.set(sceneId, scene);
-
-            // Start rendering if section is active or visible
-            if (isElementInViewport(container)) {
-                scene.start();
-            }
         } catch (error) {
             console.error(`Error initializing Three.js scene ${sceneId}:`, error);
+
+            // Add an error message to the container
             container.innerHTML = `
-                <div class="error-message">
-                    <i class="ph ph-warning"></i>
-                    <h3>Failed to initialize 3D scene</h3>
-                    <p>${error.message}</p>
+                <div class="viz-message">
+                    <p>Unable to load 3D visualization. Please ensure WebGL is enabled in your browser.</p>
                 </div>
             `;
         }
     });
+
+    // Call manageScenesVisibility to ensure proper scene rendering
+    manageScenesVisibility();
 }
 
 /**
@@ -375,18 +403,27 @@ function isElementInViewport(el) {
 }
 
 /**
- * Manage visibility of Three.js scenes based on active section and viewport
+ * Manage which Three.js scenes are visible and being rendered
  */
 function manageScenesVisibility() {
+    // Skip if visualization engine isn't initialized
+    if (!window.visualizationEngine) return;
+
     state.threeJsScenes.forEach(scene => {
         const container = scene.container;
+        const sceneData = scene.getSceneData();
+
+        // If no scene data yet, skip
+        if (!sceneData) return;
 
         // Check if container is visible in the viewport
-        if (isElementInViewport(container)) {
-            scene.start();
-        } else {
-            scene.stop();
-        }
+        const isVisible = isElementInViewport(container);
+
+        // Update visibility status
+        scene.isVisible = isVisible;
+
+        // The actual rendering is handled by the visualization engine's animate loops
+        // We don't need to manually start/stop animations as they're all managed by the engine
     });
 }
 
@@ -394,32 +431,9 @@ function manageScenesVisibility() {
  * Handle window resize to update Three.js renderers
  */
 window.addEventListener('resize', () => {
-    state.threeJsScenes.forEach(scene => {
-        // Update renderer size
-        if (scene.renderer && scene.container) {
-            const width = scene.container.clientWidth;
-            const height = scene.container.clientHeight;
-            scene.renderer.setSize(width, height);
-
-            // Update camera aspect ratio if needed
-            if (scene.camera && scene.camera.aspect) {
-                scene.camera.aspect = width / height;
-                scene.camera.updateProjectionMatrix();
-            }
-        }
-    });
-});
-
-/**
- * Handle scroll events to update Three.js visibility
- */
-document.getElementById('book-content').addEventListener('scroll', () => {
-    // Throttle the function to improve performance
-    if (!state.scrollThrottle) {
-        state.scrollThrottle = setTimeout(() => {
-            manageScenesVisibility();
-            state.scrollThrottle = null;
-        }, 200);
+    // Let the visualization engine handle resizing of all scenes
+    if (window.visualizationEngine) {
+        window.visualizationEngine.handleResize();
     }
 });
 
@@ -427,7 +441,16 @@ document.getElementById('book-content').addEventListener('scroll', () => {
  * Clean up resources when page is unloaded
  */
 window.addEventListener('beforeunload', () => {
-    state.threeJsScenes.forEach(scene => {
-        scene.dispose();
-    });
+    // Let the visualization engine clean up all scenes
+    if (window.visualizationEngine) {
+        window.visualizationEngine.scenes.forEach((sceneData, id) => {
+            if (sceneData.renderer) {
+                sceneData.renderer.dispose();
+            }
+            // Remove any event listeners
+            if (sceneData.controls) {
+                sceneData.controls.dispose();
+            }
+        });
+    }
 });
