@@ -12,27 +12,62 @@
     <div class="content-section">
         <h2>Our Mission</h2>
         <div class="section-text">
-            <p>VistaKine is dedicated to making abstract mathematical and physical concepts tangible through interactive 3D visualizations.</p>
-            <p>We believe that by engaging multiple senses and allowing direct manipulation of concepts, students can build stronger mental models and deeper understanding.</p>
-            <p>Our mission is to make physics education more engaging, intuitive, and effective through interactive experiences that foster genuine understanding rather than rote memorization.</p>
-            <p>We believe that truly understanding physics concepts requires more than just solving equations—it demands developing a feel for how systems behave and respond to changes. By providing interactive simulations with thoughtful UX design, we aim to help students build that intuition in a way that's both educational and enjoyable.</p>
+            <p>VistaKine makes abstract physics concepts tangible through interactive 3D visualizations.</p>
+
+            <p class="mobile-condensed">We engage multiple senses to help students build stronger mental models and deeper understanding.</p>
+
+            <div class="desktop-only" id="mission-extra">
+                <p>Our mission is to make physics education more engaging, intuitive, and effective through interactive experiences that foster genuine understanding rather than rote memorization.</p>
+
+                <p>We believe that truly understanding physics concepts requires more than just solving equations—it demands developing a feel for how systems behave and respond to changes. By providing interactive simulations with thoughtful UX design, we aim to help students build that intuition in a way that's both educational and enjoyable.</p>
+            </div>
+
+            <button class="expand-text-btn" aria-expanded="false" data-target="mission-extra">Read more <i class="expand-arrow">→</i></button>
         </div>
     </div>
 
     <div class="content-section">
         <h2>The Story Behind VistaKine</h2>
         <div class="section-text">
-            <p>When I was a mechanical engineering student, I spent countless hours poring over dense textbooks, working through problem sets, and trying to visualize complex physical systems in my mind. While I found satisfaction in solving difficult problems, I often felt that traditional learning methods weren't optimized for building true understanding.</p>
-            <p>The interactive problems in some assignments were where I learned the most. By experimenting with the physics—changing variables and seeing immediate results—I developed intuition that no static textbook could provide. However, these experiences often felt limited, with clunky interfaces and restricted interaction.</p>
-            <p>VistaKine was born from this realization: that by combining the rigorous content of traditional textbooks with immersive, well-designed 3D visualizations, we could create learning experiences that are not just more engaging, but fundamentally more effective at building deep understanding.</p>
+            <p>VistaKine was born from the realization that traditional textbooks often fall short in building intuition for complex physics concepts.</p>
+
+            <div class="desktop-only" id="story-extra">
+                <p>When I was a mechanical engineering student, I spent countless hours poring over dense textbooks, working through problem sets, and trying to visualize complex physical systems in my mind. While I found satisfaction in solving difficult problems, I often felt that traditional learning methods weren't optimized for building true understanding.</p>
+
+                <p>The interactive problems in some assignments were where I learned the most. By experimenting with the physics—changing variables and seeing immediate results—I developed intuition that no static textbook could provide. However, these experiences often felt limited, with clunky interfaces and restricted interaction.</p>
+
+                <p>By combining rigorous content with immersive, well-designed 3D visualizations, we create learning experiences that are fundamentally more effective at building deep understanding.</p>
+            </div>
+
+            <button class="expand-text-btn" aria-expanded="false" data-target="story-extra">Read more <i class="expand-arrow">→</i></button>
         </div>
     </div>
 
     <div class="content-section">
         <h2>How to Use This Book</h2>
         <div class="section-text">
-            <p>Navigate through chapters using the sidebar. Each section contains explanations and interactive 3D visualizations that you can manipulate to explore concepts.</p>
-            <p>For the best experience, we recommend completing chapters in order, as concepts build upon each other.</p>
+            <p>Navigate through chapters using the sidebar menu. Each section contains explanations and interactive 3D visualizations.</p>
+            <p>For the best experience, complete chapters in order as concepts build upon each other.</p>
+
+            <h3>Using the Sidebar Navigation</h3>
+            <p>The sidebar on the left provides easy access to all chapters and sections:</p>
+            <ul>
+                <li><strong>Chapters Menu:</strong> Click on chapter titles to jump directly to that chapter.</li>
+                <li><strong>Subchapter Links:</strong> Each chapter expands to show individual sections.</li>
+                <li><strong>Sidebar Toggle:</strong> On desktop, use the toggle button in the top-right corner of the sidebar to collapse it for more viewing space.</li>
+                <li><strong>Mobile Access:</strong> On mobile devices, tap the hamburger menu icon in the bottom right to open the navigation and the X icon to close it.</li>
+            </ul>
+
+            <h3>Page Navigation</h3>
+            <p>The book includes several navigation aids to help you move between sections:</p>
+            <ul>
+                <li><strong>Page Numbers:</strong> Each section includes page numbers at the top and bottom.</li>
+                <li><strong>Progress Bar:</strong> The thin bar at the top shows your reading progress.</li>
+                <li><strong>Next/Previous:</strong> Use the navigation buttons at the bottom to move sequentially.</li>
+            </ul>
+
+            <h3>Interactive Visualizations</h3>
+            <p>To interact with 3D models: <strong>rotate</strong> by dragging, <strong>zoom</strong> with the scroll wheel, and <strong>pan</strong> by holding Shift while dragging. Use the expand button for fullscreen mode.</p>
         </div>
     </div>
 
@@ -75,3 +110,94 @@
         <div class="page-number">i</div>
     </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none;
+        margin-top: 1rem;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    .desktop-only.expanded {
+        display: block;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .expand-text-btn {
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0.5rem 0;
+        margin: 0.8rem 0 0.5rem;
+        font-size: 1rem;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .expand-text-btn:hover, .expand-text-btn:focus {
+        color: var(--primary-color-dark);
+        transform: translateX(3px);
+        outline: none;
+    }
+
+    .expand-text-btn:active {
+        transform: translateX(5px);
+    }
+
+    .expand-arrow {
+        display: inline-block;
+        margin-left: 8px;
+        font-style: normal;
+        transition: transform 0.2s ease;
+        font-weight: bold;
+    }
+
+    .expand-text-btn[aria-expanded="true"] .expand-arrow {
+        transform: rotate(90deg);
+    }
+}
+
+@media (min-width: 769px) {
+    .expand-text-btn {
+        display: none;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const expandButtons = document.querySelectorAll('.expand-text-btn');
+
+    expandButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const contentSection = document.getElementById(targetId);
+
+            if (contentSection) {
+                contentSection.classList.toggle('expanded');
+
+                const isExpanded = contentSection.classList.contains('expanded');
+                this.setAttribute('aria-expanded', isExpanded);
+
+                if (isExpanded) {
+                    this.innerHTML = 'Show less <i class="expand-arrow">→</i>';
+                } else {
+                    this.innerHTML = 'Read more <i class="expand-arrow">→</i>';
+                }
+            }
+        });
+    });
+});
+</script>

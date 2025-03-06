@@ -3,17 +3,24 @@
  * Allows users to drag the sidebar resize handle to adjust sidebar width
  */
 (function() {
+    // Define utility functions at the top level so they're available throughout the script
+    // Check if we're on a mobile device
+    function isMobileDevice() {
+        return (window.innerWidth <= 480) ||
+               /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // Check if we're on a tablet device
+    function isTabletDevice() {
+        return (window.innerWidth > 480 && window.innerWidth <= 768) ||
+               /iPad/i.test(navigator.userAgent);
+    }
+
     // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Initializing sidebar resize functionality');
 
-        // Check if we're on a mobile device
-        function isMobileDevice() {
-            return (window.innerWidth <= 768) ||
-                   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // Skip normal sidebar resize behavior if on mobile
+        // Skip normal sidebar resize behavior if on mobile (but not tablet)
         if (isMobileDevice()) {
             console.log('Mobile device detected - using mobile sidebar behavior');
             setupMobileSidebar();
@@ -30,11 +37,11 @@
         // Get necessary elements with flexible selectors
         const sidebar = document.querySelector('.sidebar');
 
-        // Try different possible selectors for main content
-        const mainContent = document.querySelector('.main-content') ||
+        // Try different possible selectors for main content - prioritize book-content ID
+        const mainContent = document.getElementById('book-content') ||
+                          document.querySelector('.main-content') ||
                           document.querySelector('main') ||
-                          document.querySelector('.content') ||
-                          document.querySelector('#book-content');
+                          document.querySelector('.content');
 
         // Try different possible selectors for resize handle
         const resizeHandle = document.getElementById('sidebarResizeHandle') ||
@@ -285,31 +292,117 @@
         // Invoke setup for mini-collapsed interactions
         setupMiniCollapsedInteractions();
 
-        // Handle window resize for responsiveness
+        // Apply resize behavior
         window.addEventListener('resize', function() {
-            // If switched to mobile view, apply mobile behavior
-            if (isMobileDevice()) {
+            // Get current window width
+            const windowWidth = window.innerWidth;
+
+            // Check current device type
+            const isMobile = isMobileDevice();
+            const isTablet = isTabletDevice();
+            const isDesktop = !isMobile && !isTablet;
+
+            console.log('Window resized. Width:', windowWidth, 'Device type:', isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop');
+
+            // Handle transitions between device types
+            if (isMobile) {
+                // If switched to mobile view, apply mobile behavior
+                console.log('Applying mobile behavior');
                 setupMobileSidebar();
+            } else if (isTablet) {
+                // For tablets, we need specific handling
+                console.log('Applying tablet behavior');
+                setupTabletSidebar();
+            } else if (isDesktop) {
+                // For desktop, restore normal resize behavior
+                console.log('Applying desktop behavior');
+                restoreDesktopBehavior();
             }
         });
     });
+
+    // Tablet-specific setup
+    function setupTabletSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.getElementById('book-content');
+
+        if (sidebar) {
+            // Clear any inline width to let CSS media queries take effect
+            sidebar.style.width = '';
+            sidebar.classList.remove('mini-collapsed');
+            sidebar.classList.remove('collapsed');
+
+            // Ensure glassmorphic styling is applied
+            sidebar.style.backgroundColor = 'rgba(255, 255, 255, 0.75)';
+            sidebar.style.backdropFilter = 'blur(12px)';
+            sidebar.style.webkitBackdropFilter = 'blur(12px)';
+
+            // Make sure sidebar overlay is properly positioned
+            sidebar.style.left = sidebar.classList.contains('active') ? '0' : '-350px';
+        }
+
+        // Setup resize handle to be visible but not functional for tablets
+        const resizeHandle = document.querySelector('.sidebar-resize-handle');
+        if (resizeHandle) {
+            resizeHandle.style.display = 'none';
+        }
+    }
+
+    // Restore desktop behavior
+    function restoreDesktopBehavior() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.getElementById('book-content');
+        const resizeHandle = document.querySelector('.sidebar-resize-handle');
+
+        if (sidebar) {
+            // Get stored width or use default
+            const storedWidth = localStorage.getItem('sidebarWidth');
+            if (storedWidth) {
+                sidebar.style.width = `${storedWidth}px`;
+            } else {
+                sidebar.style.width = '260px';
+            }
+        }
+
+        if (resizeHandle) {
+            resizeHandle.style.display = 'block';
+        }
+    }
 
     // Mobile sidebar setup function
     function setupMobileSidebar() {
         const sidebar = document.querySelector('.sidebar');
         const showNavToggle = document.querySelector('.show-nav-toggle');
         const sidebarClose = document.querySelector('.sidebar-close');
-        const mainContent = document.querySelector('.main-content') || document.querySelector('#book-content');
+        const mainContent = document.getElementById('book-content') || document.querySelector('.main-content');
+
+        console.log('Setting up mobile/tablet sidebar...');
+
+        // Check if we're on a tablet
+        const isTablet = isTabletDevice();
+        if (isTablet) {
+            console.log('Tablet device detected - applying tablet-specific behavior');
+        }
 
         // Reset sidebar styling for mobile
         if (sidebar) {
             sidebar.style.width = '';
             sidebar.classList.remove('mini-collapsed');
             sidebar.classList.remove('collapsed');
+
+            if (isTablet) {
+                // For tablets, we want to ensure the glassmorphic styles are applied
+                sidebar.style.backgroundColor = 'rgba(255, 255, 255, 0.75)';
+                sidebar.style.backdropFilter = 'blur(12px)';
+                sidebar.style.webkitBackdropFilter = 'blur(12px)';
+            }
         }
 
         if (mainContent) {
-            mainContent.style.marginLeft = '0';
+            if (!isTablet) {
+                // Only apply this on phones, not tablets
+                mainContent.style.marginLeft = '0';
+            }
         }
 
         // Improved toggle for mobile - handle both click and touch events

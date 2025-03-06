@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VistaKine Physics</title>
+
+    <!-- GitHub Pages compatibility script -->
+    <script>
+    // Add meta info for GitHub Pages compatibility
+    window.vistaKineConfig = {
+        // Detect if we're on GitHub Pages
+        isGitHubPages: window.location.hostname.includes('github.io'),
+        // Store the repository name for path resolution
+        repoName: window.location.pathname.split('/').filter(p => p.length > 0)[0] || '',
+        // Debug mode for development
+        debug: true
+    };
+
+    // Log configuration for debugging
+    if (window.vistaKineConfig.debug) {
+        console.log('VistaKine Config:', window.vistaKineConfig);
+    }
+    </script>
+
     <!-- CSS Files -->
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/book.css">
@@ -20,7 +39,7 @@
 
     <!-- Navigation toggle button -->
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
-        <i class="ph ph-list"><span></span></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path fill="currentColor" d="M228 128a12 12 0 0 1-12 12H40a12 12 0 0 1 0-24h176a12 12 0 0 1 12 12M40 76h176a12 12 0 0 0 0-24H40a12 12 0 0 0 0 24m176 104H40a12 12 0 0 0 0 24h176a12 12 0 0 0 0-24"/></svg>
     </button>
 
     <!-- Main sidebar -->
@@ -31,15 +50,12 @@
                 <h1>VistaKine</h1>
             </div>
             <div class="sidebar-actions">
-                <button class="color-legend-toggle" aria-label="Show color legend" title="Color legend">
-                    <i class="ph ph-palette"></i>
+                <button class="sidebar-resize-toggle" aria-label="Toggle sidebar width" title="Toggle sidebar width">
+                    <span class="sidebar-resize-icon"></span>
                 </button>
                 <!-- Add close button for mobile -->
                 <button class="sidebar-close" aria-label="Close sidebar">
-                    <i class="ph ph-x"></i>
-                </button>
-                <button class="mobile-toggle" aria-label="Toggle navigation">
-                    <i class="ph ph-list"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path fill="currentColor" d="M165.66 101.66L139.31 128l26.35 26.34a8 8 0 0 1-11.32 11.32L128 139.31l-26.34 26.35a8 8 0 0 1-11.32-11.32L116.69 128l-26.35-26.34a8 8 0 0 1 11.32-11.32L128 116.69l26.34-26.35a8 8 0 0 1 11.32 11.32M232 128A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104m-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88"/></svg>
                 </button>
             </div>
         </div>
@@ -65,33 +81,7 @@
                 <span>Chapters</span>
             </a>
 
-            <!-- Color legend moved next to chapters tab -->
-            <div class="color-legend sidebar-panel">
-                <h3>Section Color Guide</h3>
-                <p>Sections use a grayscale color scheme to help you identify where you are in the book.</p>
-                <div class="legend-items">
-                    <div class="legend-item">
-                        <div class="color-sample" style="background-color: var(--section-cover-bg);"></div>
-                        <span>Cover</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="color-sample" style="background-color: var(--section-about-bg);"></div>
-                        <span>About</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="color-sample" style="background-color: var(--section-chapter1-bg);"></div>
-                        <span>Chapter 1</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="color-sample" style="background-color: var(--section-chapter2-bg);"></div>
-                        <span>Chapter 2</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="color-sample" style="background-color: var(--section-chapter3-bg);"></div>
-                        <span>Chapter 3</span>
-                    </div>
-                </div>
-            </div>
+            <!-- Color legend removed since it's now on the chapter page -->
 
             <a href="#chapter1-intro" class="nav-chapter">
                 <div class="chapter-number">1</div>
@@ -244,12 +234,16 @@
         </button>
     </div>
 
-    <script src="js/book-loader.js"></script>
     <script src="js/sidebar-resize.js"></script>
+    <script src="js/book-loader.js"></script>
+    <script src="js/visualization-engine.js"></script>
 
     <!-- Page navigation script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Immediately initialize the mobile navigation
+            initializeMobileNavigation();
+
             // Get all section links
             const sectionLinks = document.querySelectorAll('.nav-chapter, .nav-subchapter');
 
@@ -437,12 +431,15 @@
                 navToggle.onclick = null;
                 navToggle.ontouchend = null;
 
-                // Reapply onclick directly
+                // Reapply onclick directly with more robust handling
                 navToggle.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log("FAB clicked - direct handler");
                     sidebar.classList.add('active');
+                    navToggle.style.display = 'none';
                     logDebug("Sidebar opened via force handler");
+                    return false; // Prevent any default behavior
                 };
 
                 // Make button highly visible in debug mode
@@ -452,101 +449,177 @@
             }
 
             // Initialize mobile navigation with enhanced touch support
-            const sidebar = document.querySelector('.sidebar');
-            const showNavToggle = document.getElementById('show-nav-toggle');
-            const sidebarClose = document.querySelector('.sidebar-close');
+            function initializeMobileNavigation() {
+                console.log("Initializing mobile navigation...");
 
-            // Log initial state
-            if (showNavToggle) {
-                logDebug("Nav toggle found");
-            } else {
-                logDebug("ERROR: Nav toggle not found!");
-            }
+                const sidebar = document.querySelector('.sidebar');
+                const showNavToggle = document.getElementById('show-nav-toggle');
+                const sidebarClose = document.querySelector('.sidebar-close');
 
-            // More robust event handling for showing sidebar
-            function openSidebar(e) {
-                if (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Log state for debugging
+                if (showNavToggle) {
+                    console.log("✅ Navigation toggle button found");
+                    // Make it very visible for testing
+                    showNavToggle.style.opacity = "1";
+                    showNavToggle.style.display = "flex";
+                    showNavToggle.removeAttribute('aria-hidden');
+                } else {
+                    console.error("❌ Navigation toggle button not found!");
                 }
-                sidebar.classList.add('active');
-                logDebug("Sidebar opened");
-            }
 
-            // More robust event handling for hiding sidebar
-            function closeSidebar(e) {
-                if (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (sidebar) {
+                    console.log("✅ Sidebar element found");
+                    // Check if sidebar is already active and update FAB visibility accordingly
+                    if (sidebar.classList.contains('active')) {
+                        console.log("Sidebar is already active, hiding FAB");
+                        if (showNavToggle) {
+                            showNavToggle.style.display = 'none';
+                            showNavToggle.style.opacity = '0';
+                            showNavToggle.setAttribute('aria-hidden', 'true');
+                        }
+                    }
+                } else {
+                    console.error("❌ Sidebar element not found!");
                 }
-                sidebar.classList.remove('active');
-                logDebug("Sidebar closed");
-            }
 
-            // Apply multiple event listeners for better mobile compatibility
-            if (showNavToggle) {
-                // Remove any existing handlers first
-                showNavToggle.removeEventListener('click', openSidebar);
+                if (sidebarClose) {
+                    console.log("✅ Sidebar close button found");
+                } else {
+                    console.error("❌ Sidebar close button not found!");
+                }
 
-                // Add click event
-                showNavToggle.addEventListener('click', openSidebar);
+                // Add a direct click handler to the FAB
+                if (showNavToggle) {
+                    console.log("Adding click handlers to navigation toggle");
 
-                // Add touch events
-                showNavToggle.addEventListener('touchstart', function(e) {
-                    e.preventDefault(); // Prevent default touch behavior
-                    logDebug("Touch detected on nav toggle");
+                    // First remove any existing handlers
+                    showNavToggle.removeAttribute('onclick');
+                    const newClickHandler = function(e) {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        console.log("🔳 Navigation toggle clicked!");
+                        if (sidebar) {
+                            sidebar.classList.add('active');
+                            // Force hide FAB with both display and opacity
+                            showNavToggle.style.display = 'none';
+                            showNavToggle.style.opacity = '0';
+                            showNavToggle.setAttribute('aria-hidden', 'true');
+                            console.log("🔳 Sidebar opened, FAB hidden");
+                        }
+                    };
+
+                    // Apply the handlers multiple ways for maximum compatibility
+                    showNavToggle.onclick = newClickHandler;
+                    showNavToggle.addEventListener('click', newClickHandler);
+                    showNavToggle.addEventListener('touchend', newClickHandler);
+                }
+
+                // Add a direct click handler to the close button
+                if (sidebarClose) {
+                    console.log("Adding click handlers to sidebar close button");
+
+                    const closeHandler = function(e) {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        console.log("🔳 Close button clicked!");
+                        if (sidebar) {
+                            sidebar.classList.remove('active');
+                            if (showNavToggle) {
+                                // Force show FAB with both display and opacity using a slight delay
+                                // to ensure transitions complete first
+                                setTimeout(function() {
+                                    showNavToggle.style.display = 'flex';
+                                    showNavToggle.style.opacity = '1';
+                                    showNavToggle.removeAttribute('aria-hidden');
+                                    console.log("🔳 FAB visibility restored with delay");
+                                }, 50);
+                            }
+                            console.log("🔳 Sidebar closed");
+                        }
+                    };
+
+                    sidebarClose.onclick = closeHandler;
+                    sidebarClose.addEventListener('click', closeHandler);
+                    sidebarClose.addEventListener('touchend', closeHandler);
+                }
+
+                // Reset any styles that might be interfering
+                if (sidebar) {
+                    sidebar.style.transform = 'none';
+                }
+
+                // Make menu button more obviously clickable
+                if (showNavToggle) {
+                    showNavToggle.style.cursor = 'pointer';
+                    showNavToggle.setAttribute('role', 'button');
+                    showNavToggle.setAttribute('tabindex', '0');
+                }
+
+                // Close sidebar when clicking outside (but not when clicking the toggle)
+                document.addEventListener('click', function(event) {
+                    if (sidebar && sidebar.classList.contains('active') &&
+                        !sidebar.contains(event.target) &&
+                        event.target !== showNavToggle &&
+                        !showNavToggle.contains(event.target)) {
+                        sidebar.classList.remove('active');
+                        if (showNavToggle) {
+                            // Force show FAB with both display and opacity after a slight delay
+                            setTimeout(function() {
+                                showNavToggle.style.display = 'flex';
+                                showNavToggle.style.opacity = '1';
+                                showNavToggle.removeAttribute('aria-hidden');
+                                console.log("🔳 FAB visibility restored after outside click");
+                            }, 50);
+                        }
+                        console.log("🔳 Sidebar closed by clicking outside");
+                    }
                 });
 
-                showNavToggle.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    openSidebar(e);
-                });
+                // Call our force function after a delay to ensure everything is loaded
+                setTimeout(function() {
+                    forceMobileNav();
+                    // Double check visibility of the menu button
+                    if (showNavToggle) {
+                        showNavToggle.style.display = 'flex';
+                    }
+                }, 1000);
 
-                // Fallback - try direct attribute
-                showNavToggle.setAttribute('onclick', "document.querySelector('.sidebar').classList.add('active'); console.log('Sidebar opened via onclick attribute');");
+                console.log("Mobile navigation initialization complete");
             }
-
-            // Enhanced close button functionality
-            if (sidebarClose) {
-                sidebarClose.addEventListener('click', closeSidebar);
-                sidebarClose.addEventListener('touchend', closeSidebar);
-            }
-
-            // Close sidebar when clicking outside (but not when clicking the toggle)
-            document.addEventListener('click', function(event) {
-                if (sidebar.classList.contains('active') &&
-                    !sidebar.contains(event.target) &&
-                    event.target !== showNavToggle &&
-                    !showNavToggle.contains(event.target)) {
-                    closeSidebar();
-                }
-            });
-
-            // Make menu button more obviously clickable
-            if (showNavToggle) {
-                showNavToggle.style.cursor = 'pointer';
-                showNavToggle.setAttribute('role', 'button');
-                showNavToggle.setAttribute('tabindex', '0');
-            }
-
-            // Extra fallbacks after a delay to ensure everything is loaded
-            setTimeout(forceMobileNav, 1000);
 
             // Check if we're on a mobile device (for proper behavior)
             function isMobileDevice() {
-                return (window.innerWidth <= 768) ||
-                       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                return (window.innerWidth <= 480) ||
+                       /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // Check if we're on a tablet device
+            function isTabletDevice() {
+                return (window.innerWidth > 480 && window.innerWidth <= 768) ||
+                       /iPad/i.test(navigator.userAgent);
             }
 
             // Apply mobile styles if needed
             function checkMobileView() {
-                if (isMobileDevice()) {
-                    // Disable progressive sidebar for mobile
-                    sidebar.classList.remove('mini-collapsed');
-                    sidebar.classList.remove('collapsed');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.getElementById('book-content');
 
-                    // Ensure main content is properly positioned
-                    document.querySelector('.main-content').style.marginLeft = '0';
+                if (isMobileDevice() || isTabletDevice()) {
+                    // Disable progressive sidebar for mobile and tablet
+                    if (sidebar) {
+                        sidebar.classList.remove('mini-collapsed');
+                        sidebar.classList.remove('collapsed');
+
+                        // Ensure main content is properly positioned
+                        if (mainContent && isMobileDevice()) {
+                            // Only for phones, not tablets
+                            mainContent.style.marginLeft = '0';
+                        }
+                    }
                 }
             }
 
@@ -557,9 +630,6 @@
     </script>
 
     <!-- JavaScript Files -->
-    <script src="js/content-loader.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/visualization-engine.js"></script>
     <script>
         // Initialize reading progress indicator
         const progressBar = document.getElementById('reading-progress');

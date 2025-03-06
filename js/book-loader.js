@@ -259,24 +259,82 @@ async function loadSectionContent(section) {
         return; // Already loaded or no content element
     }
 
-    const contentPath = contentElement.getAttribute('data-src');
+    let contentPath = contentElement.getAttribute('data-src');
     if (!contentPath) {
         console.error(`Section ${sectionId} has no data-src attribute`);
         return;
     }
 
+    // Add repository path if on GitHub Pages using the config
+    if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
+        const repoName = window.vistaKineConfig.repoName;
+        if (repoName && !contentPath.startsWith('/' + repoName)) {
+            contentPath = `/${repoName}/${contentPath}`;
+            console.log(`GitHub Pages detected, adjusted path to: ${contentPath}`);
+        }
+    }
+
+    // Add cache busting for GitHub Pages
+    const cacheBuster = `?_=${Date.now()}`;
+    const finalPath = contentPath + cacheBuster;
+
     try {
         // Show loading state
         contentElement.classList.add('loading');
+        console.log(`Fetching content from: ${finalPath}`);
 
-        // Fetch the content
-        const response = await fetch(contentPath);
+        // Fetch the content with proper options
+        const fetchOptions = {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/html',
+                'Cache-Control': 'no-cache'
+            },
+            cache: 'no-store'
+        };
+
+        // Try to fetch the content
+        let response;
+        try {
+            response = await fetch(finalPath, fetchOptions);
+        } catch (initialError) {
+            console.warn(`Initial fetch failed, trying alternative paths: ${initialError.message}`);
+
+            // Try alternative paths if the first attempt fails
+            const alternativePaths = [
+                contentPath, // Original path without cache busting
+                contentPath.replace(/^\//, ''), // Without leading slash
+                `/${contentPath}`, // With leading slash
+                window.location.origin + contentPath // With full origin
+            ];
+
+            // Try each alternative path
+            let succeeded = false;
+            for (const altPath of alternativePaths) {
+                try {
+                    console.log(`Trying alternative path: ${altPath}`);
+                    response = await fetch(altPath, fetchOptions);
+                    if (response.ok) {
+                        console.log(`Alternative path succeeded: ${altPath}`);
+                        succeeded = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.warn(`Alternative path ${altPath} failed: ${e.message}`);
+                }
+            }
+
+            if (!succeeded) {
+                throw new Error(`All fetch attempts failed for section ${sectionId}`);
+            }
+        }
 
         if (!response.ok) {
             throw new Error(`Failed to load content: ${response.status} ${response.statusText}`);
         }
 
         const htmlContent = await response.text();
+        console.log(`Successfully loaded content for ${sectionId}, length: ${htmlContent.length} chars`);
 
         // Insert the content
         contentElement.innerHTML = htmlContent;
@@ -295,23 +353,21 @@ async function loadSectionContent(section) {
             detail: {
                 sectionId: sectionId,
                 timestamp: Date.now(),
-                loaded: true
+                loaded: true,
+                sectionElement: section
             }
         });
-        console.log('Dispatching section-loaded event after content loaded for:', sectionId);
         document.dispatchEvent(sectionLoadedEvent);
     } catch (error) {
-        console.error(`Error loading section ${sectionId}:`, error);
-
-        // Show error message
+        console.error(`Error loading content for ${sectionId}:`, error);
         contentElement.innerHTML = `
             <div class="error-message">
-                <i class="ph ph-warning"></i>
-                <h3>Failed to load content</h3>
-                <p>${error.message}</p>
-                <button class="retry-button" onclick="loadSectionContent(document.getElementById('${sectionId}'))">
-                    Try Again
-                </button>
+                <h2>Error Loading Content</h2>
+                <p>Failed to load content for this section. Please try again later.</p>
+                <p class="error-details">${error.message}</p>
+                <p>Path attempted: ${contentPath}</p>
+                <button onclick="window.location.reload()">Reload Page</button>
+                <button onclick="loadSectionContent(document.getElementById('${sectionId}'))">Try Again</button>
             </div>
         `;
         contentElement.classList.remove('loading');
