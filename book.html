@@ -11,8 +11,19 @@
     window.vistaKineConfig = {
         // Detect if we're on GitHub Pages
         isGitHubPages: window.location.hostname.includes('github.io'),
-        // Store the repository name for path resolution
-        repoName: window.location.pathname.split('/').filter(p => p.length > 0)[0] || '',
+        // Store the repository name for path resolution - improved to handle more cases
+        repoName: (function() {
+            // Extract repo name from the path
+            const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+
+            // If we're on GitHub Pages, the first path part should be the repo name
+            if (window.location.hostname.includes('github.io') && pathParts.length > 0) {
+                return pathParts[0];
+            }
+
+            // For local development or other scenarios, return empty string
+            return '';
+        })(),
         // Debug mode for development
         debug: true
     };

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VistaKine Physics</title>
+    <script>
+        // Get the repository name from the URL path
+        const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+        const repoName = pathParts[0] || '';
+
+        // GitHub Pages detection
+        const isGitHubPages = window.location.hostname.includes('github.io');
+
+        // Build redirect path
+        let redirectPath = 'book.html';
+        if (isGitHubPages && repoName) {
+            redirectPath = `/${repoName}/book.html`;
+        }
+
+        // Redirect to book.html
+        window.location.href = redirectPath;
+    </script>
+</head>
+<body>
+    <p>Redirecting to <a href="book.html">VistaKine Physics</a>...</p>
+</body>
+</html>

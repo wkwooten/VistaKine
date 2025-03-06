@@ -265,12 +265,18 @@ async function loadSectionContent(section) {
         return;
     }
 
-    // Add repository path if on GitHub Pages using the config
+    // Improved GitHub Pages path handling
     if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages) {
         const repoName = window.vistaKineConfig.repoName;
-        if (repoName && !contentPath.startsWith('/' + repoName)) {
-            contentPath = `/${repoName}/${contentPath}`;
-            console.log(`GitHub Pages detected, adjusted path to: ${contentPath}`);
+        console.log(`GitHub Pages detected, repo name: ${repoName}`);
+
+        // Make sure the path is relative (no leading slash) for GitHub Pages
+        contentPath = contentPath.replace(/^\//, '');
+
+        // Add repo name prefix if not already present and we have a repo name
+        if (repoName && !contentPath.startsWith(repoName + '/')) {
+            contentPath = `${repoName}/${contentPath}`;
+            console.log(`Adjusted path for GitHub Pages: ${contentPath}`);
         }
     }
 
@@ -305,8 +311,11 @@ async function loadSectionContent(section) {
                 contentPath, // Original path without cache busting
                 contentPath.replace(/^\//, ''), // Without leading slash
                 `/${contentPath}`, // With leading slash
-                window.location.origin + contentPath // With full origin
-            ];
+                window.location.origin + '/' + contentPath.replace(/^\//, ''), // With origin, ensuring no double slash
+                // Try with explicit https://[username].github.io/[repo] format if on GitHub Pages
+                window.vistaKineConfig && window.vistaKineConfig.isGitHubPages ?
+                    `https://${window.location.hostname}/${contentPath.replace(/^\//, '')}` : null
+            ].filter(Boolean); // Remove null entries
 
             // Try each alternative path
             let succeeded = false;
