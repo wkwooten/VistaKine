@@ -4,25 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VistaKine Physics</title>
-    <script>
-        // Get the repository name from the URL path
-        const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
-        const repoName = pathParts[0] || '';
 
-        // GitHub Pages detection
-        const isGitHubPages = window.location.hostname.includes('github.io');
-
-        // Build redirect path
-        let redirectPath = 'book.html';
-        if (isGitHubPages && repoName) {
-            redirectPath = `/${repoName}/book.html`;
+    <style>
+        /* Simple redirect page styles */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #000428, #004e92);
+            color: white;
+            text-align: center;
         }
 
-        // Redirect to book.html
-        window.location.href = redirectPath;
+        .redirect-container {
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        a {
+            color: #5af;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            margin: 2rem auto;
+        }
+
+        .loader:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #fff;
+            border-color: #fff transparent #fff transparent;
+            animation: loader 1.2s linear infinite;
+        }
+
+        @keyframes loader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the repository name from the URL path
+            const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+            const repoName = pathParts[0] || '';
+
+            // GitHub Pages detection
+            const isGitHubPages = window.location.hostname.includes('github.io');
+
+            // Build redirect path
+            let redirectPath = 'book.html';
+            if (isGitHubPages && repoName) {
+                redirectPath = `/${repoName}/book.html`;
+            }
+
+            // Set the link href
+            const redirectLink = document.getElementById('redirect-link');
+            if (redirectLink) {
+                redirectLink.href = redirectPath;
+            }
+
+            // Redirect after a short delay
+            setTimeout(function() {
+                window.location.href = redirectPath;
+            }, 1500);
+        });
     </script>
 </head>
 <body>
-    <p>Redirecting to <a href="book.html">VistaKine Physics</a>...</p>
+    <div class="redirect-container">
+        <h1>VistaKine Physics</h1>
+        <p>Welcome to the VistaKine interactive physics textbook.</p>
+        <div class="loader"></div>
+        <p>Redirecting to the main page...</p>
+        <p>If you are not redirected automatically, <a id="redirect-link" href="book.html">click here</a>.</p>
+    </div>
 </body>
 </html>

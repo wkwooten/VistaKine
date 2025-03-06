@@ -1,29 +1,20 @@
 /**
  * VistaKine Main Styles
  *
- * This file contains:
- * - Global base styles (reset, typography, colors)
- * - General layout and grid utilities
- * - UI components used across the site
- * - Main navigation and chapter navigation styles
- * - Page-specific styles for cover, about, etc.
- *
- * Note: Specific book and sidebar styles are in book.css
- * Components shared across files are prefixed with their context
- * to avoid selector conflicts.
+ * This file contains global styles, layout, navigation, and page components.
+ * Specific book and sidebar styles are in book.css
  */
 
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Phosphor Icons Styling */
+/* Icon Styling */
 .ph {
 	vertical-align: middle;
 	display: inline-block;
 	line-height: 1;
 }
 
-/* Adjust icon sizing in different contexts */
 h1 .ph {
 	margin-right: 0.5rem;
 	font-size: 1.2em;
@@ -53,7 +44,7 @@ h3 .ph {
 	transition: color 0.2s ease;
 }
 
-/* Typography Variables */
+/* Variables */
 :root {
 	/* Font sizes */
 	--step--2: clamp(0.6944rem, 0.6608rem + 0.1797vw, 0.8rem);
@@ -76,7 +67,7 @@ h3 .ph {
 	--space-2xl: clamp(4rem, 3.6809rem + 1.7021vw, 5rem);
 	--space-3xl: clamp(6rem, 5.5213rem + 2.5532vw, 7.5rem);
 
-	/* One-up pairs */
+	/* Space pairs */
 	--space-3xs-2xs: clamp(0.25rem, 0.1303rem + 0.6383vw, 0.625rem);
 	--space-2xs-xs: clamp(0.5rem, 0.3604rem + 0.7447vw, 0.9375rem);
 	--space-xs-s: clamp(0.75rem, 0.5904rem + 0.8511vw, 1.25rem);
@@ -85,8 +76,6 @@ h3 .ph {
 	--space-l-xl: clamp(2rem, 1.4415rem + 2.9787vw, 3.75rem);
 	--space-xl-2xl: clamp(3rem, 2.3617rem + 3.4043vw, 5rem);
 	--space-2xl-3xl: clamp(4rem, 2.883rem + 5.9574vw, 7.5rem);
-
-	/* Custom pairs */
 	--space-s-l: clamp(1rem, 0.5213rem + 2.5532vw, 2.5rem);
 
 	/* Grid system */
@@ -110,27 +99,33 @@ h3 .ph {
 	--letter-spacing-normal: 0;
 	--letter-spacing-wide: 0.02em;
 
-	/* Color Palette */
+	/* Colors */
 	--color-bg-primary: #F9FAFC;
 	--color-text-primary: #1E293B;
-
-	/* Mid-Tones */
 	--color-mid-dark: #4A6581;
 	--color-mid: #89A1B7;
 	--color-mid-light: #C2D0E0;
-
-	/* Interactive Colors */
 	--color-primary: #3B82F6;
 	--color-secondary: #60A5FA;
 	--color-success: #22C55E;
 	--color-error: #EF4444;
 	--color-warning: #FCD34D;
 	--color-accent: #6A5ACD;
-
-	/* Neutral Grays */
 	--color-gray-light: #D1D5DB;
 	--color-gray-medium: #9CA3AF;
 	--color-gray-dark: #4B5563;
+
+	/* Legacy variables */
+	--primary-color: #004e92;
+	--secondary-color: #000428;
+	--text-color: #333;
+	--background-color: #ffffff;
+	--sidebar-width: 260px;
+	--sidebar-mini-width: 80px;
+	--sidebar-bg: #f7f9fc;
+	--sidebar-hover: #e9edf5;
+	--sidebar-active: #d9e2f5;
+	--transition-speed: 0.3s;
 }
 
 /* Grid Utilities */
@@ -146,7 +141,7 @@ h3 .ph {
 	gap: var(--grid-gutter);
 }
 
-/* Common grid layouts */
+/* Grid layouts */
 .u-grid-2 {
 	grid-template-columns: repeat(2, 1fr);
 }
@@ -163,7 +158,7 @@ h3 .ph {
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 }
 
-/* Header Styles */
+/* Headers */
 h1,
 h2,
 h3,
@@ -202,7 +197,7 @@ h6 {
 	font-weight: var(--font-weight-medium);
 }
 
-/* Reset and base styles */
+/* Base styles */
 * {
 	margin: 0;
 	padding: 0;
@@ -230,34 +225,29 @@ body {
 	position: fixed;
 	flex-shrink: 0;
 	overflow: visible;
-	/* Always visible for the pull tab */
+	/* For pull tab visibility */
 	z-index: 10;
-	/* No transition here - we're handling this with JS animation */
 	left: 0;
 	top: 0;
 	will-change: width;
-	/* Optimize for animation */
+	/* JS animation optimization */
+	width: var(--nav-width, 280px);
 }
 
-/* Make sure only the container has overflow:auto, not the entire nav */
+/* Nav container with scrolling content */
 #chapter-nav .u-container {
 	height: 100%;
 	width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
-	/* Always keep x hidden to prevent horizontal overflow */
 	padding: var(--grid-gutter);
 	opacity: 1;
-	/* No transition here - we're handling this with JS animation */
 	transform-origin: left center;
-	/* For scale effect */
 	will-change: opacity, transform;
-	/* Optimize for animation */
-	/* Ensure content is completely hidden when nav is very narrow */
 	visibility: visible;
 }
 
-/* Container collapsed state - ensure complete invisibility */
+/* Collapsed container state */
 #chapter-nav .u-container.collapsed {
 	opacity: 0;
 	width: 0;
@@ -267,7 +257,7 @@ body {
 	visibility: hidden;
 }
 
-/* Only hide content for very narrow widths - much more selective */
+/* Hide content for very narrow widths */
 #chapter-nav[style*="width: 20px"] .u-container,
 #chapter-nav[style*="width:20px"] .u-container,
 #chapter-nav[style*="width: 25px"] .u-container,
@@ -275,22 +265,19 @@ body {
 	visibility: hidden;
 }
 
-/* Make all widths show content unless explicitly hidden by JavaScript */
+/* Show content for other widths */
 #chapter-nav[style*="width:"] .u-container:not([style*="visibility: hidden"]) {
 	visibility: visible;
 }
 
-/* Custom width class to handle JavaScript-defined widths without inline styles */
+/* Default width */
 #chapter-nav.custom-width {
 	width: 280px;
-	/* Default fallback */
 }
 
-/* Width presets (we'll use JavaScript to add these classes) */
-#chapter-nav.width-0 {
-	width: 0;
-}
-
+/* Width presets for JavaScript control */
+/* Note: width-0 is disabled for desktop but kept for mobile compatibility */
+/* Minimum width on desktop is now the mini-collapsed width */
 #chapter-nav.width-100 {
 	width: 100px;
 }
@@ -339,13 +326,7 @@ body {
 	width: 600px;
 }
 
-/* Remove the attr() approach which doesn't work for width */
-#chapter-nav[data-nav-width] {
-	/* We'll use the data attribute just to store the value,
-       but actual styling will come from the classes above */
-}
-
-/* Resize handle with pull tab - always visible */
+/* Resize handle */
 .resize-handle {
 	position: absolute;
 	top: 0;
@@ -359,7 +340,7 @@ body {
 	pointer-events: auto;
 }
 
-/* Pull tab - positioned absolutely outside the nav menu */
+/* Pull tab */
 .pull-tab {
 	position: absolute;
 	top: 50%;
@@ -376,11 +357,10 @@ body {
 	pointer-events: auto;
 }
 
-/* State when navigation is collapsed - more visible */
+/* Collapsed nav pull tab */
 #chapter-nav.collapsed .pull-tab {
 	opacity: 0.85;
 	box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
-	/* Ensure pull tab is always visible and clickable when nav is collapsed */
 	pointer-events: auto;
 	z-index: 100;
 }
@@ -395,17 +375,12 @@ body.resizing .pull-tab,
 	box-shadow: 3px 0 10px rgba(0, 0, 0, 0.25);
 }
 
-/* Mobile adjustments for pull tab */
+/* Mobile pull tab */
 @media (max-width: 768px) {
 	#chapter-nav.collapsed .pull-tab {
 		width: 14px;
 		height: 70px;
 	}
-}
-
-/* Hide the nav toggle button as we're using the pull tab exclusively */
-.show-nav-toggle {
-	display: none !important;
 }
 
 /* Main content */
@@ -417,15 +392,9 @@ main {
 	padding: var(--space-m);
 	transition: margin-left 0.2s ease-out;
 	will-change: margin-left;
-	/* Optimize for animation */
 }
 
-body.nav-collapsed main {
-	margin-left: 20px;
-	/* Leave room for the pull tab */
-}
-
-/* Mobile adjustments */
+/* Mobile layout (≤ 768px) */
 @media (max-width: 768px) {
 	#chapter-nav {
 		box-shadow: 0 0 20px rgba(74, 101, 129, 0.15);
@@ -434,34 +403,17 @@ body.nav-collapsed main {
 		transition: transform 0.2s ease-out, width 0.2s ease-out;
 	}
 
-	/* When container is collapsed, reduce width for pull tab */
-	#chapter-nav .u-container.collapsed {
-		opacity: 0;
-		width: 0;
-		padding: 0;
-	}
-
-	/* Keep pull tab more visible on mobile */
-	.pull-tab {
-		opacity: 0.8;
-		height: 70px;
-		/* Taller on mobile for easier targeting */
-	}
-
-	/* Content spacing */
 	main {
 		margin-left: 0;
-		/* On mobile content takes full width */
-		padding: var(--space-s);
+		padding: var(--space-3xs);
 	}
 
-	/* Collapsed state content spacing */
 	body.nav-collapsed main {
 		margin-left: 20px;
 	}
 }
 
-/* Grid responsive utilities */
+/* Desktop grid utilities */
 @media (min-width: 768px) {
 	.u-grid-md-2 {
 		grid-template-columns: repeat(2, 1fr);
@@ -725,11 +677,6 @@ body.nav-collapsed main {
 	text-overflow: ellipsis;
 }
 
-/* Search bar styles */
-.main-search-container {
-	/* Replaces general search container */
-}
-
 .main-search-bar {
 	position: relative;
 	display: flex;
@@ -959,7 +906,7 @@ body.nav-collapsed main {
 	border-bottom-color: var(--color-secondary);
 }
 
-/* Mobile Adjustments */
+/* Mobile adjustments */
 @media (max-width: 768px) {
 	.cover-actions {
 		flex-direction: column;
@@ -979,30 +926,104 @@ body.nav-collapsed main {
 		width: 100%;
 		text-align: center;
 	}
+
+	#chapter-nav:not(.collapsed) {
+		width: 280px !important;
+	}
+
+	html,
+	body {
+		font-size: 14px;
+	}
+
+	.show-nav-toggle {
+		display: flex;
+	}
 }
 
-/* Mobile width classes */
-@media (max-width: 768px) {
+/* Utility classes */
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
 
-	#chapter-nav.width-100,
-	#chapter-nav.width-150,
-	#chapter-nav.width-200,
-	#chapter-nav.width-250,
-	#chapter-nav.width-280,
-	#chapter-nav.width-300,
-	#chapter-nav.width-350,
-	#chapter-nav.width-400,
-	#chapter-nav.width-450,
-	#chapter-nav.width-500,
-	#chapter-nav.width-550,
-	#chapter-nav.width-600 {
-		width: 280px;
-		/* On mobile, we always use 280px for expanded state */
+.text-center {
+	text-align: center;
+}
+
+.hidden {
+	display: none !important;
+}
+
+/* Animation */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
 	}
 
-	/* When collapsed, ensure width is 0 */
-	#chapter-nav.collapsed {
-		width: 0 !important;
-		transform: translateX(-100%);
+	to {
+		opacity: 1;
 	}
+}
+
+.fade-in {
+	animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Loading indicator */
+.loading-placeholder {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 200px;
+	background-color: #f5f5f5;
+	border-radius: 4px;
+	color: #666;
+	font-style: italic;
+}
+
+/* Error message */
+.error-message {
+	background-color: #fff0f0;
+	border-left: 4px solid #ff6b6b;
+	padding: 1rem;
+	margin: 1rem 0;
+	border-radius: 4px;
+}
+
+.error-message h2 {
+	color: #d63031;
+	margin-bottom: 0.5rem;
+}
+
+.error-message button {
+	background-color: #f7f7f7;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	margin-top: 1rem;
+	margin-right: 0.5rem;
+	cursor: pointer;
+}
+
+.error-message button:hover {
+	background-color: #eee;
+}
+
+/* Reading progress indicator */
+.reading-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 0;
+	height: 4px;
+	background-color: var(--primary-color);
+	z-index: 9999;
+	transition: width 0.3s ease;
+}
+
+/* Navigation toggle button */
+.show-nav-toggle {
+	display: none;
 }
