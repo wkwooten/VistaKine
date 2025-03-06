@@ -790,6 +790,17 @@
                 console.log("Book loader script loaded, loading visualization engine...");
                 loadScript('js/visualization-engine.js', function() {
                     console.log("All scripts loaded successfully!");
+
+                    // Ensure initialization happens after all scripts are loaded
+                    // Use a slight delay to ensure DOM is fully ready
+                    setTimeout(function() {
+                        console.log("Manually initializing book loader...");
+                        if (window.initializeBookLoader) {
+                            window.initializeBookLoader();
+                        } else {
+                            console.error("initializeBookLoader function not found");
+                        }
+                    }, 100);
                 });
             });
         });

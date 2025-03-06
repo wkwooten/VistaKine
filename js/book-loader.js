@@ -11,42 +11,95 @@ const state = {
     observer: null,
     scrollObserver: null,
     sectionPositions: [],
+    initialized: false,
 };
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    setupNavigation();
-    setupLazyLoading();
-    setupScrollObserver();
-    setupProgressIndicator();
-    handleInitialHash();
+    console.log("DOMContentLoaded event triggered - initializing book loader");
+    initializeBookLoader();
 });
+
+// Allow manual initialization (as a fallback)
+function initializeBookLoader() {
+    if (state.initialized) {
+        console.log("Book loader already initialized, skipping");
+        return;
+    }
+
+    console.log("Initializing book loader...");
+    try {
+        setupNavigation();
+        setupLazyLoading();
+        setupScrollObserver();
+        setupProgressIndicator();
+        handleInitialHash();
+        state.initialized = true;
+        console.log("Book loader initialization complete");
+    } catch (error) {
+        console.error("Error during book loader initialization:", error);
+        // Try again in 500ms as a fallback
+        setTimeout(initializeBookLoader, 500);
+    }
+}
+
+// Make initializeBookLoader globally available
+window.initializeBookLoader = initializeBookLoader;
 
 /**
  * Set up navigation functionality
  */
 function setupNavigation() {
+    console.log("Setting up navigation...");
+
+    // Get the navigation elements - try different selectors to handle various structures
+    const navLinks = document.querySelectorAll('.sidebar-nav a, #chapter-nav a, nav a');
+
+    if (navLinks.length === 0) {
+        console.warn("No navigation links found!");
+    } else {
+        console.log(`Found ${navLinks.length} navigation links`);
+    }
+
     // Handle navigation click events
-    document.querySelectorAll('#chapter-nav a').forEach(link => {
+    navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
-            const targetId = link.getAttribute('href').substring(1); // Remove the #
+            const href = link.getAttribute('href');
 
-            if (targetId) {
-                e.preventDefault();
+            if (!href) {
+                console.warn("Navigation link has no href attribute:", link);
+                return;
+            }
 
-                // Scroll to the section smoothly
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.scrollIntoView({ behavior: 'smooth' });
-                }
+            // Only handle internal links
+            if (href.startsWith('#')) {
+                const targetId = href.substring(1); // Remove the #
 
-                // Update URL hash without scrolling
-                history.pushState(null, null, `#${targetId}`);
+                if (targetId) {
+                    e.preventDefault();
+                    console.log(`Navigation clicked: ${targetId}`);
 
-                // Mobile: close navigation if open
-                const nav = document.getElementById('chapter-nav');
-                if (nav.classList.contains('active')) {
-                    nav.classList.remove('active');
+                    // Scroll to the section smoothly
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.scrollIntoView({ behavior: 'smooth' });
+
+                        // Force load the section content (in case intersection observer missed it)
+                        loadSectionContent(targetSection);
+                    } else {
+                        console.warn(`Target section #${targetId} not found`);
+                    }
+
+                    // Update URL hash without scrolling
+                    history.pushState(null, null, `#${targetId}`);
+
+                    // Mobile: close navigation if open
+                    const navElements = document.querySelectorAll('.sidebar, .sidebar-nav, #chapter-nav');
+                    navElements.forEach(nav => {
+                        if (nav && nav.classList.contains('active')) {
+                            nav.classList.remove('active');
+                        }
+                    });
                 }
             }
         });
@@ -54,10 +107,24 @@ function setupNavigation() {
 
     // Mobile navigation toggle
     const navToggle = document.getElementById('show-nav-toggle');
-    navToggle.addEventListener('click', () => {
-        const nav = document.getElementById('chapter-nav');
-        nav.classList.toggle('active');
-    });
+    if (navToggle) {
+        navToggle.addEventListener('click', () => {
+            // Try different navigation elements
+            const navElements = [
+                document.querySelector('.sidebar'),
+                document.querySelector('.sidebar-nav'),
+                document.getElementById('chapter-nav')
+            ].filter(Boolean);
+
+            if (navElements.length > 0) {
+                navElements.forEach(nav => nav.classList.toggle('active'));
+            } else {
+                console.warn("No navigation element found to toggle");
+            }
+        });
+    } else {
+        console.warn("Navigation toggle button not found");
+    }
 
     // Set active link in navigation based on current section
     window.addEventListener('hashchange', () => {
@@ -147,11 +214,14 @@ function updateActiveNavLink(sectionId) {
  * Set up Intersection Observer for lazy loading
  */
 function setupLazyLoading() {
+    console.log("Setting up lazy loading...");
+
     // Create an Intersection Observer
     state.observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const section = entry.target;
+                console.log(`Section ${section.id} is intersecting, loading content...`);
                 loadSectionContent(section);
             }
         });
@@ -161,9 +231,64 @@ function setupLazyLoading() {
     });
 
     // Start observing all section containers
-    document.querySelectorAll('.section-container').forEach(section => {
+    const sectionContainers = document.querySelectorAll('.section-container');
+    console.log(`Found ${sectionContainers.length} section containers to observe`);
+
+    if (sectionContainers.length === 0) {
+        console.warn("No section containers found! This may indicate a structural issue.");
+    }
+
+    sectionContainers.forEach(section => {
         state.observer.observe(section);
+        console.log(`Now observing section: ${section.id}`);
     });
+
+    // Load the initial section immediately (don't wait for intersection)
+    const initialSection = getVisibleSection();
+    if (initialSection) {
+        console.log(`Loading initial section ${initialSection.id} immediately`);
+        loadSectionContent(initialSection);
+    } else {
+        console.warn("No visible section found for immediate loading");
+        // Fallback: load the first section
+        const firstSection = sectionContainers[0];
+        if (firstSection) {
+            console.log(`Fallback: Loading first section ${firstSection.id}`);
+            loadSectionContent(firstSection);
+        }
+    }
+}
+
+/**
+ * Get the currently visible section
+ */
+function getVisibleSection() {
+    const sections = document.querySelectorAll('.section-container');
+    const viewportHeight = window.innerHeight;
+    const viewportTop = window.scrollY;
+    const viewportBottom = viewportTop + viewportHeight;
+
+    // Find the section that occupies the most of the viewport
+    let bestSection = null;
+    let bestVisibleArea = 0;
+
+    sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        const sectionTop = rect.top + window.scrollY;
+        const sectionBottom = rect.bottom + window.scrollY;
+
+        // Calculate the visible area of the section
+        const visibleTop = Math.max(sectionTop, viewportTop);
+        const visibleBottom = Math.min(sectionBottom, viewportBottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+        if (visibleHeight > bestVisibleArea) {
+            bestVisibleArea = visibleHeight;
+            bestSection = section;
+        }
+    });
+
+    return bestSection;
 }
 
 /**
@@ -255,8 +380,14 @@ async function loadSectionContent(section) {
     const sectionId = section.id;
     const contentElement = section.querySelector('.section-content');
 
-    if (!contentElement || state.loadedSections.has(sectionId)) {
-        return; // Already loaded or no content element
+    if (!contentElement) {
+        console.error(`Section ${sectionId} has no content element`);
+        return; // No content element
+    }
+
+    if (state.loadedSections.has(sectionId)) {
+        console.log(`Section ${sectionId} already loaded, skipping`);
+        return; // Already loaded
     }
 
     let contentPath = contentElement.getAttribute('data-src');
@@ -265,134 +396,135 @@ async function loadSectionContent(section) {
         return;
     }
 
+    console.log(`Loading content for section ${sectionId} from ${contentPath}`);
+
+    // Create a loading indicator if it doesn't exist
+    let loadingElement = contentElement.querySelector('.loading-placeholder');
+    if (!loadingElement) {
+        loadingElement = document.createElement('div');
+        loadingElement.className = 'loading-placeholder';
+        loadingElement.textContent = `Loading ${sectionId}...`;
+        contentElement.appendChild(loadingElement);
+    }
+
+    // Show loading state
+    contentElement.classList.add('loading');
+
     const isGitHubPages = window.vistaKineConfig && window.vistaKineConfig.isGitHubPages;
     console.log(`Environment: ${isGitHubPages ? 'GitHub Pages' : 'Local Development'}`);
 
     // Create a copy of the original path for local development
     const originalPath = contentPath;
 
-    // Only modify paths for GitHub Pages
-    if (isGitHubPages) {
+    // Simple absolute path for local development
+    const localPath = contentPath.startsWith('/') ? contentPath : '/' + contentPath;
+
+    // Adjusted paths for GitHub Pages
+    let githubPagesPath = contentPath;
+    if (isGitHubPages && window.vistaKineConfig.repoName) {
         const repoName = window.vistaKineConfig.repoName;
-        console.log(`GitHub Pages detected, repo name: "${repoName}", original path: "${contentPath}"`);
-
-        // First, strip any leading slashes
-        contentPath = contentPath.replace(/^\/+/, '');
-        console.log(`Path after stripping leading slashes: "${contentPath}"`);
-
-        // Add repo name prefix if not already present and we have a repo name
-        if (repoName && !contentPath.startsWith(repoName + '/') && !contentPath.startsWith('/'+repoName+'/')) {
-            // Ensure no double slashes
-            contentPath = `${repoName}/${contentPath}`;
-            console.log(`Path after adding repo prefix: "${contentPath}"`);
-        }
-
-        // IMPORTANT: Check for paths that might need encoding
-        // GitHub Pages can have issues with parentheses and certain characters
-        if (contentPath.includes('(') || contentPath.includes(')')) {
-            console.log(`Path contains parentheses, original: "${contentPath}"`);
-
-            // Extract the filename and directory parts
-            const pathParts = contentPath.split('/');
-            const fileName = pathParts.pop();
-            const directory = pathParts.join('/');
-
-            // Replace problematic characters in the filename
-            const encodedFileName = fileName
-                .replace(/\(/g, '%28')
-                .replace(/\)/g, '%29')
-                .replace(/\s/g, '%20');
-
-            // Reconstruct the path
-            contentPath = directory ? `${directory}/${encodedFileName}` : encodedFileName;
-            console.log(`Path after encoding special characters: "${contentPath}"`);
+        // Strip leading slashes and ensure no double slashes
+        const cleanPath = contentPath.replace(/^\/+/, '');
+        // Add repo name prefix if not already present
+        if (!cleanPath.startsWith(repoName + '/')) {
+            githubPagesPath = `/${repoName}/${cleanPath}`;
+        } else {
+            githubPagesPath = `/${cleanPath}`;
         }
     }
 
-    // Use a timestamp-based cache buster to avoid caching issues
-    const cacheBuster = `?_=${Date.now()}`;
-    const finalPath = contentPath + cacheBuster;
-    console.log(`Final path with cache buster: "${finalPath}"`);
+    // Encode parentheses and spaces for problematic filenames
+    if (contentPath.includes('(') || contentPath.includes(')') || contentPath.includes(' ')) {
+        const pathParts = contentPath.split('/');
+        const fileName = pathParts.pop();
+        const directory = pathParts.join('/');
 
-    try {
-        // Show loading state
-        contentElement.classList.add('loading');
+        // Replace problematic characters in the filename
+        const encodedFileName = fileName
+            .replace(/\(/g, '%28')
+            .replace(/\)/g, '%29')
+            .replace(/\s/g, '%20');
 
-        // Fetch the content with proper options
-        const fetchOptions = {
-            method: 'GET',
-            headers: {
-                'Accept': 'text/html',
-                'Cache-Control': 'no-cache'
-            },
-            cache: 'no-store'
-        };
+        // Reconstruct the path
+        const encodedPath = directory ? `${directory}/${encodedFileName}` : encodedFileName;
 
-        // Try to fetch the content with progressive fallbacks
-        let response = null;
-        let usedPath = '';
-
-        // Create an array of paths to try, starting with most likely to work
-        const pathsToTry = [];
-
+        // Add this as another path to try
         if (isGitHubPages) {
-            // GitHub Pages paths (already processed)
-            pathsToTry.push(
-                finalPath,
-                contentPath,
-                `/${contentPath.replace(/^\/+/, '')}`
-            );
-        } else {
-            // Local development paths (use original paths)
-            pathsToTry.push(
-                originalPath + cacheBuster, // Original with cache buster
-                originalPath,               // Original without cache buster
-                // Also try without leading slash for local too
-                originalPath.replace(/^\//, '') + cacheBuster
-            );
-        }
-
-        // Add more fallback paths that work in both environments
-        pathsToTry.push(
-            contentPath.replace(/^\/+/, ''),       // No leading slash
-            `/${contentPath.replace(/^\/+/, '')}`, // With leading slash
-            // Absolute URL paths
-            new URL(contentPath.replace(/^\/+/, ''), window.location.origin).href
-        );
-
-        // For GitHub Pages specifically, add more GitHub-specific options
-        if (isGitHubPages && window.vistaKineConfig.repoName) {
-            const repoName = window.vistaKineConfig.repoName;
-
-            // Add repo-specific paths
-            pathsToTry.push(
-                `/${repoName}/${contentPath.replace(/^\/+/, '').replace(`${repoName}/`, '')}`, // Ensure no duplicate repo name
-                `https://${window.location.hostname}/${repoName}/${contentPath.replace(/^\/+/, '').replace(`${repoName}/`, '')}` // Full GitHub Pages URL
-            );
-
-            // Try with different section file naming conventions
-            if (contentPath.includes('(') || contentPath.includes(')')) {
-                // Try the path with parentheses removed
-                const withoutParentheses = contentPath.replace(/\([^)]*\)/g, '');
-                pathsToTry.push(
-                    withoutParentheses,
-                    `/${repoName}/${withoutParentheses.replace(/^\/+/, '').replace(`${repoName}/`, '')}`
-                );
+            if (window.vistaKineConfig.repoName) {
+                const repoName = window.vistaKineConfig.repoName;
+                const cleanEncodedPath = encodedPath.replace(/^\/+/, '');
+                if (!cleanEncodedPath.startsWith(repoName + '/')) {
+                    githubPagesPath = `/${repoName}/${cleanEncodedPath}`;
+                }
             }
         }
+    }
 
-        // Log the paths we're going to try
-        console.log("Paths to try:", JSON.stringify(pathsToTry, null, 2));
+    // Use a cache buster to avoid caching issues
+    const cacheBuster = `?_=${Date.now()}`;
 
+    // Create the final list of paths to try
+    const pathsToTry = [];
+
+    if (isGitHubPages) {
+        // GitHub Pages paths
+        pathsToTry.push(
+            githubPagesPath + cacheBuster,                      // GitHub Pages adjusted path with cache buster
+            githubPagesPath,                                    // GitHub Pages adjusted path without cache buster
+            window.vistaKineConfig.getResourcePath(contentPath) // Use the helper function
+        );
+    } else {
+        // Local development paths
+        pathsToTry.push(
+            originalPath + cacheBuster,           // Original with cache buster
+            originalPath,                         // Original without cache buster
+            contentPath.replace(/^\//, ''),       // Without leading slash
+            localPath                             // Ensure leading slash
+        );
+    }
+
+    // Add shared fallbacks for both environments
+    pathsToTry.push(
+        // Try with URL constructor (handles relative paths correctly)
+        new URL(contentPath.replace(/^\/+/, ''), window.location.origin).href,
+        // Try direct content path (for local file:// protocol)
+        contentPath
+    );
+
+    // Debug info
+    console.log("Paths to try:", JSON.stringify(pathsToTry, null, 2));
+
+    // Try to fetch the content with progressive fallbacks
+    let response = null;
+    let usedPath = '';
+    let htmlContent = '';
+    let fetchSuccess = false;
+
+    try {
         // Try each path until one works
         for (const path of pathsToTry) {
             try {
                 console.log(`Trying path: "${path}"`);
+
+                // Fetch options to prevent caching
+                const fetchOptions = {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/html',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    cache: 'no-store'
+                };
+
                 response = await fetch(path, fetchOptions);
 
                 if (response.ok) {
                     usedPath = path;
-                    console.log(`✅ Success with path: "${path}"`);
+                    htmlContent = await response.text();
+                    console.log(`✅ Success with path: "${path}", content length: ${htmlContent.length} chars`);
+                    fetchSuccess = true;
                     break;
                 } else {
                     console.log(`❌ Failed with path: "${path}", status: ${response.status}`);
@@ -402,15 +534,13 @@ async function loadSectionContent(section) {
             }
         }
 
-        // If none of the paths worked, throw an error
-        if (!response || !response.ok) {
+        // If none of the paths worked, show an error
+        if (!fetchSuccess) {
             throw new Error(`Failed to load content for section ${sectionId} after trying multiple paths`);
         }
 
-        const htmlContent = await response.text();
-        console.log(`✅ Successfully loaded content for "${sectionId}", length: ${htmlContent.length} chars, from: "${usedPath}"`);
-
-        // Insert the content
+        // Success! Insert the content
+        console.log(`✅ Successfully loaded content for "${sectionId}", from: "${usedPath}"`);
         contentElement.innerHTML = htmlContent;
         state.loadedSections.add(sectionId);
 
@@ -420,9 +550,12 @@ async function loadSectionContent(section) {
         // Remove loading state
         contentElement.classList.remove('loading');
 
-        console.log(`Loaded content for section: ${sectionId}`);
+        // Force a relayout/repaint to ensure content is visible
+        contentElement.style.display = 'none';
+        contentElement.offsetHeight; // Force a reflow
+        contentElement.style.display = '';
 
-        // Dispatch section-loaded event after content is fully loaded
+        // Dispatch section-loaded event
         const sectionLoadedEvent = new CustomEvent('section-loaded', {
             detail: {
                 sectionId: sectionId,
@@ -432,6 +565,8 @@ async function loadSectionContent(section) {
             }
         });
         document.dispatchEvent(sectionLoadedEvent);
+
+        return true; // Success
     } catch (error) {
         console.error(`Error loading content for ${sectionId}:`, error);
         contentElement.innerHTML = `
@@ -439,13 +574,15 @@ async function loadSectionContent(section) {
                 <h2>Error Loading Content</h2>
                 <p>Failed to load content for this section. Please try again later.</p>
                 <p class="error-details">${error.message}</p>
-                <p>Path attempted: ${contentPath}</p>
-                <button onclick="window.location.reload()">Reload Page</button>
+                <p>Paths attempted: ${pathsToTry.join(', ')}</p>
                 <button onclick="loadSectionContent(document.getElementById('${sectionId}'))">Try Again</button>
+                <button onclick="window.location.reload()">Reload Page</button>
             </div>
         `;
         contentElement.classList.remove('loading');
         contentElement.classList.add('error');
+
+        return false; // Failure
     }
 }
 
