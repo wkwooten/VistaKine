@@ -1,0 +1,2981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VistaKine Physics Sandbox</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+            max-width: 300px;
+        }
+        #object-counter {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        #performance-metrics {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+            min-width: 180px;
+        }
+        #performance-metrics .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            align-items: flex-start;
+        }
+        #performance-metrics .title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        #memory-usage {
+            text-align: right;
+            line-height: 1.4;
+        }
+        button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        #performance-display {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        #message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        /* Debug panel styles */
+        #debug-panel {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 200;
+            width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: none; /* Initially hidden */
+        }
+
+        #debug-panel h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 3px;
+        }
+
+        #debug-panel .slider-container {
+            margin-bottom: 8px;
+        }
+
+        #debug-panel label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        #debug-panel input[type="range"] {
+            width: 100%;
+            margin: 0;
+        }
+
+        #debug-panel .value-display {
+            float: right;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        #debug-panel button {
+            padding: 4px 8px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        #debug-toggle {
+            position: fixed;
+            top: 20px;
+            right: 330px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            z-index: 201;
+        }
+
+        #debug-panel .reset-group {
+            text-align: right;
+            padding-top: 5px;
+            margin-top: 5px;
+            border-top: 1px dotted rgba(255, 255, 255, 0.2);
+        }
+        /* Animation controls */
+        #animation-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+        }
+        #timeline {
+            width: 300px;
+        }
+        #mode-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        #camera-controls-help {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+            max-width: 250px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        /* Vector mode UI panel - initially hidden */
+        #vector-controls {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #vector-controls div {
+            margin-bottom: 5px;
+        }
+        #vector-controls label {
+            font-weight: bold;
+        }
+        #vector-controls input[type="number"],
+        #vector-controls input[type="range"],
+        #vector-controls select {
+            width: 100px;
+        }
+        #vector-controls button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #selected-object-info {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="object-counter">Objects: 0</div>
+    <div id="performance-metrics">
+        <div class="title">Performance Metrics</div>
+        <div class="metric">
+            <span>FPS:</span>
+            <span id="fps-value">0</span>
+        </div>
+        <div class="metric">
+            <span>Physics Time:</span>
+            <span id="physics-time">0 ms</span>
+        </div>
+        <div class="metric">
+            <span>Render Time:</span>
+            <span id="render-time">0 ms</span>
+        </div>
+        <div class="metric">
+            <span>Memory:</span>
+            <span id="memory-usage">0 MB</span>
+        </div>
+    </div>
+
+    <div id="mode-indicator">Mode: Physics Mode</div>
+    <div id="camera-controls-help">
+        <strong>Camera Controls:</strong><br>
+        Left click + drag: Rotate camera<br>
+        Right click/middle click + drag: Pan camera<br>
+        Scroll wheel: Zoom camera<br>
+        <strong>Object Controls:</strong><br>
+        Left click + drag: Move object<br>
+        Scroll wheel while dragging: Rotate object<br>
+        Camera controls active unless grabbing objects
+    </div>
+
+    <!-- Vector mode UI panel - initially hidden -->
+    <div id="vector-controls" style="display: none; position: fixed; bottom: 60px; left: 20px; background: rgba(0, 0, 0, 0.6); color: white; padding: 15px; border-radius: 5px; z-index: 100;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Vector Force Controls</div>
+        <div style="margin-bottom: 5px;">
+            <label for="force-x">X:</label>
+            <input type="number" id="force-x" value="0" step="1" style="width: 60px;">
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label for="force-y">Y:</label>
+            <input type="number" id="force-y" value="10" step="1" style="width: 60px;">
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label for="force-z">Z:</label>
+            <input type="number" id="force-z" value="0" step="1" style="width: 60px;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="force-type">Type:</label>
+            <select id="force-type" style="width: 100px;">
+                <option value="impulse">Impulse</option>
+                <option value="force">Continuous</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label for="force-magnitude">Magnitude:</label>
+            <input type="range" id="force-magnitude" min="1" max="50" value="10" style="width: 100px;">
+            <span id="magnitude-display">10</span>
+        </div>
+        <button id="apply-force" style="background: #0078d4; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-top: 5px; cursor: pointer;">Apply Force</button>
+        <div id="selected-object-info" style="margin-top: 10px; font-size: 12px;">No object selected</div>
+    </div>
+
+    <div id="controls">
+        <h2>Physics Sandbox</h2>
+        <div id="performance-display">FPS: 0</div>
+
+        <div class="control-group">
+            <label for="object-count">Object Count: <span id="object-count-display">10</span></label>
+            <input type="range" id="object-count" min="1" max="100" value="10">
+        </div>
+
+        <div class="control-group">
+            <label>Add Objects</label>
+            <div class="button-group">
+                <button id="add-cube">Add Cube</button>
+                <button id="add-sphere">Add Sphere</button>
+                <button id="add-tetra">Add Tetrahedron</button>
+                <button id="add-octa">Add Octahedron</button>
+                <button id="add-dodeca">Add Dodecahedron</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Scene Controls</label>
+            <div class="button-group">
+                <button id="reset-scene">Reset Scene</button>
+                <button id="toggle-boundaries">Toggle Boundaries</button>
+                <button id="toggle-gravity">Toggle Gravity</button>
+                <button id="start-recording">Start Recording</button>
+                <button id="stress-test">Stress Test (100)</button>
+                <button id="instanced-stress-test">Instanced Test (200)</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="physics-step">Physics Update Rate: <span id="physics-rate-display">60 Hz</span></label>
+            <input type="range" id="physics-step" min="15" max="120" value="60">
+        </div>
+
+        <div class="control-group">
+            <label for="gravity-strength">Gravity Strength: <span id="gravity-display">9.82</span></label>
+            <input type="range" id="gravity-strength" min="0" max="20" value="9.82" step="0.1">
+        </div>
+    </div>
+
+    <div id="animation-controls" style="display: none;">
+        <button id="play-pause">Pause</button>
+        <input type="range" id="timeline" min="0" max="100" value="0">
+        <span id="time-display">0.00s</span>
+    </div>
+
+    <div id="message"></div>
+
+    <div id="debug-panel">
+        <h2>Physics Debug Controls</h2>
+
+        <h3>Rotation Controls</h3>
+        <div class="slider-container">
+            <label for="rotation-speed">Rotation Speed <span id="rotation-speed-value" class="value-display">0.2</span></label>
+            <input type="range" id="rotation-speed" min="0.05" max="0.5" step="0.01" value="0.2">
+        </div>
+        <div class="slider-container">
+            <label for="rotation-smooth">Rotation Smoothness <span id="rotation-smooth-value" class="value-display">0.2</span></label>
+            <input type="range" id="rotation-smooth" min="0.05" max="0.5" step="0.01" value="0.2">
+        </div>
+        <div class="slider-container">
+            <label for="direct-rotation">Direct Rotation % <span id="direct-rotation-value" class="value-display">30%</span></label>
+            <input type="range" id="direct-rotation" min="0" max="100" step="1" value="30">
+        </div>
+        <div class="reset-group">
+            <button id="reset-rotation">Reset Rotation Values</button>
+        </div>
+
+        <h3>Dragging Controls</h3>
+        <div class="slider-container">
+            <label for="position-smooth">Position Smoothness <span id="position-smooth-value" class="value-display">0.3</span></label>
+            <input type="range" id="position-smooth" min="0.05" max="0.8" step="0.01" value="0.3">
+        </div>
+        <div class="slider-container">
+            <label for="throw-strength">Throw Strength <span id="throw-strength-value" class="value-display">0.005</span></label>
+            <input type="range" id="throw-strength" min="0.001" max="0.01" step="0.0005" value="0.005">
+        </div>
+        <div class="slider-container">
+            <label for="random-rotation">Random Rotation <span id="random-rotation-value" class="value-display">0.05</span></label>
+            <input type="range" id="random-rotation" min="0" max="0.2" step="0.01" value="0.05">
+        </div>
+        <div class="reset-group">
+            <button id="reset-dragging">Reset Dragging Values</button>
+        </div>
+
+        <h3>Physics Controls</h3>
+        <div class="slider-container">
+            <label for="object-mass">Object Mass <span id="object-mass-value" class="value-display">1.0</span></label>
+            <input type="range" id="object-mass" min="0.1" max="5" step="0.1" value="1.0">
+        </div>
+        <div class="slider-container">
+            <label for="angular-damping">Angular Damping <span id="angular-damping-value" class="value-display">0.1</span></label>
+            <input type="range" id="angular-damping" min="0" max="0.5" step="0.01" value="0.1">
+        </div>
+        <div class="slider-container">
+            <label for="linear-damping">Linear Damping <span id="linear-damping-value" class="value-display">0.1</span></label>
+            <input type="range" id="linear-damping" min="0" max="0.5" step="0.01" value="0.1">
+        </div>
+        <div class="reset-group">
+            <button id="reset-physics">Reset Physics Values</button>
+        </div>
+
+        <div style="margin-top: 15px; text-align: center;">
+            <button id="reset-all">Reset All Values</button>
+        </div>
+    </div>
+
+    <button id="debug-toggle">Debug Controls</button>
+
+    <!-- Load libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+    <!-- Add OrbitControls for camera manipulation -->
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Main physics sandbox implementation
+        class PhysicsSandbox {
+            constructor() {
+                this.objects = [];
+                this.physicsBodies = [];
+                this.objectCount = 0;
+                this.isDragging = false;
+                this.draggedBody = null;
+                this.draggedMesh = null;
+                this.dragJoint = null;
+                this.jointBody = null;
+                this.showBoundaries = false;
+                this.boundaryMeshes = [];
+                this.raycaster = new THREE.Raycaster();
+                this.clickPosition = new THREE.Vector2();
+                this.physicsPaused = false;
+                this.physicsRate = 1/60;
+
+                // Performance tracking metrics
+                this.lastPhysicsTime = 0;
+                this.lastRenderTime = 0;
+                this.lastFrameTime = 0;
+
+                // Mouse velocity tracking
+                this.mousePositions = [];
+                this.mouseTimestamps = [];
+                this.maxMouseSamples = 10;
+                this.lastMouseVelocity = null;
+
+                // Mode system
+                this.vectorMode = false; // Start with vector mode disabled
+                this.selectedBody = null; // For vector mode: currently selected object
+                this.interactingWithObject = false; // Flag for when user is actively interacting with object
+
+                // Recording/playback variables
+                this.isRecording = false;
+                this.isReplaying = false;
+                this.recordedStates = [];
+                this.currentReplayFrame = 0;
+
+                // Custom FPS tracking
+                this.frames = 0;
+                this.lastTime = undefined;
+                this.fps = 0;
+
+                // Performance tracking
+                this.stats = new Stats();
+                document.body.appendChild(this.stats.dom);
+                this.stats.dom.style.position = 'absolute';
+                this.stats.dom.style.top = '200px';
+                this.stats.dom.style.left = '20px';
+
+                this.initThree();
+                this.initCannon();
+                this.initControls();
+                console.log("PhysicsSandbox initialized");
+                this.animate();
+            }
+
+            initThree() {
+                // Set up Three.js scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0xf0f0f0);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 5, 10);
+                this.camera.lookAt(0, 0, 0);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.shadowMap.enabled = true;
+                document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+
+                // Prevent context menu on right-click for camera rotation
+                this.renderer.domElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    return false;
+                });
+
+                // Completely deactivate OrbitControls' own event listeners for more control
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.rotateSpeed = 0.7;
+                this.controls.panSpeed = 0.7;
+                this.controls.zoomSpeed = 1.2;
+                this.controls.enablePan = true;
+                this.controls.minDistance = 3;
+                this.controls.maxDistance = 50;
+                this.controls.target.set(0, 0, 0);
+
+                // Store configuration values but dispose of OrbitControls' event handlers
+                this.controls.dispose();
+
+                // We'll manually update the camera based on our own events
+                this.cameraRotating = false;
+                this.cameraPanning = false;
+                this.cameraStartPosition = new THREE.Vector2();
+
+                console.log("OrbitControls initialized but its event handlers are disabled");
+
+                // Handle our own mouse events for both camera control and object interaction
+                const mouseDownHandler = this.onMouseDown.bind(this);
+                const mouseMoveHandler = this.onMouseMove.bind(this);
+                const mouseUpHandler = this.onMouseUp.bind(this);
+                const mouseWheelHandler = this.onMouseWheel.bind(this);
+
+                this.renderer.domElement.addEventListener('mousedown', mouseDownHandler, false);
+                this.renderer.domElement.addEventListener('mousemove', mouseMoveHandler, false);
+                this.renderer.domElement.addEventListener('mouseup', mouseUpHandler, false);
+                this.renderer.domElement.addEventListener('wheel', mouseWheelHandler, false);
+
+                // Keep these for reference but log them to debug
+                console.log("Direct event listeners added to domElement");
+
+                // No need for redundant event listeners with capture phase
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7.5);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 1024;
+                directionalLight.shadow.mapSize.height = 1024;
+                directionalLight.shadow.camera.far = 50;
+                directionalLight.shadow.camera.left = -20;
+                directionalLight.shadow.camera.right = 20;
+                directionalLight.shadow.camera.top = 20;
+                directionalLight.shadow.camera.bottom = -20;
+                this.scene.add(directionalLight);
+
+                // Add grid helper (toggleable)
+                const gridSize = 50;
+                const gridDivisions = 50;
+                this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x888888, 0xcccccc);
+                this.gridHelper.position.y = 0.01; // Slightly above the ground to prevent z-fighting
+                this.scene.add(this.gridHelper);
+
+                // Ground plane - clean white surface
+                const groundGeometry = new THREE.PlaneGeometry(50, 50);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    roughness: 0.8,
+                    metalness: 0.2,
+                    transparent: false,
+                    opacity: 1.0
+                });
+
+                this.groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+                this.groundMesh.rotation.x = -Math.PI / 2;
+                this.groundMesh.receiveShadow = true;
+                this.scene.add(this.groundMesh);
+
+                // Boundary visualization (initially hidden)
+                this.createBoundaryMeshes();
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // Mouse interaction - REMOVED DUPLICATE LISTENERS
+                // Note: Mouse event listeners are now added with capture phase above
+                this.renderer.domElement.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+                this.renderer.domElement.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+                this.renderer.domElement.addEventListener('touchend', this.onTouchEnd.bind(this));
+            }
+
+            initCannon() {
+                // Set up Cannon.js physics
+                this.world = new CANNON.World();
+                this.world.gravity.set(0, -9.82, 0);
+                this.world.broadphase = new CANNON.NaiveBroadphase();
+                this.world.solver.iterations = 10;
+                this.world.defaultContactMaterial.friction = 0.3;
+
+                // Add a softer contact material for better interaction feel
+                this.physicsMaterial = new CANNON.Material("material");
+                const contactMaterial = new CANNON.ContactMaterial(
+                    this.physicsMaterial,
+                    this.physicsMaterial,
+                    {
+                        friction: 0.3,
+                        restitution: 0.3, // More bouncy
+                        contactEquationStiffness: 1e6,
+                        contactEquationRelaxation: 3
+                    }
+                );
+                this.world.addContactMaterial(contactMaterial);
+
+                // Ground body
+                const groundShape = new CANNON.Plane();
+                const groundBody = new CANNON.Body({ mass: 0, material: this.physicsMaterial });
+                groundBody.addShape(groundShape);
+                groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+                this.world.addBody(groundBody);
+
+                // Invisible walls
+                this.createBoundaryBodies();
+
+                // Joint body for mouse interaction
+                this.jointBody = new CANNON.Body({ mass: 0 });
+                this.jointBody.addShape(new CANNON.Sphere(0.1));
+                this.jointBody.collisionFilterGroup = 0;
+                this.jointBody.collisionFilterMask = 0;
+                this.world.addBody(this.jointBody);
+
+                // Configuration for smooth interaction
+                this.dragStrength = 3.0; // Lower value means softer, more inertial dragging
+                this.throwStrength = 10.0; // Lower value for more realistic throws
+                // These will be used for spring-like dragging behavior
+                this.dragSpringStiffness = 300;
+                this.dragSpringDamping = 5;
+                this.dragSpringRange = 10;
+            }
+
+            createBoundaryBodies() {
+                // Boundary dimensions
+                const size = 25;
+                const thickness = 1;
+
+                // Create walls
+                const wallShape = new CANNON.Box(new CANNON.Vec3(size, size, thickness));
+
+                // +Z wall
+                const frontWall = new CANNON.Body({ mass: 0 });
+                frontWall.addShape(wallShape);
+                frontWall.position.set(0, size, size);
+                this.world.addBody(frontWall);
+
+                // -Z wall
+                const backWall = new CANNON.Body({ mass: 0 });
+                backWall.addShape(wallShape);
+                backWall.position.set(0, size, -size);
+                this.world.addBody(backWall);
+
+                // +X wall
+                const rightWall = new CANNON.Body({ mass: 0 });
+                rightWall.addShape(wallShape);
+                rightWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
+                rightWall.position.set(size, size, 0);
+                this.world.addBody(rightWall);
+
+                // -X wall
+                const leftWall = new CANNON.Body({ mass: 0 });
+                leftWall.addShape(wallShape);
+                leftWall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
+                leftWall.position.set(-size, size, 0);
+                this.world.addBody(leftWall);
+
+                // +Y ceiling
+                const ceilingWall = new CANNON.Body({ mass: 0 });
+                ceilingWall.addShape(wallShape);
+                ceilingWall.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+                ceilingWall.position.set(0, size * 2, 0);
+                this.world.addBody(ceilingWall);
+            }
+
+            createBoundaryMeshes() {
+                // Create transparent visualization of the boundaries
+                const size = 25;
+                const thickness = 0.5;
+                const boundaryMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+
+                // Floor is already visible
+
+                // Walls
+                const wallGeometry = new THREE.BoxGeometry(size * 2, size * 2, thickness);
+
+                // +Z wall
+                const frontWall = new THREE.Mesh(wallGeometry, boundaryMaterial);
+                frontWall.position.set(0, size, size);
+                this.scene.add(frontWall);
+                this.boundaryMeshes.push(frontWall);
+                frontWall.visible = this.showBoundaries;
+
+                // -Z wall
+                const backWall = new THREE.Mesh(wallGeometry, boundaryMaterial);
+                backWall.position.set(0, size, -size);
+                this.scene.add(backWall);
+                this.boundaryMeshes.push(backWall);
+                backWall.visible = this.showBoundaries;
+
+                // +X wall
+                const rightWall = new THREE.Mesh(wallGeometry, boundaryMaterial);
+                rightWall.rotation.y = Math.PI / 2;
+                rightWall.position.set(size, size, 0);
+                this.scene.add(rightWall);
+                this.boundaryMeshes.push(rightWall);
+                rightWall.visible = this.showBoundaries;
+
+                // -X wall
+                const leftWall = new THREE.Mesh(wallGeometry, boundaryMaterial);
+                leftWall.rotation.y = Math.PI / 2;
+                leftWall.position.set(-size, size, 0);
+                this.scene.add(leftWall);
+                this.boundaryMeshes.push(leftWall);
+                leftWall.visible = this.showBoundaries;
+
+                // +Y ceiling
+                const ceilingWall = new THREE.Mesh(wallGeometry, boundaryMaterial);
+                ceilingWall.rotation.x = Math.PI / 2;
+                ceilingWall.position.set(0, size * 2, 0);
+                this.scene.add(ceilingWall);
+                this.boundaryMeshes.push(ceilingWall);
+                ceilingWall.visible = this.showBoundaries;
+            }
+
+            toggleBoundaryVisibility() {
+                this.showBoundaries = !this.showBoundaries;
+                this.boundaryMeshes.forEach(mesh => {
+                    mesh.visible = this.showBoundaries;
+                });
+                this.showMessage(this.showBoundaries ? "Boundaries visible" : "Boundaries hidden");
+            }
+
+            initControls() {
+                // Setup UI controls
+                document.getElementById('add-cube').addEventListener('click', () => this.addObject('cube'));
+                document.getElementById('add-sphere').addEventListener('click', () => this.addObject('sphere'));
+                document.getElementById('add-tetra').addEventListener('click', () => this.addObject('tetrahedron'));
+                document.getElementById('add-octa').addEventListener('click', () => this.addObject('octahedron'));
+                document.getElementById('add-dodeca').addEventListener('click', () => this.addObject('dodecahedron'));
+                document.getElementById('reset-scene').addEventListener('click', () => this.resetScene());
+                document.getElementById('toggle-boundaries').addEventListener('click', () => this.toggleBoundaryVisibility());
+                document.getElementById('toggle-gravity').addEventListener('click', () => this.toggleGravity());
+                document.getElementById('start-recording').addEventListener('click', () => this.startRecording());
+                document.getElementById('stress-test').addEventListener('click', () => this.runStressTest());
+                document.getElementById('instanced-stress-test').addEventListener('click', () => this.runInstancedStressTest());
+
+                // Add grid toggle button
+                const controlsGroup = document.querySelector('.control-group:nth-of-type(3) .button-group');
+                const gridToggleButton = document.createElement('button');
+                gridToggleButton.id = 'toggle-grid';
+                gridToggleButton.textContent = 'Toggle Grid';
+                gridToggleButton.addEventListener('click', () => this.toggleGrid());
+                controlsGroup.appendChild(gridToggleButton);
+
+                // Add vector mode toggle button
+                const vectorModeButton = document.createElement('button');
+                vectorModeButton.id = 'toggle-vector-mode';
+                vectorModeButton.textContent = 'Vector Mode';
+                vectorModeButton.addEventListener('click', () => this.toggleVectorMode());
+                controlsGroup.appendChild(vectorModeButton);
+
+                // Set up vector control UI elements
+                document.getElementById('apply-force').addEventListener('click', () => this.applyVectorForce());
+
+                // Update magnitude display when slider moves
+                const magnitudeSlider = document.getElementById('force-magnitude');
+                const magnitudeDisplay = document.getElementById('magnitude-display');
+                magnitudeSlider.addEventListener('input', () => {
+                    magnitudeDisplay.textContent = magnitudeSlider.value;
+                });
+
+                // Gravity strength slider
+                const gravitySlider = document.getElementById('gravity-strength');
+                const gravityDisplay = document.getElementById('gravity-display');
+                gravitySlider.addEventListener('input', () => {
+                    const gravity = parseFloat(gravitySlider.value);
+                    gravityDisplay.textContent = gravity.toFixed(2);
+                    this.updateGravity(gravity);
+                });
+
+                // Add keyboard shortcut for toggling vector mode and grid
+                window.addEventListener('keydown', (event) => {
+                    if (event.key === 'v' || event.key === 'V') {
+                        this.toggleVectorMode();
+                    } else if (event.key === 'g' || event.key === 'G') {
+                        this.toggleGrid();
+                    }
+                });
+
+                // Initialize the mode indicator
+                const modeIndicatorElement = document.getElementById('mode-indicator');
+                if (modeIndicatorElement) {
+                    modeIndicatorElement.textContent = `Mode: ${this.getDisplayMode()}`;
+                    this.updateModeIndicatorColor();
+                }
+
+                // Update object info in vector mode
+                if (this.selectedBody) {
+                    setInterval(() => {
+                        this.updateSelectedObjectInfo();
+                    }, 100);
+                }
+
+                // Show camera controls help when hovering over mode indicator
+                const modeIndicator = document.getElementById('mode-indicator');
+                const cameraHelp = document.getElementById('camera-controls-help');
+                if (modeIndicator && cameraHelp) {
+                    modeIndicator.addEventListener('mouseenter', () => {
+                        cameraHelp.style.opacity = '1';
+                    });
+                    modeIndicator.addEventListener('mouseleave', () => {
+                        cameraHelp.style.opacity = '0';
+                    });
+                }
+
+                // Object count slider
+                const objectCountSlider = document.getElementById('object-count');
+                const objectCountDisplay = document.getElementById('object-count-display');
+                objectCountSlider.addEventListener('input', () => {
+                    const count = objectCountSlider.value;
+                    objectCountDisplay.textContent = count;
+                });
+
+                // Physics rate slider
+                const physicsStepSlider = document.getElementById('physics-step');
+                const physicsRateDisplay = document.getElementById('physics-rate-display');
+                physicsStepSlider.addEventListener('input', () => {
+                    const rate = parseInt(physicsStepSlider.value);
+                    this.physicsRate = 1 / rate;
+                    physicsRateDisplay.textContent = `${rate} Hz`;
+                });
+
+                // Animation controls
+                document.getElementById('play-pause').addEventListener('click', () => this.togglePlayback());
+                document.getElementById('timeline').addEventListener('input', (e) => this.scrubTimeline(e.target.value));
+
+                // Add grab response styles to the body
+                document.body.addEventListener('mouseover', (event) => {
+                    const intersects = this.getIntersections(event.clientX, event.clientY);
+                    if (intersects.length > 0 && !this.isDragging) {
+                        document.body.style.cursor = 'grab';
+                    } else if (!this.isDragging) {
+                        document.body.style.cursor = 'auto';
+                    }
+                });
+
+                // Initialize debug panel controls
+                this.initDebugControls();
+            }
+
+            initDebugControls() {
+                // Default values for reference
+                this.debugDefaults = {
+                    rotationSpeed: 0.2,
+                    rotationSmooth: 0.2,
+                    directRotation: 0.3,
+                    positionSmooth: 0.3,
+                    throwStrength: 0.005,
+                    randomRotation: 0.05,
+                    objectMass: 1.0,
+                    angularDamping: 0.1,
+                    linearDamping: 0.1
+                };
+
+                // Store current values
+                this.debugSettings = {...this.debugDefaults};
+
+                // Toggle debug panel visibility
+                const debugPanel = document.getElementById('debug-panel');
+                const debugToggle = document.getElementById('debug-toggle');
+
+                debugToggle.addEventListener('click', () => {
+                    if (debugPanel.style.display === 'none' || !debugPanel.style.display) {
+                        debugPanel.style.display = 'block';
+                        debugToggle.textContent = 'Hide Debug';
+                    } else {
+                        debugPanel.style.display = 'none';
+                        debugToggle.textContent = 'Debug Controls';
+                    }
+                });
+
+                // Setup sliders
+                this.setupSlider('rotation-speed', value => {
+                    this.debugSettings.rotationSpeed = parseFloat(value);
+                });
+
+                this.setupSlider('rotation-smooth', value => {
+                    this.debugSettings.rotationSmooth = parseFloat(value);
+                });
+
+                this.setupSlider('direct-rotation', value => {
+                    this.debugSettings.directRotation = parseInt(value) / 100;
+                    document.getElementById('direct-rotation-value').textContent = value + '%';
+                });
+
+                this.setupSlider('position-smooth', value => {
+                    this.debugSettings.positionSmooth = parseFloat(value);
+                });
+
+                this.setupSlider('throw-strength', value => {
+                    this.debugSettings.throwStrength = parseFloat(value);
+                });
+
+                this.setupSlider('random-rotation', value => {
+                    this.debugSettings.randomRotation = parseFloat(value);
+                });
+
+                this.setupSlider('object-mass', value => {
+                    this.debugSettings.objectMass = parseFloat(value);
+                    // Update existing objects
+                    this.objects.forEach(obj => {
+                        if (obj.body.type === CANNON.Body.DYNAMIC) {
+                            obj.body.mass = this.debugSettings.objectMass;
+                            obj.body.updateMassProperties();
+                        }
+                    });
+                });
+
+                this.setupSlider('angular-damping', value => {
+                    this.debugSettings.angularDamping = parseFloat(value);
+                    // Update existing objects
+                    this.objects.forEach(obj => {
+                        obj.body.angularDamping = this.debugSettings.angularDamping;
+                    });
+                });
+
+                this.setupSlider('linear-damping', value => {
+                    this.debugSettings.linearDamping = parseFloat(value);
+                    // Update existing objects
+                    this.objects.forEach(obj => {
+                        obj.body.linearDamping = this.debugSettings.linearDamping;
+                    });
+                });
+
+                // Reset buttons
+                document.getElementById('reset-rotation').addEventListener('click', () => {
+                    this.resetSliderGroup('rotation-speed', 'rotation-smooth', 'direct-rotation');
+                });
+
+                document.getElementById('reset-dragging').addEventListener('click', () => {
+                    this.resetSliderGroup('position-smooth', 'throw-strength', 'random-rotation');
+                });
+
+                document.getElementById('reset-physics').addEventListener('click', () => {
+                    this.resetSliderGroup('object-mass', 'angular-damping', 'linear-damping');
+                });
+
+                document.getElementById('reset-all').addEventListener('click', () => {
+                    this.resetAllSliders();
+                });
+            }
+
+            // Helper method to set up a slider with value display and callback
+            setupSlider(id, callback) {
+                const slider = document.getElementById(id);
+                const valueDisplay = document.getElementById(`${id}-value`);
+
+                // Initialize display
+                valueDisplay.textContent = slider.value;
+
+                // Handle slider changes
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                    callback(slider.value);
+                });
+            }
+
+            // Reset a group of sliders to their default values
+            resetSliderGroup(...ids) {
+                ids.forEach(id => {
+                    const slider = document.getElementById(id);
+                    const propertyName = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                    slider.value = this.debugDefaults[propertyName];
+                    document.getElementById(`${id}-value`).textContent =
+                        id === 'direct-rotation' ? slider.value + '%' : slider.value;
+
+                    // Trigger the callback to update the setting
+                    const event = new Event('input');
+                    slider.dispatchEvent(event);
+                });
+            }
+
+            // Reset all sliders to default values
+            resetAllSliders() {
+                this.resetSliderGroup(
+                    'rotation-speed', 'rotation-smooth', 'direct-rotation',
+                    'position-smooth', 'throw-strength', 'random-rotation',
+                    'object-mass', 'angular-damping', 'linear-damping'
+                );
+            }
+
+            addObject(type = 'cube', position = null) {
+                // Create random position if not provided
+                if (!position) {
+                    position = {
+                        x: (Math.random() - 0.5) * 8,
+                        y: Math.random() * 10 + 5,
+                        z: (Math.random() - 0.5) * 8
+                    };
+                }
+
+                // Random size and color
+                const size = Math.random() * 0.5 + 0.5;
+                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+                // Create Three.js mesh
+                let geometry, shape;
+
+                switch(type) {
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(size, 16, 16);
+                        shape = new CANNON.Sphere(size);
+                        break;
+                    case 'tetrahedron':
+                        geometry = new THREE.TetrahedronGeometry(size);
+                        geometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(geometry, 1);
+                        break;
+                    case 'octahedron':
+                        geometry = new THREE.OctahedronGeometry(size);
+                        geometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(geometry, 1);
+                        break;
+                    case 'dodecahedron':
+                        geometry = new THREE.DodecahedronGeometry(size);
+                        geometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(geometry, 1);
+                        break;
+                    case 'cube':
+                    default:
+                        geometry = new THREE.BoxGeometry(size, size, size);
+                        shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
+                        break;
+                }
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+
+                // Create Cannon.js body - use debug settings if available
+                const mass = this.debugSettings ? this.debugSettings.objectMass : 1;
+                const body = new CANNON.Body({
+                    mass: mass,
+                    position: new CANNON.Vec3(position.x, position.y, position.z),
+                    material: this.physicsMaterial
+                });
+                body.addShape(shape);
+
+                // Set damping to make it more realistic
+                body.linearDamping = 0.1; // Increased for more smooth motion
+                body.angularDamping = 0.1; // Increased for more smooth rotation
+
+                // Store metadata
+                body.userData = { size, type, color: color.getHex() };
+
+                // Set initial angular velocity for more dynamic movement
+                body.angularVelocity.set(
+                    (Math.random() - 0.5) * 0.5, // Reduced for less jittery initial movement
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+
+                this.world.addBody(body);
+
+                // Store the body and mesh pair
+                this.objects.push({ mesh, body, type });
+                this.objectCount++;
+
+                // Update counter
+                document.getElementById('object-counter').textContent = `Objects: ${this.objectCount}`;
+
+                return { mesh, body };
+            }
+
+            removeObject(index) {
+                const object = this.objects[index];
+
+                // Remove from scene
+                this.scene.remove(object.mesh);
+
+                // Properly dispose of Three.js resources
+                if (object.mesh.geometry) {
+                    object.mesh.geometry.dispose();
+                }
+
+                // Handle materials (could be an array or a single material)
+                if (object.mesh.material) {
+                    if (Array.isArray(object.mesh.material)) {
+                        object.mesh.material.forEach(material => {
+                            if (material.map) material.map.dispose();
+                            material.dispose();
+                        });
+                    } else {
+                        if (object.mesh.material.map) object.mesh.material.map.dispose();
+                        object.mesh.material.dispose();
+                    }
+                }
+
+                // Remove from physics world
+                this.world.removeBody(object.body);
+
+                // Remove from objects array
+                this.objects.splice(index, 1);
+                this.objectCount--;
+
+                // Update counter
+                document.getElementById('object-counter').textContent = `Objects: ${this.objectCount}`;
+
+                // Force garbage collection hint (not guaranteed but can help)
+                if (window.gc) window.gc();
+            }
+
+            resetScene() {
+                console.log("Resetting scene");
+
+                // Remove all objects with proper disposal
+                while (this.objects.length > 0) {
+                    this.removeObject(0);
+                }
+
+                // Manually trigger a renderer dispose and context clear
+                if (this.renderer) {
+                    this.renderer.info.reset();
+                }
+
+                // Force texture memory cleanup
+                THREE.Cache.clear();
+
+                // Add a set of objects based on slider value
+                const count = parseInt(document.getElementById('object-count').value);
+                const types = ['cube', 'sphere', 'tetrahedron', 'octahedron', 'dodecahedron'];
+                console.log(`Creating ${count} new objects`);
+
+                for (let i = 0; i < count; i++) {
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    this.addObject(type);
+                }
+
+                // Log memory stats if available
+                if (window.performance && window.performance.memory) {
+                    const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                    const memTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                    console.log(`Memory after reset: ${memUsed}MB / ${memTotal}MB`);
+                }
+
+                console.log(`Scene reset complete. ${this.objects.length} objects in scene.`);
+                this.showMessage(`Created ${count} objects`);
+            }
+
+            toggleGravity() {
+                if (this.world.gravity.y === 0) {
+                    // Get current gravity value from slider
+                    const gravityStrength = parseFloat(document.getElementById('gravity-strength').value);
+                    this.world.gravity.set(0, -gravityStrength, 0);
+                    this.showMessage("Gravity enabled");
+                } else {
+                    this.world.gravity.set(0, 0, 0);
+                    this.showMessage("Gravity disabled");
+                }
+            }
+
+            // New method to update gravity strength
+            updateGravity(strength) {
+                // Only update if gravity is currently enabled
+                if (this.world.gravity.y !== 0) {
+                    this.world.gravity.set(0, -strength, 0);
+                }
+                this.showMessage(`Gravity set to ${strength.toFixed(2)}`);
+            }
+
+            startRecording() {
+                if (this.isRecording) {
+                    // Stop recording and enable playback
+                    this.isRecording = false;
+                    document.getElementById('start-recording').textContent = "Start Recording";
+                    document.getElementById('animation-controls').style.display = 'flex';
+                    document.getElementById('timeline').max = this.recordedStates.length - 1;
+                    this.showMessage("Recording stopped. Use the timeline to scrub.");
+                    this.physicsPaused = true;
+
+                    // Switch to replay mode
+                    this.isReplaying = true;
+                    this.currentReplayFrame = 0;
+                    document.getElementById('timeline').value = 0;
+                    document.getElementById('play-pause').textContent = "Play";
+                } else {
+                    // Start recording
+                    this.recordedStates = [];
+                    this.isRecording = true;
+                    document.getElementById('start-recording').textContent = "Stop Recording";
+                    this.showMessage("Recording started...");
+
+                    // Hide playback controls during recording
+                    document.getElementById('animation-controls').style.display = 'none';
+                }
+            }
+
+            recordCurrentState() {
+                if (!this.isRecording) return;
+
+                const state = {
+                    time: this.world.time,
+                    bodies: this.objects.map(obj => ({
+                        position: { ...obj.body.position },
+                        quaternion: { ...obj.body.quaternion },
+                        velocity: { ...obj.body.velocity },
+                        angularVelocity: { ...obj.body.angularVelocity },
+                        type: obj.type,
+                        userData: obj.body.userData
+                    }))
+                };
+
+                this.recordedStates.push(state);
+
+                // Update timeline during recording
+                if (this.recordedStates.length % 10 === 0) {
+                    document.getElementById('time-display').textContent =
+                        `${this.world.time.toFixed(2)}s`;
+                }
+            }
+
+            applyRecordedState(frameIndex) {
+                if (frameIndex >= this.recordedStates.length || frameIndex < 0) return;
+
+                const state = this.recordedStates[frameIndex];
+
+                // Make sure we have the right number of objects
+                while (this.objects.length < state.bodies.length) {
+                    // Create missing objects
+                    const bodyState = state.bodies[this.objects.length];
+                    this.addObject(bodyState.type, bodyState.position);
+                }
+
+                while (this.objects.length > state.bodies.length) {
+                    // Remove excess objects
+                    this.removeObject(this.objects.length - 1);
+                }
+
+                // Update object states
+                for (let i = 0; i < state.bodies.length; i++) {
+                    const bodyState = state.bodies[i];
+                    const obj = this.objects[i];
+
+                    // Update body state
+                    obj.body.position.copy(bodyState.position);
+                    obj.body.quaternion.copy(bodyState.quaternion);
+                }
+
+                document.getElementById('time-display').textContent =
+                    `${state.time.toFixed(2)}s`;
+
+                document.getElementById('timeline').value = frameIndex;
+            }
+
+            togglePlayback() {
+                if (!this.isReplaying) return;
+
+                this.physicsPaused = !this.physicsPaused;
+
+                if (this.physicsPaused) {
+                    document.getElementById('play-pause').textContent = "Play";
+                } else {
+                    document.getElementById('play-pause').textContent = "Pause";
+
+                    // If we're at the end, restart
+                    if (this.currentReplayFrame >= this.recordedStates.length - 1) {
+                        this.currentReplayFrame = 0;
+                    }
+                }
+            }
+
+            scrubTimeline(value) {
+                this.currentReplayFrame = parseInt(value);
+                this.applyRecordedState(this.currentReplayFrame);
+                this.physicsPaused = true;
+                document.getElementById('play-pause').textContent = "Play";
+            }
+
+            showMessage(text, duration = 2000) {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = text;
+                messageEl.style.opacity = 1;
+
+                clearTimeout(this.messageTimeout);
+                this.messageTimeout = setTimeout(() => {
+                    messageEl.style.opacity = 0;
+                }, duration);
+            }
+
+            getIntersections(clientX, clientY) {
+                // Convert mouse position to normalized device coordinates
+                this.clickPosition.x = (clientX / window.innerWidth) * 2 - 1;
+                this.clickPosition.y = - (clientY / window.innerHeight) * 2 + 1;
+
+                // Perform raycasting
+                this.raycaster.setFromCamera(this.clickPosition, this.camera);
+
+                // Get intersections with meshes
+                const meshes = this.objects.map(o => o.mesh);
+                const intersects = this.raycaster.intersectObjects(meshes);
+
+                // Debug info: log intersection details
+                if (intersects.length > 0) {
+                    console.log(`Found ${intersects.length} intersections`);
+                }
+
+                return intersects;
+            }
+
+            onMouseDown(event) {
+                // Skip if we're in replay mode
+                if (this.isReplaying) {
+                    console.log("Skipping mouse down - in replay mode");
+                    return;
+                }
+
+                console.log("Mouse down at", event.clientX, event.clientY);
+
+                // Get intersections with objects first to determine if we're interacting with an object
+                const intersects = this.getIntersections(event.clientX, event.clientY);
+                console.log(`Mouse down: Found ${intersects.length} intersections`);
+
+                // Handle vector mode selection first
+                if (this.vectorMode) {
+                    console.log("Processing in Vector mode");
+                    if (intersects.length > 0) {
+                        // Find the corresponding body
+                        const intersectedMesh = intersects[0].object;
+                        const objectIndex = this.objects.findIndex(o => o.mesh === intersectedMesh);
+
+                        if (objectIndex !== -1) {
+                            console.log(`Selected object at index ${objectIndex}`);
+                            // When selecting an object in vector mode:
+                            this.interactingWithObject = true;
+                            console.log("Object interaction started");
+
+                            // Select this object
+                            this.selectedBody = this.objects[objectIndex].body;
+                            this.highlightSelectedObject();
+                            this.updateSelectedObjectInfo();
+                            this.showMessage(`Selected ${this.objects[objectIndex].type} for vector forces`);
+
+                            // Prevent further processing - we're now in object selection mode
+                            event.stopPropagation();
+                            return;
+                        }
+                    } else {
+                        // Clicked empty space, deselect
+                        this.selectedBody = null;
+                        this.highlightSelectedObject();
+                        this.updateSelectedObjectInfo();
+                        console.log("Clicked empty space in Vector mode, deselected");
+
+                        // End interaction status
+                        if (this.interactingWithObject) {
+                            this.interactingWithObject = false;
+                            console.log("Object interaction ended");
+                        }
+                    }
+
+                    // Allow camera control in empty areas even in vector mode
+                }
+
+                // Physics mode interaction - if we found an object, handle it before camera controls
+                if (!this.vectorMode && intersects.length > 0) {
+                    console.log("Found object to drag in physics mode");
+                    // Disable camera movement during drag (by setting flag)
+                    this.interactingWithObject = true;
+                    console.log("Object interaction started - camera movements disabled");
+
+                    this.isDragging = true;
+                    document.body.style.cursor = 'grabbing';
+
+                    // Find the corresponding body
+                    const intersectedMesh = intersects[0].object;
+                    const objectIndex = this.objects.findIndex(o => o.mesh === intersectedMesh);
+
+                    if (objectIndex !== -1) {
+                        console.log(`Starting drag for object at index ${objectIndex}`);
+                        this.draggedMesh = intersectedMesh;
+                        this.draggedBody = this.objects[objectIndex].body;
+
+                        // Rest of existing drag setup code...
+                        // Store the impact point for more accurate dragging
+                        const hitPoint = intersects[0].point;
+                        this.hitPointOffset = new CANNON.Vec3(
+                            hitPoint.x - this.draggedBody.position.x,
+                            hitPoint.y - this.draggedBody.position.y,
+                            hitPoint.z - this.draggedBody.position.z
+                        );
+
+                        // Save dragged body mass - we'll make it lighter while dragging
+                        this.originalBodyMass = this.draggedBody.mass;
+                        this.originalBodyType = this.draggedBody.type;
+
+                        // Save current gravity for restoration
+                        this.savedGravity = new CANNON.Vec3().copy(this.world.gravity);
+
+                        // Save the current angular velocity for preservation
+                        this.savedAngularVelocity = new CANNON.Vec3().copy(this.draggedBody.angularVelocity);
+
+                        // Dampen the angular velocity but preserve some rotation
+                        this.draggedBody.angularVelocity.scale(0.7);
+
+                        // Temporarily switch to kinematic mode for more precise control
+                        this.draggedBody.type = CANNON.Body.KINEMATIC;
+                        this.draggedBody.updateMassProperties();
+
+                        // Initialize the target position for smooth drag
+                        this.targetPosition = new THREE.Vector3().copy(this.draggedBody.position);
+
+                        // Reset drag history for new drag
+                        this.dragPositions = [];
+                        this.dragTimestamps = [];
+
+                        // Track this event for throwing calculations
+                        this.dragPositions.push({
+                            time: performance.now(),
+                            x: event.clientX,
+                            y: event.clientY,
+                            z: 0
+                        });
+
+                        // Create a plane for dragging that's perpendicular to the camera
+                        this.dragPlane = new THREE.Plane();
+                        const planeNormal = new THREE.Vector3().copy(this.camera.position).sub(this.draggedBody.position).normalize();
+                        this.dragPlane.setFromNormalAndCoplanarPoint(
+                            planeNormal,
+                            new THREE.Vector3(
+                                this.draggedBody.position.x,
+                                this.draggedBody.position.y,
+                                this.draggedBody.position.z
+                            )
+                        );
+
+                        console.log("Object drag configuration completed");
+                        this.showMessage(`Grabbed ${this.objects[objectIndex].type} - Scroll to rotate`);
+                        return;
+                    }
+                }
+
+                // If we get here, we're not interacting with an object, so handle camera controls
+
+                // Handle left-click for camera rotation (like original OrbitControls)
+                if (event.button === 0 && !this.interactingWithObject) {
+                    // Left mouse button - for camera rotation
+                    this.cameraRotating = true;
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    event.preventDefault();
+                    console.log("Starting camera rotation with left mouse button");
+                    document.body.style.cursor = 'move';
+                    return;
+                }
+
+                // Handle right-click or middle-click for camera panning
+                if ((event.button === 2 || event.button === 1) && !this.interactingWithObject) {
+                    // Right or middle mouse button - for camera panning
+                    this.cameraPanning = true;
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    event.preventDefault();
+                    console.log("Starting camera panning with right/middle mouse button");
+                    document.body.style.cursor = 'move';
+                    return;
+                }
+
+                console.log("No camera or object interaction occurred");
+            }
+
+            onMouseMove(event) {
+                // Skip if we're in replay mode
+                if (this.isReplaying) return;
+
+                // Handle camera rotation
+                if (this.cameraRotating) {
+                    const deltaX = event.clientX - this.cameraStartPosition.x;
+                    const deltaY = event.clientY - this.cameraStartPosition.y;
+
+                    // Rotate camera - similar to what OrbitControls would do
+                    const rotateSpeed = 0.005;
+                    this.camera.position.sub(this.controls.target);
+
+                    // Rotate around vertical axis
+                    const quaternionY = new THREE.Quaternion();
+                    quaternionY.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotateSpeed);
+                    this.camera.position.applyQuaternion(quaternionY);
+
+                    // Rotate around horizontal axis
+                    const right = new THREE.Vector3();
+                    right.crossVectors(this.camera.up, this.camera.position).normalize();
+                    const quaternionX = new THREE.Quaternion();
+                    quaternionX.setFromAxisAngle(right, -deltaY * rotateSpeed);
+                    this.camera.position.applyQuaternion(quaternionX);
+
+                    this.camera.position.add(this.controls.target);
+                    this.camera.lookAt(this.controls.target);
+
+                    // Reset start position for next move
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    return;
+                }
+
+                // Handle camera panning
+                if (this.cameraPanning) {
+                    const deltaX = event.clientX - this.cameraStartPosition.x;
+                    const deltaY = event.clientY - this.cameraStartPosition.y;
+
+                    // Pan camera - similar to what OrbitControls would do
+                    const panSpeed = 0.01;
+                    const distance = this.camera.position.distanceTo(this.controls.target);
+
+                    // Calculate horizontal and vertical pan directions
+                    const right = new THREE.Vector3();
+                    right.crossVectors(this.camera.up, this.camera.position.clone().sub(this.controls.target)).normalize();
+
+                    const horizontalPan = right.clone().multiplyScalar(-deltaX * panSpeed * distance);
+                    const verticalPan = this.camera.up.clone().multiplyScalar(deltaY * panSpeed * distance);
+
+                    // Apply pan to both camera and target
+                    this.camera.position.add(horizontalPan).add(verticalPan);
+                    this.controls.target.add(horizontalPan).add(verticalPan);
+
+                    // Reset start position for next move
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    return;
+                }
+
+                // Update cursor on hover (when not dragging)
+                if (!this.isDragging) {
+                    const intersects = this.getIntersections(event.clientX, event.clientY);
+                    if (intersects.length > 0) {
+                        document.body.style.cursor = 'grab';
+                    } else {
+                        document.body.style.cursor = 'auto';
+                    }
+                }
+
+                // Track drag positions for throw velocity calculations
+                if (this.isDragging) {
+                    const now = performance.now();
+                    this.dragPositions.push({
+                        time: now,
+                        x: event.clientX,
+                        y: event.clientY,
+                        z: 0
+                    });
+
+                    // Keep only the last 5 positions for smoother velocity calculation
+                    if (this.dragPositions.length > 5) {
+                        this.dragPositions.shift();
+                    }
+                }
+
+                if (this.isDragging && this.draggedBody) {
+                    console.log("Updating drag position");
+                    // Create a ray from the camera to the mouse
+                    this.clickPosition.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    this.clickPosition.y = - (event.clientY / window.innerHeight) * 2 + 1;
+                    this.raycaster.setFromCamera(this.clickPosition, this.camera);
+
+                    // Find where the ray intersects the drag plane
+                    const targetPoint = new THREE.Vector3();
+                    const intersected = this.raycaster.ray.intersectPlane(this.dragPlane, targetPoint);
+
+                    if (!intersected) {
+                        console.log("Failed to intersect with drag plane");
+                        return;
+                    }
+
+                    // Update the target position with smoothing
+                    if (!this.targetPosition) {
+                        this.targetPosition = new THREE.Vector3().copy(targetPoint);
+                    } else {
+                        // Generate new target position to track the cursor
+                        this.targetPosition.copy(targetPoint);
+                    }
+
+                    // Apply smooth interpolation - use debug setting
+                    const smoothFactor = this.debugSettings.positionSmooth;
+                    const newPosition = new THREE.Vector3();
+                    newPosition.copy(this.draggedBody.position);
+                    newPosition.lerp(this.targetPosition, smoothFactor);
+
+                    // Debug drag position
+                    console.log(`Dragging to: ${newPosition.x.toFixed(2)}, ${newPosition.y.toFixed(2)}, ${newPosition.z.toFixed(2)}`);
+
+                    // Update the body position
+                    this.draggedBody.position.copy(newPosition);
+
+                    // Apply smooth rotation if there's a target quaternion
+                    if (this.targetQuaternion) {
+                        console.log("Applying smooth rotation from target quaternion");
+                        // Create a temporary CANNON quaternion from the current body quaternion
+                        const currentQuaternion = new CANNON.Quaternion().copy(this.draggedBody.quaternion);
+
+                        // Interpolate between current and target quaternion (SLERP)
+                        // We can mimic SLERP with a weighted average for simple implementation
+                        const rotationSmoothFactor = this.debugSettings.rotationSmooth;
+
+                        // Calculate the difference quaternion
+                        const diffQuaternion = this.targetQuaternion.mult(currentQuaternion.inverse());
+
+                        // Scale it down for smooth interpolation
+                        const angle = 2 * Math.acos(diffQuaternion.w);
+                        const sinHalfAngle = Math.sin(angle / 2);
+
+                        if (sinHalfAngle !== 0) {
+                            const axis = new CANNON.Vec3(
+                                diffQuaternion.x / sinHalfAngle,
+                                diffQuaternion.y / sinHalfAngle,
+                                diffQuaternion.z / sinHalfAngle
+                            );
+
+                            // Create a scaled rotation
+                            const scaledQuaternion = new CANNON.Quaternion();
+                            scaledQuaternion.setFromAxisAngle(axis, angle * rotationSmoothFactor);
+
+                            // Apply the scaled rotation
+                            this.draggedBody.quaternion = scaledQuaternion.mult(currentQuaternion);
+                            console.log("Smooth rotation applied");
+                        }
+                    }
+
+                    // Add a subtle random rotation while dragging for more tactile feel
+                    // Only add random rotation if we're not using wheel rotation
+                    if (!this.targetQuaternion) {
+                        const rotationSpeed = this.debugSettings.randomRotation;
+                        this.draggedBody.angularVelocity.set(
+                            (Math.random() - 0.5) * rotationSpeed,
+                            (Math.random() - 0.5) * rotationSpeed,
+                            (Math.random() - 0.5) * rotationSpeed
+                        );
+                    }
+                }
+            }
+
+            onMouseUp(event) {
+                // Skip if we're in replay mode
+                if (this.isReplaying) {
+                    console.log("Skipping mouse up - in replay mode");
+                    return;
+                }
+
+                console.log("Mouse up event", this.isDragging ? "with active drag" : "no active drag");
+
+                // End camera rotation/panning if active
+                if (this.cameraRotating || this.cameraPanning) {
+                    this.cameraRotating = false;
+                    this.cameraPanning = false;
+                    document.body.style.cursor = 'auto';
+                    console.log("Camera movement ended");
+                    return;
+                }
+
+                // End object interaction if we're not in vector mode with selected object
+                if (this.interactingWithObject && !(this.vectorMode && this.selectedBody)) {
+                    this.interactingWithObject = false;
+                    console.log("Object interaction ended");
+                }
+
+                // Skip rest of physical interaction if in vector mode
+                if (this.vectorMode) {
+                    console.log("In Vector mode - skipping physics release logic");
+                    return;
+                }
+
+                if (this.isDragging && this.draggedBody) {
+                    console.log("Completing drag and applying throw velocity");
+                    // Reset cursor
+                    document.body.style.cursor = 'auto';
+
+                    // Restore original body type
+                    this.draggedBody.type = this.originalBodyType || CANNON.Body.DYNAMIC;
+
+                    // Restore original mass
+                    if (this.originalBodyMass) {
+                        this.draggedBody.mass = this.originalBodyMass;
+                        this.draggedBody.updateMassProperties();
+                    }
+
+                    // Restore gravity
+                    if (this.savedGravity) {
+                        this.world.gravity.copy(this.savedGravity);
+                    }
+
+                    // Calculate throw velocity from drag motion history
+                    const throwVelocity = this.calculateThrowVelocity();
+                    if (throwVelocity) {
+                        console.log(`Applying throw velocity: ${throwVelocity.x.toFixed(2)}, ${throwVelocity.y.toFixed(2)}, ${throwVelocity.z.toFixed(2)}`);
+                        this.draggedBody.velocity.copy(throwVelocity);
+                    }
+
+                    // Blend previous angular velocity with new random component
+                    if (this.savedAngularVelocity) {
+                        // Add some random spin for added realism
+                        const randomSpin = new CANNON.Vec3(
+                            (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 2
+                        );
+
+                        // Blend previous rotation with new random component
+                        this.draggedBody.angularVelocity.set(
+                            this.savedAngularVelocity.x * 0.5 + randomSpin.x * 0.5,
+                            this.savedAngularVelocity.y * 0.5 + randomSpin.y * 0.5,
+                            this.savedAngularVelocity.z * 0.5 + randomSpin.z * 0.5
+                        );
+                    }
+
+                    this.showMessage("Object thrown");
+                } else {
+                    console.log("Mouse up without active drag");
+                }
+
+                // Reset drag state
+                this.isDragging = false;
+                this.draggedBody = null;
+                this.draggedMesh = null;
+                this.originalBodyMass = null;
+                this.originalBodyType = null;
+                this.dragPlane = null;
+                this.targetPosition = null;
+                this.targetQuaternion = null;
+                this.isShowingRotationCue = false;
+            }
+
+            // Calculate throw velocity based on drag history
+            calculateThrowVelocity() {
+                if (!this.dragPositions || this.dragPositions.length < 2) {
+                    return new CANNON.Vec3(0, 0, 0);
+                }
+
+                // Use the most recent positions for velocity calculation
+                const latest = this.dragPositions[this.dragPositions.length - 1];
+                const earliest = this.dragPositions[0];
+
+                // Calculate time difference in seconds
+                const timeDiff = (latest.time - earliest.time) / 1000;
+                if (timeDiff <= 0) return new CANNON.Vec3(0, 0, 0);
+
+                // Calculate screen velocity
+                const pixelVelocityX = (latest.x - earliest.x) / timeDiff;
+                const pixelVelocityY = (latest.y - earliest.y) / timeDiff;
+
+                // Convert to world velocity (scaled by window size)
+                // Higher coefficient = more responsive throws, lower = more gentle
+                const velocityCoefficient = this.debugSettings.throwStrength;
+                const velocityX = pixelVelocityX * velocityCoefficient;
+                const velocityY = -pixelVelocityY * velocityCoefficient; // Y is inverted in screen space
+
+                // Add depth component based on the x and y velocity
+                // This makes throws in the z-axis more natural based on 2D mouse movement
+                const velocityZ = -(pixelVelocityY * velocityCoefficient * 0.7);
+
+                // Create the velocity vector
+                const throwVelocity = new CANNON.Vec3(velocityX, velocityY, velocityZ);
+
+                // Cap the maximum velocity for more realistic physics
+                const maxVelocity = 15;
+                const currentSpeed = throwVelocity.length();
+                if (currentSpeed > maxVelocity) {
+                    throwVelocity.scale(maxVelocity / currentSpeed);
+                }
+
+                return throwVelocity;
+            }
+
+            onTouchStart(event) {
+                event.preventDefault();
+
+                if (event.touches.length === 1) {
+                    const touch = event.touches[0];
+                    this.onMouseDown({
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                }
+            }
+
+            onTouchMove(event) {
+                event.preventDefault();
+
+                if (event.touches.length === 1) {
+                    const touch = event.touches[0];
+                    this.onMouseMove({
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                }
+            }
+
+            onTouchEnd(event) {
+                this.onMouseUp(event);
+            }
+
+            updatePhysics() {
+                // Skip physics update if paused
+                if (this.physicsPaused) return;
+
+                // Measure physics update time
+                const physicsStartTime = performance.now();
+
+                // Record current state if recording
+                if (this.isRecording) {
+                    this.recordCurrentState();
+                }
+
+                // Handle replay mode
+                if (this.isReplaying && !this.physicsPaused) {
+                    this.currentReplayFrame++;
+                    if (this.currentReplayFrame >= this.recordedStates.length) {
+                        this.currentReplayFrame = 0;
+                    }
+                    this.applyRecordedState(this.currentReplayFrame);
+
+                    // Measure physics time
+                    const physicsEndTime = performance.now();
+                    this.lastPhysicsTime = physicsEndTime - physicsStartTime;
+
+                    return;
+                }
+
+                // Step the physics world
+                this.world.step(this.physicsRate);
+
+                // Update regular meshes to match physics bodies
+                this.objects.forEach(object => {
+                    object.mesh.position.copy(object.body.position);
+                    object.mesh.quaternion.copy(object.body.quaternion);
+                });
+
+                // Update instanced objects if available
+                if (this.updateInstancedMeshes && this.instancedObjects) {
+                    this.updateInstancedObjects();
+                }
+
+                // Measure physics time
+                const physicsEndTime = performance.now();
+                this.lastPhysicsTime = physicsEndTime - physicsStartTime;
+            }
+
+            animate() {
+                // Schedule next frame and store the ID
+                this._animationFrameId = requestAnimationFrame(this.animate.bind(this));
+
+                try {
+                    // Measure overall frame time
+                    const frameStartTime = performance.now();
+
+                    // Update stats if available
+                    if (this.stats) {
+                        try {
+                            this.stats.update();
+                        } catch (e) {
+                            console.warn('Stats update error:', e);
+                        }
+                    }
+
+                    // Debug object count periodically
+                    if (this.frames % 60 === 0) {
+                        console.log(`Active objects: ${this.objects.length}`);
+                    }
+
+                    // Safe FPS display update
+                    if (this.lastTime === undefined) {
+                        this.lastTime = performance.now();
+                        this.frames = 0;
+                        this.fps = 0;
+                    } else {
+                        const now = performance.now();
+                        this.frames++;
+
+                        // Update FPS calculation once per second
+                        if (now - this.lastTime > 1000) {
+                            this.fps = Math.round(this.frames * 1000 / (now - this.lastTime));
+                            this.lastTime = now;
+                            this.frames = 0;
+
+                            // Update display
+                            const perfDisplay = document.getElementById('performance-display');
+                            if (perfDisplay) {
+                                perfDisplay.textContent = `FPS: ${this.fps}`;
+                            }
+
+                            // Update the detailed metrics display
+                            this.updatePerformanceMetrics();
+                        }
+                    }
+
+                    // Update physics with error handling
+                    try {
+                        this.updatePhysics();
+                    } catch (e) {
+                        console.error('Physics update error:', e);
+                    }
+
+                    // Measure render time
+                    const renderStartTime = performance.now();
+
+                    // Render scene with error handling
+                    try {
+                        if (this.renderer && this.scene && this.camera) {
+                            this.renderer.render(this.scene, this.camera);
+                        }
+                    } catch (e) {
+                        console.error('Rendering error:', e);
+                    }
+
+                    // Store render time
+                    const renderEndTime = performance.now();
+                    this.lastRenderTime = renderEndTime - renderStartTime;
+
+                    // Store total frame time
+                    const frameEndTime = performance.now();
+                    this.lastFrameTime = frameEndTime - frameStartTime;
+                } catch (e) {
+                    console.error('Animation loop error:', e);
+                }
+            }
+
+            // Update the performance metrics display
+            updatePerformanceMetrics() {
+                try {
+                    // Update FPS value
+                    const fpsElement = document.getElementById('fps-value');
+                    if (fpsElement) {
+                        fpsElement.textContent = this.fps;
+
+                        // Color-code based on performance
+                        if (this.fps >= 55) {
+                            fpsElement.style.color = '#4CAF50'; // Green
+                        } else if (this.fps >= 30) {
+                            fpsElement.style.color = '#FFC107'; // Yellow
+                        } else {
+                            fpsElement.style.color = '#F44336'; // Red
+                        }
+                    }
+
+                    // Update physics time
+                    const physicsElement = document.getElementById('physics-time');
+                    if (physicsElement && this.lastPhysicsTime !== undefined) {
+                        physicsElement.textContent = `${this.lastPhysicsTime.toFixed(2)} ms`;
+
+                        // Color-code based on performance
+                        if (this.lastPhysicsTime < 5) {
+                            physicsElement.style.color = '#4CAF50'; // Green
+                        } else if (this.lastPhysicsTime < 10) {
+                            physicsElement.style.color = '#FFC107'; // Yellow
+                        } else {
+                            physicsElement.style.color = '#F44336'; // Red
+                        }
+                    }
+
+                    // Update render time
+                    const renderElement = document.getElementById('render-time');
+                    if (renderElement && this.lastRenderTime !== undefined) {
+                        renderElement.textContent = `${this.lastRenderTime.toFixed(2)} ms`;
+
+                        // Color-code based on performance
+                        if (this.lastRenderTime < 5) {
+                            renderElement.style.color = '#4CAF50'; // Green
+                        } else if (this.lastRenderTime < 10) {
+                            renderElement.style.color = '#FFC107'; // Yellow
+                        } else {
+                            renderElement.style.color = '#F44336'; // Red
+                        }
+                    }
+
+                    // Update memory usage - accurate tracking
+                    const memoryElement = document.getElementById('memory-usage');
+                    if (memoryElement) {
+                        let memoryUsage = 0;
+                        let memoryText = "Not available";
+                        let memoryColor = '#FFFFFF';
+
+                        // Try using performance.memory if available (Chrome)
+                        if (window.performance && window.performance.memory) {
+                            const memoryInfo = window.performance.memory;
+                            const totalJSHeap = memoryInfo.totalJSHeapSize;
+                            const usedJSHeap = memoryInfo.usedJSHeapSize;
+
+                            // Convert to MB for display
+                            const usedMB = Math.round(usedJSHeap / (1024 * 1024));
+                            const totalMB = Math.round(totalJSHeap / (1024 * 1024));
+
+                            memoryUsage = usedMB;
+                            memoryText = `${usedMB} MB / ${totalMB} MB`;
+
+                            // Color code based on memory usage percentage
+                            const usagePercentage = (usedJSHeap / totalJSHeap) * 100;
+                            if (usagePercentage < 60) {
+                                memoryColor = '#4CAF50'; // Green
+                            } else if (usagePercentage < 85) {
+                                memoryColor = '#FFC107'; // Yellow
+                            } else {
+                                memoryColor = '#F44336'; // Red
+                            }
+                        } else {
+                            // Fallback for browsers without performance.memory
+                            // Use Three.js info if available
+                            if (this.renderer && this.renderer.info) {
+                                const info = this.renderer.info;
+
+                                // Calculate approx memory from Three.js metrics
+                                // This is an estimation based on geometry, textures, and shaders
+                                const geometryMemory = info.memory.geometries * 5; // approx 5MB per geometry on average
+                                const textureMemory = info.memory.textures * 10;   // approx 10MB per texture on average
+
+                                // Total memory in MB (rough estimate)
+                                memoryUsage = geometryMemory + textureMemory;
+
+                                memoryText = `~${memoryUsage} MB (est.)`;
+
+                                // Color based on object count
+                                if (this.objects.length < 50) {
+                                    memoryColor = '#4CAF50'; // Green
+                                } else if (this.objects.length < 100) {
+                                    memoryColor = '#FFC107'; // Yellow
+                                } else {
+                                    memoryColor = '#F44336'; // Red
+                                }
+                            }
+                        }
+
+                        // Add Three.js specific memory info
+                        if (this.renderer && this.renderer.info) {
+                            const info = this.renderer.info;
+
+                            // Add detailed stats if available
+                            memoryText += `<br>Geometries: ${info.memory.geometries}`;
+                            memoryText += `<br>Textures: ${info.memory.textures}`;
+
+                            // Add render stats
+                            memoryText += `<br>Draw calls: ${info.render.calls}`;
+                            memoryText += `<br>Triangles: ${info.render.triangles.toLocaleString()}`;
+
+                            // Store this information for debugging and performance tuning
+                            this.lastMemoryUsage = memoryUsage;
+                            this.lastThreeJSInfo = {
+                                geometries: info.memory.geometries,
+                                textures: info.memory.textures,
+                                drawCalls: info.render.calls,
+                                triangles: info.render.triangles
+                            };
+                        }
+
+                        memoryElement.innerHTML = memoryText;
+                        memoryElement.style.color = memoryColor;
+                    }
+                } catch (e) {
+                    console.warn('Error updating performance metrics:', e);
+                }
+            }
+
+            /**
+             * Run a stress test by creating multiple objects at once
+             * Allows testing how many objects the physics engine can handle
+             */
+            runStressTest() {
+                // Default to 100 objects if not specified
+                const count = 100;
+
+                // Show a message
+                this.showMessage(`Starting stress test with ${count} objects...`);
+
+                // Log initial memory state
+                if (window.performance && window.performance.memory) {
+                    const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                    const memTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                    console.log(`Memory before stress test: ${memUsed}MB / ${memTotal}MB`);
+                }
+
+                // Clear existing objects first with proper cleanup
+                while (this.objects.length > 0) {
+                    this.removeObject(0);
+                }
+
+                // Clear any cached resources
+                THREE.Cache.clear();
+
+                // Reset renderer info
+                if (this.renderer) {
+                    this.renderer.info.reset();
+                }
+
+                // Force a renderer context refresh
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+                // Create objects in batches to avoid freezing the browser
+                const batchSize = 20;
+                const types = ['cube', 'sphere', 'tetrahedron', 'octahedron', 'dodecahedron'];
+
+                const createBatch = (remaining, batchIndex) => {
+                    // Create a batch of objects
+                    const batchCount = Math.min(batchSize, remaining);
+
+                    // Start with a grid layout for more controlled testing
+                    const gridSize = Math.ceil(Math.sqrt(count));
+                    const spacing = 1.2;
+
+                    for (let i = 0; i < batchCount; i++) {
+                        const index = batchIndex * batchSize + i;
+                        const row = Math.floor(index / gridSize);
+                        const col = index % gridSize;
+
+                        // Create position in a grid formation with some height variation
+                        const position = {
+                            x: (col - gridSize/2) * spacing,
+                            y: 5 + (row * 0.2),
+                            z: (row - gridSize/2) * spacing
+                        };
+
+                        // Add random offset for more natural distribution
+                        position.x += (Math.random() - 0.5) * 0.5;
+                        position.z += (Math.random() - 0.5) * 0.5;
+
+                        // Pick a random shape type
+                        const type = types[Math.floor(Math.random() * types.length)];
+
+                        // Create the object
+                        this.addObject(type, position);
+                    }
+
+                    // Update message
+                    const created = Math.min((batchIndex + 1) * batchSize, count);
+                    this.showMessage(`Created ${created}/${count} objects...`);
+
+                    // Schedule next batch if needed
+                    if (remaining > batchSize) {
+                        setTimeout(() => {
+                            createBatch(remaining - batchSize, batchIndex + 1);
+
+                            // Log intermediate memory stats
+                            if (window.performance && window.performance.memory && batchIndex % 2 === 0) {
+                                const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                                console.log(`Memory after batch ${batchIndex+1}: ${memUsed}MB`);
+                            }
+
+                        }, 50); // 50ms delay between batches
+                    } else {
+                        // All objects created
+                        this.showMessage(`Stress test complete: ${count} objects created`);
+
+                        // Log final memory state
+                        if (window.performance && window.performance.memory) {
+                            const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                            const memTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                            console.log(`Memory after stress test: ${memUsed}MB / ${memTotal}MB`);
+                        }
+
+                        // Apply a random impulse to all objects to make it more interesting
+                        setTimeout(() => {
+                            this.objects.forEach(object => {
+                                const impulse = new CANNON.Vec3(
+                                    (Math.random() - 0.5) * 5,
+                                    Math.random() * 5,
+                                    (Math.random() - 0.5) * 5
+                                );
+                                object.body.applyImpulse(impulse, object.body.position);
+                            });
+                            this.showMessage('Objects activated!');
+                        }, 1000);
+                    }
+                };
+
+                // Start the first batch
+                createBatch(count, 0);
+            }
+
+            /**
+             * Properly dispose of resources to prevent memory leaks
+             */
+            dispose() {
+                // Stop the animation loop
+                if (this._animationFrameId) {
+                    cancelAnimationFrame(this._animationFrameId);
+                }
+
+                // Store bound handlers so we can remove them properly
+                const boundMouseDown = this.onMouseDown.bind(this);
+                const boundMouseMove = this.onMouseMove.bind(this);
+                const boundMouseUp = this.onMouseUp.bind(this);
+                const boundTouchStart = this.onTouchStart.bind(this);
+                const boundTouchMove = this.onTouchMove.bind(this);
+                const boundTouchEnd = this.onTouchEnd.bind(this);
+
+                // Remove event listeners - make sure to match capture phase
+                window.removeEventListener('resize', this.handleResize);
+                this.renderer.domElement.removeEventListener('mousedown', boundMouseDown, false);
+                this.renderer.domElement.removeEventListener('mousemove', boundMouseMove, false);
+                this.renderer.domElement.removeEventListener('mouseup', boundMouseUp, false);
+                this.renderer.domElement.removeEventListener('wheel', this.onMouseWheel.bind(this), false);
+                this.renderer.domElement.removeEventListener('touchstart', boundTouchStart, { passive: false });
+                this.renderer.domElement.removeEventListener('touchmove', boundTouchMove, { passive: false });
+                this.renderer.domElement.removeEventListener('touchend', boundTouchEnd);
+
+                // Clean up all physics bodies
+                this.objects.forEach(object => {
+                    this.world.removeBody(object.body);
+                });
+
+                // Clean up all Three.js objects
+                this.objects.forEach(object => {
+                    if (object.mesh.geometry) object.mesh.geometry.dispose();
+                    if (object.mesh.material) {
+                        if (Array.isArray(object.mesh.material)) {
+                            object.mesh.material.forEach(m => m.dispose());
+                        } else {
+                            object.mesh.material.dispose();
+                        }
+                    }
+                    this.scene.remove(object.mesh);
+                });
+
+                // Clean up boundary meshes
+                this.boundaryMeshes.forEach(mesh => {
+                    if (mesh.geometry) mesh.geometry.dispose();
+                    if (mesh.material) mesh.material.dispose();
+                    this.scene.remove(mesh);
+                });
+
+                // Clean up the ground
+                if (this.groundMesh) {
+                    if (this.groundMesh.geometry) this.groundMesh.geometry.dispose();
+                    if (this.groundMesh.material) this.groundMesh.material.dispose();
+                    this.scene.remove(this.groundMesh);
+                }
+
+                // Dispose of renderer
+                if (this.renderer) {
+                    this.renderer.dispose();
+                    this.renderer.forceContextLoss();
+                    this.renderer.domElement.remove();
+                }
+
+                // Clean up stats
+                if (this.stats && this.stats.dom && this.stats.dom.parentNode) {
+                    this.stats.dom.parentNode.removeChild(this.stats.dom);
+                }
+
+                // Clear arrays
+                this.objects = [];
+                this.boundaryMeshes = [];
+                this.mousePositions = [];
+                this.mouseTimestamps = [];
+                this.recordedStates = [];
+
+                console.log('Physics sandbox disposed');
+            }
+
+            toggleVectorMode() {
+                this.vectorMode = !this.vectorMode;
+                console.log(`Vector mode ${this.vectorMode ? 'enabled' : 'disabled'}`);
+
+                // Show/hide vector controls panel
+                const vectorPanel = document.getElementById('vector-controls');
+                if (vectorPanel) {
+                    vectorPanel.style.display = this.vectorMode ? 'block' : 'none';
+                }
+
+                // Update selected object display
+                this.updateSelectedObjectInfo();
+
+                // Clear any selected object when exiting vector mode
+                if (!this.vectorMode) {
+                    this.selectedBody = null;
+                    this.highlightSelectedObject();
+
+                    // Always end object interaction when exiting vector mode
+                    if (this.interactingWithObject) {
+                        this.interactingWithObject = false;
+                        console.log("Object interaction ended when exiting vector mode");
+                    }
+                }
+
+                // Update mode indicator
+                const modeIndicator = document.getElementById('mode-indicator');
+                if (modeIndicator) {
+                    const mode = this.getDisplayMode();
+                    modeIndicator.textContent = `Mode: ${mode}`;
+
+                    // Update background color based on mode
+                    this.updateModeIndicatorColor();
+                }
+
+                // Show message
+                this.showMessage(this.vectorMode ?
+                    "Vector mode: Click objects to apply forces" :
+                    "Physics mode: Drag objects to interact");
+            }
+
+            // Get the current display mode name
+            getDisplayMode() {
+                return this.vectorMode ? "Vector Mode" : "Physics Mode";
+            }
+
+            // Update mode indicator color based on active mode
+            updateModeIndicatorColor() {
+                const modeIndicator = document.getElementById('mode-indicator');
+                if (!modeIndicator) return;
+
+                if (this.vectorMode) {
+                    // Vector mode (purple)
+                    modeIndicator.style.background = 'rgba(150, 0, 100, 0.7)';
+                } else {
+                    // Physics mode (dark gray)
+                    modeIndicator.style.background = 'rgba(0, 0, 0, 0.6)';
+                }
+            }
+
+            // Update the selected object info display
+            updateSelectedObjectInfo() {
+                const infoElement = document.getElementById('selected-object-info');
+                if (!infoElement) return;
+
+                if (this.selectedBody && this.vectorMode) {
+                    const position = this.selectedBody.position;
+                    const velocity = this.selectedBody.velocity;
+                    const index = this.objects.findIndex(o => o.body === this.selectedBody);
+                    const type = index >= 0 ? this.objects[index].type : 'unknown';
+
+                    infoElement.innerHTML =
+                        `Selected: ${type}<br>` +
+                        `Position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})<br>` +
+                        `Velocity: (${velocity.x.toFixed(1)}, ${velocity.y.toFixed(1)}, ${velocity.z.toFixed(1)})`;
+                } else {
+                    infoElement.textContent = 'No object selected';
+                }
+            }
+
+            // Apply the force from UI controls to the selected object
+            applyVectorForce() {
+                if (!this.selectedBody || !this.vectorMode) return;
+
+                // Get force values from inputs
+                const x = parseFloat(document.getElementById('force-x').value);
+                const y = parseFloat(document.getElementById('force-y').value);
+                const z = parseFloat(document.getElementById('force-z').value);
+
+                // Get force type and magnitude
+                const forceType = document.getElementById('force-type').value;
+                const magnitude = parseFloat(document.getElementById('force-magnitude').value);
+
+                // Create normalized direction vector and scale by magnitude
+                const direction = new CANNON.Vec3(x, y, z);
+                const length = Math.sqrt(x*x + y*y + z*z);
+
+                // Avoid division by zero
+                if (length > 0) {
+                    direction.scale(magnitude / length);
+                } else {
+                    this.showMessage("Cannot apply force: direction vector is zero");
+                    return;
+                }
+
+                // Apply the force/impulse
+                if (forceType === 'impulse') {
+                    this.selectedBody.applyImpulse(direction, this.selectedBody.position);
+                    this.showMessage(`Applied impulse: (${direction.x.toFixed(1)}, ${direction.y.toFixed(1)}, ${direction.z.toFixed(1)})`);
+                } else {
+                    this.selectedBody.applyForce(direction, this.selectedBody.position);
+                    this.showMessage(`Applied force: (${direction.x.toFixed(1)}, ${direction.y.toFixed(1)}, ${direction.z.toFixed(1)})`);
+                }
+
+                // Add some visual effect
+                this.showForceVector(direction);
+
+                // End object interaction after applying force
+                if (this.interactingWithObject) {
+                    this.interactingWithObject = false;
+                    console.log("Object interaction ended after applying force");
+                }
+
+                // Clear the selected object after applying force
+                this.selectedBody = null;
+                this.highlightSelectedObject();
+                this.updateSelectedObjectInfo();
+            }
+
+            // Show a visual representation of the applied force
+            showForceVector(direction) {
+                // Create arrow helper to visualize force
+                if (!this.selectedBody) return;
+
+                // Remove previous force vector if exists
+                if (this.forceArrow) {
+                    this.scene.remove(this.forceArrow);
+                }
+
+                // Find the mesh for the selected body
+                const index = this.objects.findIndex(o => o.body === this.selectedBody);
+                if (index === -1) return;
+
+                const position = this.objects[index].mesh.position.clone();
+                const forceDirection = new THREE.Vector3(direction.x, direction.y, direction.z).normalize();
+                const forceLength = direction.length();
+
+                // Create an arrow helper
+                const arrowLength = forceLength * 0.2; // Scale for visualization
+                const hexColor = 0xff00ff; // Magenta
+                this.forceArrow = new THREE.ArrowHelper(
+                    forceDirection,
+                    position,
+                    arrowLength,
+                    hexColor,
+                    arrowLength * 0.2,
+                    arrowLength * 0.1
+                );
+
+                this.scene.add(this.forceArrow);
+
+                // Remove arrow after a delay
+                setTimeout(() => {
+                    if (this.forceArrow) {
+                        this.scene.remove(this.forceArrow);
+                        this.forceArrow = null;
+                    }
+                }, 2000);
+            }
+
+            // Highlight the currently selected object
+            highlightSelectedObject() {
+                // Reset all object materials
+                this.objects.forEach(obj => {
+                    if (obj.mesh.material) {
+                        obj.mesh.material.emissive = new THREE.Color(0x000000);
+                        obj.mesh.material.emissiveIntensity = 0;
+                    }
+                });
+
+                // If we have a selected body, highlight it
+                if (this.selectedBody && this.vectorMode) {
+                    const index = this.objects.findIndex(o => o.body === this.selectedBody);
+                    if (index !== -1) {
+                        const mesh = this.objects[index].mesh;
+                        mesh.material.emissive = new THREE.Color(0xff00ff);
+                        mesh.material.emissiveIntensity = 0.5;
+                    }
+                }
+            }
+
+            // Toggle grid visibility
+            toggleGrid() {
+                if (this.gridHelper) {
+                    this.gridHelper.visible = !this.gridHelper.visible;
+                    this.showMessage(this.gridHelper.visible ? "Grid visible" : "Grid hidden");
+                }
+            }
+
+            // New method for mouse wheel handling
+            onMouseWheel(event) {
+                // Skip if we're in replay mode
+                if (this.isReplaying) return;
+
+                // Prevent default scrolling behavior
+                event.preventDefault();
+
+                console.log("Mouse wheel event detected", event.deltaY);
+
+                // If we're currently dragging an object, rotate it instead of zooming
+                if (this.isDragging && this.draggedBody) {
+                    console.log("Applying rotation to dragged object");
+
+                    // Get rotation axis - use the camera's right vector for more intuitive control
+                    const rotationAxis = new THREE.Vector3();
+                    rotationAxis.crossVectors(this.camera.up,
+                                            new THREE.Vector3().subVectors(this.camera.position, this.draggedBody.position))
+                                            .normalize();
+
+                    // Convert to CANNON vector for physics
+                    const cannonAxis = new CANNON.Vec3(rotationAxis.x, rotationAxis.y, rotationAxis.z);
+
+                    // Determine rotation amount based on wheel delta - use debug setting
+                    const rotationAmount = -Math.sign(event.deltaY) * this.debugSettings.rotationSpeed;
+
+                    console.log(`Rotation axis: ${cannonAxis.x.toFixed(2)}, ${cannonAxis.y.toFixed(2)}, ${cannonAxis.z.toFixed(2)}`);
+                    console.log(`Rotation amount: ${rotationAmount.toFixed(2)}`);
+
+                    // Initialize target quaternion if it doesn't exist
+                    if (!this.targetQuaternion) {
+                        this.targetQuaternion = new CANNON.Quaternion().copy(this.draggedBody.quaternion);
+                        console.log("Initialized target quaternion");
+                    }
+
+                    // Create a quaternion for this rotation step
+                    const stepQuaternion = new CANNON.Quaternion();
+                    stepQuaternion.setFromAxisAngle(cannonAxis, rotationAmount);
+
+                    // Apply rotation to the target - accumulate rotations
+                    this.targetQuaternion = stepQuaternion.mult(this.targetQuaternion);
+
+                    // For immediate feedback, also apply a portion of the rotation directly
+                    // This gives instant visual feedback while still allowing smooth interpolation
+                    const directRotation = new CANNON.Quaternion();
+                    directRotation.setFromAxisAngle(cannonAxis, rotationAmount * this.debugSettings.directRotation);
+                    this.draggedBody.quaternion = directRotation.mult(this.draggedBody.quaternion);
+
+                    // Show a tooltip with rotation cue
+                    if (!this.isShowingRotationCue) {
+                        this.isShowingRotationCue = true;
+                        this.showMessage("Rotating object - scroll to adjust", 1000);
+                    }
+
+                    console.log("Object rotation target updated");
+                    return;
+                }
+
+                // If not dragging, perform normal camera zoom
+                const zoomSpeed = 0.1;
+                const delta = -Math.sign(event.deltaY) * zoomSpeed;
+
+                // Calculate new camera position
+                const direction = new THREE.Vector3().subVectors(this.camera.position, this.controls.target).normalize();
+                const distance = this.camera.position.distanceTo(this.controls.target);
+
+                // Apply zoom limits
+                const newDistance = Math.max(this.controls.minDistance,
+                                           Math.min(this.controls.maxDistance,
+                                                   distance * (1 - delta)));
+
+                // Update camera position
+                this.camera.position.copy(direction.multiplyScalar(newDistance).add(this.controls.target));
+
+                console.log(`Zoom adjusted: ${distance.toFixed(2)} -> ${newDistance.toFixed(2)}`);
+            }
+
+            // Helper method to create accurate physics shapes from Three.js geometry
+            createConvexPolyhedron(geometry, scale = 1) {
+                try {
+                    // Extract vertices from the buffer geometry
+                    const positions = geometry.attributes.position.array;
+                    const vertices = [];
+
+                    // Extract unique vertices based on position data
+                    for (let i = 0; i < positions.length; i += 3) {
+                        vertices.push(new CANNON.Vec3(
+                            positions[i] * scale,
+                            positions[i + 1] * scale,
+                            positions[i + 2] * scale
+                        ));
+                    }
+
+                    // Create faces array - each face is a triangle defined by vertex indices
+                    const faces = [];
+                    for (let i = 0; i < positions.length / 3; i += 3) {
+                        faces.push([i, i + 1, i + 2]);
+                    }
+
+                    // Create the ConvexPolyhedron with both vertices and faces
+                    return new CANNON.ConvexPolyhedron({
+                        vertices: vertices,
+                        faces: faces
+                    });
+                } catch (e) {
+                    console.error("Error creating convex polyhedron:", e);
+                    // Fallback to a simple box if convex hull creation fails
+                    return new CANNON.Box(new CANNON.Vec3(scale * 0.5, scale * 0.5, scale * 0.5));
+                }
+            }
+
+            /**
+             * Run a stress test with instanced rendering for optimal performance
+             * This demonstrates how to use THREE.InstancedMesh for efficient rendering
+             * while maintaining individual physics bodies
+             */
+            runInstancedStressTest() {
+                // Default to 200 objects - we can handle more with instancing
+                const count = 200;
+
+                // Show a message
+                this.showMessage(`Starting instanced stress test with ${count} objects...`);
+
+                // Log initial memory state
+                if (window.performance && window.performance.memory) {
+                    const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                    const memTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                    console.log(`Memory before instanced stress test: ${memUsed}MB / ${memTotal}MB`);
+                }
+
+                // Clear existing objects with proper cleanup
+                while (this.objects.length > 0) {
+                    this.removeObject(0);
+                }
+
+                // Clear any cached resources
+                THREE.Cache.clear();
+
+                // Reset renderer info
+                if (this.renderer) {
+                    this.renderer.info.reset();
+                }
+
+                // Force a renderer context refresh
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+                // Track our instanced meshes and physics bodies
+                this.instancedObjects = {
+                    cube: { bodies: [], mesh: null, matrix: new THREE.Matrix4() },
+                    sphere: { bodies: [], mesh: null, matrix: new THREE.Matrix4() },
+                    tetrahedron: { bodies: [], mesh: null, matrix: new THREE.Matrix4() },
+                    octahedron: { bodies: [], mesh: null, matrix: new THREE.Matrix4() },
+                    dodecahedron: { bodies: [], mesh: null, matrix: new THREE.Matrix4() }
+                };
+
+                // Define type distribution - how many of each shape
+                const typeDistribution = {
+                    cube: Math.floor(count * 0.3),         // 30% cubes
+                    sphere: Math.floor(count * 0.3),       // 30% spheres
+                    tetrahedron: Math.floor(count * 0.13), // 13% tetrahedrons
+                    octahedron: Math.floor(count * 0.13),  // 13% octahedrons
+                    dodecahedron: Math.floor(count * 0.14) // 14% dodecahedrons
+                };
+
+                // Create instanced mesh for each type
+                this.createInstancedMeshes(typeDistribution);
+
+                // Create physics bodies in batches
+                const batchSize = 30; // Larger batches since rendering is more efficient
+                let remainingObjects = count;
+                let currentBatchIndex = 0;
+
+                const createBatch = () => {
+                    const batchCount = Math.min(batchSize, remainingObjects);
+
+                    // Create a grid layout for organized positioning
+                    const gridSize = Math.ceil(Math.sqrt(count));
+                    const spacing = 1.5; // Slightly more spacing for better visibility
+
+                    for (let i = 0; i < batchCount; i++) {
+                        const index = currentBatchIndex * batchSize + i;
+                        const row = Math.floor(index / gridSize);
+                        const col = index % gridSize;
+
+                        // Create position in a grid formation with height variation
+                        const position = {
+                            x: (col - gridSize/2) * spacing,
+                            y: 5 + (row * 0.2),
+                            z: (row - gridSize/2) * spacing
+                        };
+
+                        // Add small random offset for more natural distribution
+                        position.x += (Math.random() - 0.5) * 0.5;
+                        position.z += (Math.random() - 0.5) * 0.5;
+
+                        // Select the object type based on our remaining distribution
+                        let selectedType;
+                        let remainingTypes = Object.keys(typeDistribution).filter(t => typeDistribution[t] > 0);
+
+                        if (remainingTypes.length > 0) {
+                            // Randomly select from available types
+                            selectedType = remainingTypes[Math.floor(Math.random() * remainingTypes.length)];
+                            typeDistribution[selectedType]--;
+                        } else {
+                            // Fallback to random type if our distribution is depleted
+                            const types = Object.keys(this.instancedObjects);
+                            selectedType = types[Math.floor(Math.random() * types.length)];
+                        }
+
+                        // Create physics body for this instance
+                        this.createInstancedPhysicsBody(selectedType, position, index);
+                    }
+
+                    // Update message
+                    const created = Math.min((currentBatchIndex + 1) * batchSize, count);
+                    this.showMessage(`Created ${created}/${count} instanced objects...`);
+
+                    remainingObjects -= batchCount;
+                    currentBatchIndex++;
+
+                    // Schedule next batch if needed
+                    if (remainingObjects > 0) {
+                        setTimeout(() => {
+                            createBatch();
+
+                            // Log intermediate memory stats
+                            if (window.performance && window.performance.memory && currentBatchIndex % 2 === 0) {
+                                const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                                console.log(`Memory after batch ${currentBatchIndex}: ${memUsed}MB`);
+                            }
+                        }, 50);
+                    } else {
+                        // All objects created
+                        this.showMessage(`Instanced stress test complete: ${count} objects created!`);
+
+                        // Log final memory state
+                        if (window.performance && window.performance.memory) {
+                            const memUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                            const memTotal = Math.round(window.performance.memory.totalJSHeapSize / (1024 * 1024));
+                            console.log(`Memory after instanced stress test: ${memUsed}MB / ${memTotal}MB`);
+
+                            // Add comparison to UI
+                            const savedPercent = Math.round((1 - (memUsed / 500)) * 100);
+                            this.showMessage(`Memory optimized! ~${savedPercent}% less memory than non-instanced version`, 5000);
+                        }
+
+                        // Apply random impulses to physics bodies for dynamic behavior
+                        setTimeout(() => {
+                            // Animate all physics bodies
+                            Object.keys(this.instancedObjects).forEach(type => {
+                                this.instancedObjects[type].bodies.forEach(body => {
+                                    const impulse = new CANNON.Vec3(
+                                        (Math.random() - 0.5) * 5,
+                                        Math.random() * 5,
+                                        (Math.random() - 0.5) * 5
+                                    );
+                                    body.applyImpulse(impulse, body.position);
+                                });
+                            });
+
+                            this.showMessage('Objects activated with instanced rendering!');
+                        }, 1000);
+                    }
+                };
+
+                // Start creating batches
+                createBatch();
+
+                // Modify the animate method to update instanced meshes
+                this.updateInstancedMeshes = true;
+            }
+
+            /**
+             * Create instanced meshes for multiple object types
+             */
+            createInstancedMeshes(typeDistribution) {
+                // Shared material properties but with unique colors per type
+                const materials = {
+                    cube: new THREE.MeshStandardMaterial({
+                        color: 0x2194ce, roughness: 0.7, metalness: 0.2
+                    }),
+                    sphere: new THREE.MeshStandardMaterial({
+                        color: 0xe91e63, roughness: 0.7, metalness: 0.2
+                    }),
+                    tetrahedron: new THREE.MeshStandardMaterial({
+                        color: 0x4caf50, roughness: 0.7, metalness: 0.2
+                    }),
+                    octahedron: new THREE.MeshStandardMaterial({
+                        color: 0xff9800, roughness: 0.7, metalness: 0.2
+                    }),
+                    dodecahedron: new THREE.MeshStandardMaterial({
+                        color: 0x9c27b0, roughness: 0.7, metalness: 0.2
+                    })
+                };
+
+                // Create mesh instances for each type
+                Object.keys(typeDistribution).forEach(type => {
+                    const count = typeDistribution[type];
+                    if (count <= 0) return;
+
+                    let geometry;
+                    // Create appropriate geometry for each type
+                    const size = 0.7; // Standardize size
+
+                    switch(type) {
+                        case 'sphere':
+                            geometry = new THREE.SphereGeometry(size, 16, 16);
+                            break;
+                        case 'tetrahedron':
+                            geometry = new THREE.TetrahedronGeometry(size);
+                            geometry.computeVertexNormals();
+                            break;
+                        case 'octahedron':
+                            geometry = new THREE.OctahedronGeometry(size);
+                            geometry.computeVertexNormals();
+                            break;
+                        case 'dodecahedron':
+                            geometry = new THREE.DodecahedronGeometry(size);
+                            geometry.computeVertexNormals();
+                            break;
+                        case 'cube':
+                        default:
+                            geometry = new THREE.BoxGeometry(size, size, size);
+                            break;
+                    }
+
+                    // Create instanced mesh
+                    const instancedMesh = new THREE.InstancedMesh(
+                        geometry,
+                        materials[type],
+                        count
+                    );
+
+                    instancedMesh.castShadow = true;
+                    instancedMesh.receiveShadow = true;
+                    this.scene.add(instancedMesh);
+
+                    // Store reference
+                    this.instancedObjects[type].mesh = instancedMesh;
+                    this.instancedObjects[type].count = 0; // Current count of instances
+                });
+
+                console.log('Created instanced meshes for types:', Object.keys(typeDistribution).filter(t => typeDistribution[t] > 0));
+            }
+
+            /**
+             * Create physics body for an instanced mesh
+             */
+            createInstancedPhysicsBody(type, position, globalIndex) {
+                // Size for physics body should match visual geometry
+                const size = 0.7;
+                let shape;
+
+                // Create appropriate physics shape based on type
+                switch(type) {
+                    case 'sphere':
+                        shape = new CANNON.Sphere(size);
+                        break;
+                    case 'tetrahedron':
+                        // Create convex polyhedron for tetrahedron (simplified)
+                        const tetraGeometry = new THREE.TetrahedronGeometry(size);
+                        tetraGeometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(tetraGeometry, 1);
+                        break;
+                    case 'octahedron':
+                        const octaGeometry = new THREE.OctahedronGeometry(size);
+                        octaGeometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(octaGeometry, 1);
+                        break;
+                    case 'dodecahedron':
+                        const dodecaGeometry = new THREE.DodecahedronGeometry(size);
+                        dodecaGeometry.computeVertexNormals();
+                        shape = this.createConvexPolyhedron(dodecaGeometry, 1);
+                        break;
+                    case 'cube':
+                    default:
+                        shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
+                        break;
+                }
+
+                // Create physics body
+                const mass = this.debugSettings ? this.debugSettings.objectMass : 1;
+                const body = new CANNON.Body({
+                    mass: mass,
+                    position: new CANNON.Vec3(position.x, position.y, position.z),
+                    material: this.physicsMaterial
+                });
+                body.addShape(shape);
+
+                // Set damping
+                body.linearDamping = 0.1;
+                body.angularDamping = 0.1;
+
+                // Add metadata for tracking
+                body.userData = {
+                    size,
+                    type,
+                    instanceIndex: this.instancedObjects[type].count,
+                    globalIndex
+                };
+
+                // Set initial angular velocity
+                body.angularVelocity.set(
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+
+                this.world.addBody(body);
+
+                // Add to our tracking array
+                this.instancedObjects[type].bodies.push(body);
+
+                // Set initial instance transform
+                const matrix = new THREE.Matrix4();
+                matrix.setPosition(position.x, position.y, position.z);
+
+                // Apply to instance
+                this.instancedObjects[type].mesh.setMatrixAt(
+                    this.instancedObjects[type].count,
+                    matrix
+                );
+                this.instancedObjects[type].mesh.instanceMatrix.needsUpdate = true;
+
+                // Increment instance count
+                this.instancedObjects[type].count++;
+
+                // Update object counter for UI
+                this.objectCount++;
+                document.getElementById('object-counter').textContent = `Objects: ${this.objectCount}`;
+
+                return body;
+            }
+
+            // Add this to the animate method inside the physics update section
+            updateInstancedObjects() {
+                if (!this.instancedObjects) return;
+
+                // For each type of instanced object
+                Object.keys(this.instancedObjects).forEach(type => {
+                    const typeData = this.instancedObjects[type];
+                    if (!typeData.mesh || !typeData.bodies || typeData.bodies.length === 0) return;
+
+                    // Update instance matrices based on physics bodies
+                    const matrix = typeData.matrix;
+
+                    for (let i = 0; i < typeData.bodies.length; i++) {
+                        const body = typeData.bodies[i];
+
+                        // Create transform matrix from physics state
+                        matrix.makeRotationFromQuaternion(body.quaternion);
+                        matrix.setPosition(
+                            body.position.x,
+                            body.position.y,
+                            body.position.z
+                        );
+
+                        // Apply to instance
+                        typeData.mesh.setMatrixAt(i, matrix);
+                    }
+
+                    // Notify Three.js that the instance matrices have changed
+                    typeData.mesh.instanceMatrix.needsUpdate = true;
+                });
+            }
+        }
+
+        // Initialize the sandbox when the page loads
+        window.addEventListener('load', () => {
+            const sandbox = new PhysicsSandbox();
+            sandbox.resetScene();
+        });
+    </script>
+</body>
+</html>

@@ -32,7 +32,6 @@ function initializeBookLoader() {
         setupNavigation();
         setupLazyLoading();
         setupScrollObserver();
-        setupProgressIndicator();
         handleInitialHash();
         state.initialized = true;
         console.log("Book loader initialization complete");
@@ -407,22 +406,6 @@ function setupScrollObserver() {
                 state.scrollThrottle = null;
             }, 200);
         }
-    });
-}
-
-/**
- * Set up the reading progress indicator
- */
-function setupProgressIndicator() {
-    const progressBar = document.getElementById('reading-progress');
-    const content = document.getElementById('book-content');
-
-    // Calculate and update progress on scroll
-    content.addEventListener('scroll', () => {
-        const scrollTop = content.scrollTop;
-        const scrollHeight = content.scrollHeight - content.clientHeight;
-        const progress = (scrollTop / scrollHeight) * 100;
-        progressBar.style.width = `${progress}%`;
     });
 }
 
