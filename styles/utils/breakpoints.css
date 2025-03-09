@@ -1,0 +1,65 @@
+/**
+ * VistaKine Breakpoints
+ *
+ * This file documents the standard breakpoints to use across the application.
+ * No actual CSS is applied from this file; it serves as documentation for
+ * Claude and other developers.
+ *
+ * STANDARD BREAKPOINTS:
+ * ---------------------
+ * Mobile:  max-width: 480px
+ * Tablet:  max-width: 768px
+ * Desktop: min-width: 769px
+ *
+ * USAGE PATTERNS:
+ * --------------
+ * Mobile-specific:
+ * @media (max-width: 480px) {
+ *   // Styles for mobile devices only
+ * }
+ *
+ * Tablet-specific:
+ * @media (min-width: 481px) and (max-width: 768px) {
+ *   // Styles for tablets only
+ * }
+ *
+ * Mobile and tablet (non-desktop):
+ * @media (max-width: 768px) {
+ *   // Styles for both mobile and tablet
+ * }
+ *
+ * Desktop-specific:
+ * @media (min-width: 769px) {
+ *   // Styles for desktop only
+ * }
+ *
+ * MEDIA QUERY ORGANIZATION:
+ * ------------------------
+ * - Group media queries by component
+ * - Place them at the end of each component section
+ * - Keep the order consistent: desktop, tablet, mobile
+ *
+ * EXAMPLE:
+ * -------
+ * .component {
+ *   // Base styles (mobile-first approach)
+ * }
+ *
+ * @media (min-width: 769px) {
+ *   .component {
+ *     // Desktop styles
+ *   }
+ * }
+ *
+ * @media (max-width: 768px) {
+ *   .component {
+ *     // Tablet and mobile styles
+ *   }
+ * }
+ *
+ * @media (max-width: 480px) {
+ *   .component {
+ *     // Mobile-only styles
+ *   }
+ * }
+ */

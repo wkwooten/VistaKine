@@ -1,0 +1,155 @@
+/**
+ * VistaKine Typography
+ *
+ * This file contains all typography-related styles including:
+ * - Font imports
+ * - Base typography
+ * - Headings
+ * - Paragraphs
+ * - Lists
+ * - Links
+ */
+
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Base typography */
+html {
+	font-size: 16px;
+	line-height: 1.5;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+	color: var(--text-color);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	font-size: var(--step-0);
+	line-height: 1.6;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--heading-font);
+	font-weight: 600;
+	line-height: 1.2;
+	margin-top: 0;
+	margin-bottom: var(--spacing-md);
+	color: var(--text-color);
+}
+
+h1 {
+	font-size: var(--step-4);
+	margin-bottom: var(--spacing-lg);
+}
+
+h2 {
+	font-size: var(--step-3);
+	margin-top: var(--spacing-xl);
+	margin-bottom: var(--spacing-md);
+}
+
+h3 {
+	font-size: var(--step-2);
+	margin-top: var(--spacing-lg);
+	margin-bottom: var(--spacing-sm);
+}
+
+h4 {
+	font-size: var(--step-1);
+	margin-top: var(--spacing-md);
+}
+
+h5 {
+	font-size: var(--step-0);
+	font-weight: 700;
+}
+
+h6 {
+	font-size: var(--step--1);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* Paragraphs and lists */
+p {
+	margin-top: 0;
+	margin-bottom: var(--spacing-md);
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+
+ul,
+ol {
+	margin-top: 0;
+	margin-bottom: var(--spacing-md);
+	padding-left: 1.5rem;
+}
+
+li {
+	margin-bottom: var(--spacing-xs);
+}
+
+li:last-child {
+	margin-bottom: 0;
+}
+
+/* Links */
+a {
+	color: var(--primary-color);
+	text-decoration: none;
+	transition: color var(--transition-fast);
+}
+
+a:hover {
+	color: var(--accent-color-dark);
+	text-decoration: underline;
+}
+
+/* Strong and emphasis */
+strong,
+b {
+	font-weight: 600;
+}
+
+em,
+i {
+	font-style: italic;
+}
+
+/* Responsive typography adjustments */
+@media (min-width: 480px) and (max-width: 991px) {
+
+	html,
+	body {
+		font-size: 15px;
+	}
+}
+
+@media (max-width: 479px) {
+
+	html,
+	body {
+		font-size: 14px;
+	}
+
+	h1 {
+		font-size: var(--step-3);
+	}
+
+	h2 {
+		font-size: var(--step-2);
+	}
+
+	h3 {
+		font-size: var(--step-1);
+	}
+}

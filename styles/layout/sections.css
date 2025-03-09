@@ -1,0 +1,291 @@
+/**
+ * VistaKine Sections Layout
+ *
+ * This file contains styles for page section layouts including:
+ * - Section containers
+ * - Content blocks
+ * - Page dividers
+ * - Layout spacing
+ * - Section preview cards
+ */
+
+/* Section containers */
+.section-container {
+	margin-bottom: var(--spacing-xl);
+	position: relative;
+}
+
+.section-inner {
+	background-color: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+	padding: var(--spacing-lg);
+	margin-bottom: var(--spacing-lg);
+	transition: box-shadow 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+	position: relative;
+}
+
+.section-inner:hover {
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 3px 12px rgba(0, 0, 0, 0.05);
+	transform: translateY(-2px);
+}
+
+.section-content {
+	width: 100%;
+	max-width: var(--max-content-width);
+	margin: 0 auto;
+}
+
+/* Content blocks */
+.content-section {
+	margin-bottom: var(--spacing-xl);
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-radius: 6px;
+	background-color: #ffffff;
+	border-left: 4px solid var(--accent-color);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+	transition: box-shadow 0.2s ease;
+}
+
+.content-section:hover {
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.content-section:last-child {
+	margin-bottom: 0;
+}
+
+.content-section h2,
+.content-section h3 {
+	margin-top: 0;
+	margin-bottom: var(--spacing-md);
+	color: var(--text-color);
+}
+
+.content-header {
+	margin-bottom: var(--spacing-lg);
+	position: relative;
+	max-width: 68ch;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.content-header h1,
+.content-header h2 {
+	margin-bottom: var(--spacing-xs);
+	line-height: 1.3;
+	font-size: var(--step-3);
+	color: var(--text-color);
+}
+
+.content-header .subtitle {
+	font-size: var(--step-1);
+	color: var(--text-light);
+	margin-top: var(--spacing-sm);
+	line-height: 1.5;
+}
+
+.section-text {
+	max-width: 68ch;
+	font-size: var(--step-0);
+	line-height: 1.6;
+	color: var(--text-color);
+	margin: 0 auto var(--spacing-md) auto;
+}
+
+.section-text p {
+	margin-bottom: var(--spacing-md);
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+.section-text p:last-child {
+	margin-bottom: 0;
+}
+
+.section-text ul,
+.section-text ol {
+	padding-left: var(--spacing-lg);
+	margin-bottom: var(--spacing-md);
+}
+
+.section-text li {
+	margin-bottom: var(--spacing-sm);
+}
+
+/* Card element */
+.card-element {
+	background-color: #f9f9f9;
+	border-radius: 8px;
+	padding: var(--spacing-lg);
+	margin-bottom: var(--spacing-xl);
+	box-shadow: var(--shadow-sm);
+}
+
+/* Page dividers */
+.page-divider {
+	position: relative;
+	text-align: center;
+	margin: var(--spacing-xl) 0;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.page-divider::before,
+.page-divider::after {
+	content: '';
+	flex-grow: 1;
+	height: 1px;
+	background: var(--border-color);
+	margin: 0 var(--spacing-md);
+}
+
+.page-number {
+	font-family: var(--heading-font);
+	color: var(--text-light);
+	font-size: 1rem;
+	background: #fff;
+	height: 36px;
+	width: 36px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: var(--shadow-sm);
+}
+
+/* Section preview cards */
+.section-preview-card {
+	background-color: #fff;
+	border-radius: 8px;
+	padding: var(--spacing-lg);
+	box-shadow: var(--shadow-md);
+	transition: transform 0.2s, box-shadow 0.2s;
+	margin-bottom: var(--spacing-xl);
+}
+
+.section-preview-card:hover {
+	transform: translateY(-5px);
+	box-shadow: var(--shadow-lg);
+}
+
+.section-preview-card h3 {
+	margin-top: 0;
+	margin-bottom: var(--spacing-sm);
+}
+
+.section-preview-card h3 a {
+	color: var(--text-color);
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+.section-preview-card h3 a:hover {
+	color: var(--primary-color);
+}
+
+.section-preview-card p {
+	color: var(--text-light);
+	margin-bottom: var(--spacing-md);
+	line-height: 1.5;
+}
+
+.chapter-sections {
+	margin: var(--spacing-xxl) 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+	gap: var(--spacing-xl);
+}
+
+/* Section backgrounds */
+#cover .section-inner {
+	background-color: var(--section-cover-bg);
+}
+
+#about .section-inner {
+	background-color: var(--section-about-bg);
+}
+
+#chapters .section-inner {
+	background-color: var(--section-chapters-bg);
+}
+
+/* Chapter 1 sections */
+#chapter1-intro .section-inner,
+#chapter1-coordinates .section-inner,
+#chapter1-matrices .section-inner,
+#chapter1-matrix-lab .section-inner {
+	background-color: var(--section-chapter1-bg);
+}
+
+/* Chapter 2 sections */
+#chapter2-intro .section-inner,
+#chapter2-operations .section-inner,
+#chapter2-dot-products .section-inner,
+#chapter2-applications .section-inner {
+	background-color: var(--section-chapter2-bg);
+}
+
+/* Chapter 3 sections */
+#chapter3-definition .section-inner,
+#chapter3-geometric .section-inner,
+#chapter3-applications .section-inner,
+#chapter3-triple .section-inner {
+	background-color: var(--section-chapter3-bg);
+}
+
+/* Responsive adjustments */
+@media (min-width: 480px) and (max-width: 991px) {
+	.section-inner {
+		padding: var(--spacing-md);
+	}
+
+	.content-section {
+		margin-bottom: var(--spacing-lg);
+		padding: var(--spacing-sm) var(--spacing-md);
+	}
+
+	.section-text {
+		font-size: var(--step--1);
+	}
+
+	.chapter-sections {
+		grid-template-columns: 1fr;
+		gap: var(--spacing-md);
+	}
+
+	.section-preview-card {
+		padding: var(--spacing-md);
+	}
+}
+
+@media (max-width: 479px) {
+	.section-inner {
+		padding: var(--spacing-sm);
+		margin-bottom: var(--spacing-md);
+	}
+
+	.content-section {
+		margin-bottom: var(--spacing-md);
+		padding: var(--spacing-xs) var(--spacing-sm);
+	}
+
+	.content-header h1,
+	.content-header h2 {
+		font-size: var(--step-2);
+	}
+
+	.content-header .subtitle {
+		font-size: var(--step-0);
+	}
+
+	.section-preview-card {
+		padding: var(--spacing-sm);
+	}
+
+	.page-divider {
+		margin: var(--spacing-xs) 0;
+	}
+}

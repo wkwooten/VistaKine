@@ -1,0 +1,260 @@
+/**
+ * VistaKine Grid System
+ *
+ * This file contains grid-related layout components including:
+ * - Container classes
+ * - Grid system
+ * - Flexbox utilities
+ */
+
+/* Container classes */
+.container {
+	width: 100%;
+	max-width: var(--max-content-width);
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: var(--spacing-md);
+	padding-right: var(--spacing-md);
+}
+
+.container-wide {
+	max-width: var(--wide-content-width);
+}
+
+.container-fluid {
+	max-width: 100%;
+}
+
+/* Basic grid system */
+.grid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: var(--spacing-md);
+}
+
+.grid-gap-sm {
+	gap: var(--spacing-sm);
+}
+
+.grid-gap-lg {
+	gap: var(--spacing-lg);
+}
+
+/* Common grid layouts */
+.grid-2 {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--spacing-md);
+}
+
+.grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--spacing-md);
+}
+
+.grid-4 {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--spacing-md);
+}
+
+/* Flexbox utilities */
+.flex {
+	display: flex;
+}
+
+.flex-col {
+	flex-direction: column;
+}
+
+.flex-wrap {
+	flex-wrap: wrap;
+}
+
+.items-center {
+	align-items: center;
+}
+
+.items-start {
+	align-items: flex-start;
+}
+
+.items-end {
+	align-items: flex-end;
+}
+
+.justify-center {
+	justify-content: center;
+}
+
+.justify-between {
+	justify-content: space-between;
+}
+
+.justify-end {
+	justify-content: flex-end;
+}
+
+.justify-start {
+	justify-content: flex-start;
+}
+
+.flex-1 {
+	flex: 1;
+}
+
+.flex-auto {
+	flex: 0 0 auto;
+}
+
+.flex-grow {
+	flex-grow: 1;
+}
+
+.gap-xs {
+	gap: var(--spacing-xs);
+}
+
+.gap-sm {
+	gap: var(--spacing-sm);
+}
+
+.gap-md {
+	gap: var(--spacing-md);
+}
+
+.gap-lg {
+	gap: var(--spacing-lg);
+}
+
+/* Responsive adjustments for generic grid utilities */
+@media (min-width: 480px) and (max-width: 991px) {
+
+	.grid-3,
+	.grid-4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.container {
+		padding-left: var(--spacing-sm);
+		padding-right: var(--spacing-sm);
+	}
+}
+
+@media (max-width: 479px) {
+
+	.grid,
+	.grid-2,
+	.grid-3,
+	.grid-4 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Margin utilities */
+.m-0 {
+	margin: 0;
+}
+
+.mx-auto {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.mt-auto {
+	margin-top: auto;
+}
+
+.mb-auto {
+	margin-bottom: auto;
+}
+
+/* Padding utilities */
+.p-0 {
+	padding: 0;
+}
+
+.p-xs {
+	padding: var(--spacing-xs);
+}
+
+.p-sm {
+	padding: var(--spacing-sm);
+}
+
+.p-md {
+	padding: var(--spacing-md);
+}
+
+.p-lg {
+	padding: var(--spacing-lg);
+}
+
+.px-sm {
+	padding-left: var(--spacing-sm);
+	padding-right: var(--spacing-sm);
+}
+
+.py-sm {
+	padding-top: var(--spacing-sm);
+	padding-bottom: var(--spacing-sm);
+}
+
+.px-md {
+	padding-left: var(--spacing-md);
+	padding-right: var(--spacing-md);
+}
+
+.py-md {
+	padding-top: var(--spacing-md);
+	padding-bottom: var(--spacing-md);
+}
+
+/* Display utilities */
+.block {
+	display: block;
+}
+
+.inline {
+	display: inline;
+}
+
+.inline-block {
+	display: inline-block;
+}
+
+.hidden {
+	display: none;
+}
+
+/* Position utilities */
+.relative {
+	position: relative;
+}
+
+.absolute {
+	position: absolute;
+}
+
+.fixed {
+	position: fixed;
+}
+
+.sticky {
+	position: sticky;
+}
+
+/* Layout utilities */
+.full-width {
+	width: 100%;
+}
+
+.full-height {
+	height: 100%;
+}
+
+.full-page {
+	width: 100%;
+	height: 100vh;
+}

@@ -1,0 +1,594 @@
+/**
+ * VistaKine Sidebar Component
+ *
+ * Simplified sidebar with three clear states:
+ * - Expanded: Full sidebar with all navigation information
+ * - Minified: Icon-only state with tooltips for desktop
+ * - Collapsed: Hidden sidebar for mobile (shown with overlay when toggled)
+ */
+
+/* ========== BASE VARIABLES ========== */
+:root {
+	--sidebar-header-height: 60px;
+	--sidebar-search-height: 54px;
+	--chapter-icon-size: 28px;
+	--chapter-icon-size-mini: 32px;
+}
+
+/* ========== BASE SIDEBAR ========== */
+.sidebar {
+	height: 100vh;
+	width: var(--sidebar-width);
+	background-color: white;
+	border-right: 1px solid rgba(255, 255, 255, 0.6);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+	display: flex;
+	flex-direction: column;
+	z-index: 200;
+	/* Higher z-index to stay above content */
+	font-family: var(--heading-font);
+	overflow: hidden;
+	position: sticky;
+	top: 0;
+	align-self: start;
+	transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	will-change: width, transform;
+}
+
+/* Add transitions to all important sidebar elements */
+.sidebar-header,
+.sidebar-nav,
+.search-container,
+.logo,
+.logo h1,
+.logo i {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== SIDEBAR HEADER ========== */
+.sidebar-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-bottom: 1px solid var(--border-color);
+	height: var(--sidebar-header-height);
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.logo {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.logo i {
+	font-size: 1.5rem;
+	color: var(--text-color);
+}
+
+.logo h1 {
+	font-size: 1.75rem;
+	margin: 0;
+	font-weight: 600;
+	color: var(--text-color);
+}
+
+/* ========== SEARCH CONTAINER ========== */
+.sidebar .search-container {
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-bottom: 1px solid var(--border-color);
+	position: relative;
+	height: var(--sidebar-search-height);
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+}
+
+.sidebar .search-container input {
+	width: 100%;
+	padding: var(--spacing-sm) 0.75rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 0.9rem;
+}
+
+.sidebar .search-container i {
+	position: absolute;
+	right: 2rem;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #999;
+	opacity: 1;
+	z-index: 5;
+}
+
+/* ========== SIDEBAR NAV CONTAINER ========== */
+.sidebar-nav {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: var(--spacing-md) var(--spacing-md);
+}
+
+/* ========== RESIZE HANDLE ========== */
+.sidebar-resize-handle {
+	position: absolute;
+	top: 0;
+	right: -8px;
+	width: 16px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 100;
+	background-color: transparent;
+	transition: background-color 0.3s ease;
+}
+
+/* Visual indicator for the resize handle */
+.sidebar-resize-handle::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 6px;
+	width: 3px;
+	background-color: var(--border-color);
+	transition: all 0.3s ease;
+}
+
+/* Make it more visible on hover */
+.sidebar-resize-handle:hover::before {
+	background-color: var(--primary-color);
+	box-shadow: 0 0 6px rgba(var(--primary-color-rgb), 0.4);
+	transform: scaleX(2);
+}
+
+/* Show highlighted area when hovering */
+.sidebar-resize-handle:hover {
+	background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+/* ========== ACTION BUTTONS ========== */
+.sidebar-actions {
+	display: flex;
+	gap: var(--spacing-xs);
+}
+
+/* Close button - hidden by default (desktop) */
+.sidebar-close {
+	display: none;
+	/* Explicitly hidden by default on desktop */
+}
+
+/* Toggle button - hidden by default (desktop) */
+.show-nav-toggle {
+	display: none !important;
+	/* Hidden on desktop by default, use !important to override any conflicting rules */
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+	z-index: 9999;
+	/* Extremely high z-index to ensure it's always visible */
+	background-color: white;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	padding: 0.5rem;
+	box-shadow: var(--shadow-md);
+	cursor: pointer;
+	/* Make it more touchable */
+	width: 45px;
+	height: 45px;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+}
+
+.show-nav-toggle:hover {
+	background-color: #f8f8f8;
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-lg);
+}
+
+.show-nav-toggle:active {
+	transform: translateY(0);
+}
+
+/* ========== SIDEBAR STATES ========== */
+
+/* 1. Expanded state (default) */
+/* Default expanded state styles already defined above */
+
+/* 2. Minified state */
+.sidebar.mini-collapsed {
+	width: var(--sidebar-mini-collapsed-width);
+}
+
+/* Header in minified mode */
+.sidebar.mini-collapsed .logo h1 {
+	opacity: 0;
+	transform: translateX(-20px);
+	display: none;
+}
+
+.sidebar.mini-collapsed .logo {
+	justify-content: center;
+	width: 100%;
+}
+
+.sidebar.mini-collapsed .logo i {
+	font-size: 1.75rem;
+	margin: 0;
+}
+
+/* Hide text in minified mode */
+.sidebar.mini-collapsed .sidebar-header,
+.sidebar.mini-collapsed .sidebar-nav,
+.sidebar.mini-collapsed .search-container {
+	transform: translateX(0);
+}
+
+/* Hide search input in minified mode */
+.sidebar.mini-collapsed .search-container input {
+	opacity: 0;
+	width: 0;
+	padding: 0;
+	border: none;
+}
+
+/* Center and enlarge the search icon in minified mode */
+.sidebar.mini-collapsed .search-container i {
+	right: 50%;
+	transform: translate(50%, -50%);
+	font-size: 1.25rem;
+}
+
+/* 3. Collapsed state (mobile) */
+.sidebar.collapsed {
+	transform: translateX(-100%);
+	box-shadow: none;
+	position: fixed;
+	/* Ensure it's fixed regardless of viewport size */
+	left: 0;
+	/* Explicitly set left position */
+	top: 0;
+	/* Explicitly set top position */
+	height: 100vh;
+	/* Full height */
+}
+
+/* When active (mobile toggled open) */
+.sidebar.collapsed.active,
+.sidebar.active {
+	transform: translateX(0) !important;
+	box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+	left: 0 !important;
+	/* Force left position */
+	/* Make sure it's visible */
+	visibility: visible !important;
+	opacity: 1 !important;
+	display: flex !important;
+}
+
+/* ========== RESPONSIVE BEHAVIOR ========== */
+
+/* Desktop layout */
+.app-layout {
+	display: grid;
+	grid-template-columns: var(--sidebar-width) 1fr;
+	min-height: 100vh;
+	position: relative;
+}
+
+/* Grid adjustments for minified sidebar */
+.app-layout.sidebar-mini-collapsed {
+	grid-template-columns: var(--sidebar-mini-collapsed-width) 1fr;
+}
+
+/* Tablet behavior (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+
+	/* Make sidebar position fixed to overlay content */
+	.sidebar {
+		position: fixed;
+		left: 0;
+		top: 0;
+		height: 100vh;
+		z-index: 200;
+		transform: translateX(-100%);
+		/* Start off-screen */
+		width: 300px;
+		/* Fixed width for tablet */
+		box-shadow: none;
+		/* Reset any minified styling */
+		min-width: 300px;
+	}
+
+	/* Show toggle button */
+	.show-nav-toggle {
+		display: flex !important;
+		/* Use !important to override any other display property */
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		z-index: 1000;
+		/* Higher z-index to stay above sidebar */
+	}
+
+	/* Reset grid to single column */
+	.app-layout {
+		grid-template-columns: 1fr;
+	}
+
+	/* Show close button */
+	.sidebar-close {
+		display: block;
+	}
+
+	/* When active (toggled open) */
+	.sidebar.active {
+		transform: translateX(0);
+		/* Bring into view */
+		box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+		/* Ensure we get full width, not minified */
+		width: 300px !important;
+		min-width: 300px !important;
+	}
+
+	/* Reset any minified styling when active */
+	.sidebar.active .logo h1,
+	.sidebar.active .nav-chapter span,
+	.sidebar.active .search-container input {
+		display: block !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+
+	.sidebar.active .logo {
+		justify-content: flex-start !important;
+	}
+
+	.sidebar.active .search-container i {
+		right: 2rem !important;
+		transform: translateY(-50%) !important;
+	}
+
+	/* Ensure subchapters are visible on tablet */
+	.sidebar.active .subchapter-list {
+		display: flex !important;
+		flex-direction: column !important;
+		height: auto !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+		overflow: visible !important;
+		max-height: none !important;
+		margin-left: calc(24px + var(--spacing-sm)) !important;
+		padding-left: var(--spacing-sm) !important;
+		gap: 2px !important;
+	}
+
+	/* Improved styling for parent-active to show relationship */
+	.sidebar.active .nav-chapter.parent-active {
+		background-color: var(--active-bg-light) !important;
+		color: var(--primary-color) !important;
+		font-weight: 500 !important;
+	}
+
+	.sidebar.active .nav-subchapter {
+		display: block !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+}
+
+/* Mobile behavior (up to 767px) */
+@media (max-width: 767px) {
+
+	/* Make sidebar position fixed to overlay content */
+	.sidebar {
+		position: fixed;
+		left: 0;
+		top: 0;
+		height: 100vh;
+		z-index: 300;
+		/* Higher than tablet */
+		transform: translateX(-100%);
+		/* Start off-screen */
+		width: 85%;
+		/* Wider percentage for small screens */
+		max-width: 300px;
+		/* Reset any minified styling */
+		box-shadow: none;
+	}
+
+	/* Show toggle button */
+	.show-nav-toggle {
+		display: flex !important;
+		/* Use !important to override any other display property */
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		z-index: 1000;
+		/* Higher z-index to stay above sidebar */
+	}
+
+	/* Reset grid to single column */
+	.app-layout {
+		grid-template-columns: 1fr;
+	}
+
+	/* Show close button */
+	.sidebar-close {
+		display: block;
+	}
+
+	/* When active (toggled open) */
+	.sidebar.active {
+		transform: translateX(0);
+		/* Bring into view */
+		box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+		/* Ensure we get full width, not minified */
+		width: 85% !important;
+		max-width: 300px !important;
+	}
+
+	/* Mobile-specific subchapter lists enhancements */
+	.sidebar.active .subchapter-list {
+		display: none !important;
+		/* Initially hidden */
+		flex-direction: column !important;
+		height: auto !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+		overflow: visible !important;
+		max-height: none !important;
+		margin-left: calc(20px + var(--spacing-sm)) !important;
+		/* Slightly reduced margin on mobile */
+		padding-left: var(--spacing-sm) !important;
+		gap: 2px !important;
+		transition: none !important;
+		/* Faster transitions on mobile */
+	}
+
+	/* Show subchapters when parent is active */
+	.sidebar.active .nav-chapter.parent-active + .subchapter-list {
+		display: flex !important;
+	}
+
+	/* Stronger visual indicator for active items on mobile */
+	.sidebar.active .nav-chapter.active,
+	.sidebar.active .nav-chapter.parent-active {
+		background-color: var(--active-bg) !important;
+		color: var(--primary-color) !important;
+		font-weight: 500 !important;
+		border-left: 3px solid var(--primary-color) !important;
+		/* Add border for better visibility */
+	}
+
+	.sidebar.active .nav-subchapter {
+		display: block !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+}
+
+/* Add overlay when sidebar is active on mobile/tablet */
+@media (max-width: 991px) {
+
+	/* Explicitly overriding any other classes that might be applied */
+	.sidebar.collapsed.active {
+		transform: translateX(0) !important;
+		left: 0 !important;
+		visibility: visible !important;
+		opacity: 1 !important;
+	}
+
+	/* Remove overlay effect - comment out or remove this block
+	.sidebar.active::after {
+		content: "";
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		z-index: -1;
+		animation: fadeIn 0.3s ease-in-out;
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+	*/
+
+	/* Add a slight animation to the sidebar */
+	.sidebar {
+		transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+	}
+
+	/* Make sure the toggle button is styled properly */
+	.show-nav-toggle {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Improved close button visibility */
+	.sidebar-close {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: rgba(255, 255, 255, 0.1);
+		border-radius: 50%;
+	}
+
+	.sidebar-close:hover {
+		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	/* Only show toggle button on mobile and tablet */
+	.show-nav-toggle {
+		display: flex !important;
+	}
+
+	/* Hide the button when sidebar is active (only for mobile) */
+	.sidebar.active ~ .show-nav-toggle,
+	.sidebar.active + * .show-nav-toggle,
+	body:has(.sidebar.active) .show-nav-toggle {
+		display: none !important;
+	}
+}
+
+/* Disable resize on mobile and tablet */
+@media (max-width: 991px) {
+	.sidebar-resize-handle {
+		display: none;
+	}
+}
+
+/* Prevent content shift during resize */
+body.resizing .sidebar,
+body.resizing .main-content {
+	transition: none !important;
+	/* Use !important to override any other transitions */
+}
+
+/* Also disable transitions on mini-collapsed elements during resizing */
+body.resizing .sidebar .logo h1,
+body.resizing .sidebar .nav-chapter span,
+body.resizing .sidebar .search-container input,
+body.resizing .sidebar .logo,
+body.resizing .sidebar .search-container i {
+	transition: none !important;
+}
+
+/* Override mini-collapsed styles when active state is present */
+.sidebar.active.mini-collapsed {
+	width: 300px !important;
+	min-width: 300px !important;
+}
+
+.sidebar.active.mini-collapsed .logo h1,
+.sidebar.active.mini-collapsed .nav-chapter span,
+.sidebar.active.mini-collapsed .search-container input {
+	display: block !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	transform: translateX(0) !important;
+}
+
+.sidebar.active.mini-collapsed .logo {
+	justify-content: flex-start !important;
+}
+
+.sidebar.active.mini-collapsed .search-container i {
+	right: 2rem !important;
+	transform: translateY(-50%) !important;
+}

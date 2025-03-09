@@ -9,24 +9,24 @@ window.VistaKine = window.VistaKine || {};
 // Core configuration and state
 VistaKine.config = {
     // Default sidebar width in pixels
-    defaultSidebarWidth: 260,
+    defaultSidebarWidth: 350,
 
-    // Minimum sidebar width (now equals mini-collapsed width to prevent full collapse on desktop)
-    minSidebarWidth: 80,
+    // Minimum sidebar width (now equals mini-collapsed width)
+    minSidebarWidth: 100,
 
     // Width for mini-collapsed state
-    miniCollapsedWidth: 80,
+    miniCollapsedWidth: 100,
 
     // Maximum sidebar width
-    maxSidebarWidth: 400,
+    maxSidebarWidth: 450,
 
     // Debug mode
     debug: true,
 
     // Device breakpoints
     breakpoints: {
-        mobile: 480,
-        tablet: 768
+        mobile: 479,  // Mobile devices up to 479px
+        tablet: 991   // Tablets from 480px to 991px
     },
 
     // Feature flags
@@ -216,11 +216,60 @@ VistaKine.init = function() {
         VistaKine.state.repoName = window.vistaKineConfig.repoName;
     }
 
+    // Initialize the grid layout modes based on device
+    VistaKine.setupGridLayout();
+
+    // Add resize listener for the grid layout
+    window.addEventListener('resize', VistaKine.handleWindowResize);
+
     // Mark core as initialized
     VistaKine.state.initialized.core = true;
     VistaKine.utils.log('Core initialized successfully', 'success');
 
     return VistaKine;
+};
+
+/**
+ * Setup the grid layout based on device width
+ */
+VistaKine.setupGridLayout = function() {
+    const windowWidth = window.innerWidth;
+    const appLayout = document.querySelector('.app-layout');
+
+    if (!appLayout) {
+        VistaKine.utils.log('No app layout container found!', 'error');
+        return;
+    }
+
+    // Remove all device-specific classes
+    appLayout.classList.remove('mobile-mode', 'tablet-mode', 'desktop-mode');
+
+    // Set the appropriate device mode class
+    if (windowWidth <= VistaKine.config.breakpoints.mobile) {
+        appLayout.classList.add('mobile-mode');
+        VistaKine.utils.log('Setting up grid layout for mobile', 'info');
+    } else if (windowWidth <= VistaKine.config.breakpoints.tablet) {
+        appLayout.classList.add('tablet-mode');
+        appLayout.classList.add('sidebar-mini-collapsed');
+        VistaKine.utils.log('Setting up grid layout for tablet (mini-collapsed by default)', 'info');
+    } else {
+        appLayout.classList.add('desktop-mode');
+        VistaKine.utils.log('Setting up grid layout for desktop', 'info');
+    }
+};
+
+/**
+ * Handle window resize for the grid layout
+ */
+VistaKine.handleWindowResize = function() {
+    // Avoid expensive operations during rapid resizing
+    if (VistaKine.resizeTimeout) {
+        clearTimeout(VistaKine.resizeTimeout);
+    }
+
+    VistaKine.resizeTimeout = setTimeout(function() {
+        VistaKine.setupGridLayout();
+    }, 100);
 };
 
 /**

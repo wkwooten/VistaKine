@@ -1,0 +1,192 @@
+/**
+ * VistaKine Global Styles
+ *
+ * This file contains:
+ * - Reset styles
+ * - Global element styling
+ * - Utility classes
+ * - Icon styling
+ */
+
+/* Box sizing rules */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* Remove default padding and margin */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+figure,
+blockquote,
+dl,
+dd {
+	margin: 0;
+	padding: 0;
+}
+
+/* Set core body defaults */
+body {
+	min-height: 100vh;
+	scroll-behavior: smooth;
+	text-rendering: optimizeSpeed;
+	background-color: #fafafa;
+	color: var(--text-color);
+	/* Improve scrolling behavior on touch devices */
+	overscroll-behavior-y: none;
+}
+
+/* Remove list styles on ul, ol elements */
+ul[class],
+ol[class] {
+	list-style: none;
+}
+
+/* Make images easier to work with */
+img {
+	max-width: 100%;
+	display: block;
+}
+
+/* Inherit fonts for inputs and buttons */
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+/* Icon styling */
+.ph {
+	vertical-align: middle;
+	display: inline-block;
+	line-height: 1;
+}
+
+h1 .ph {
+	margin-right: 0.5rem;
+	font-size: 1.2em;
+}
+
+h2 .ph,
+h3 .ph {
+	margin-right: 0.4rem;
+	font-size: 0.9em;
+}
+
+.chapter-number .ph,
+.section-number .ph {
+	font-size: 1em;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Utility classes */
+.container {
+	max-width: var(--max-content-width);
+	margin: 0 auto;
+	padding: 0 var(--spacing-md);
+}
+
+.text-center {
+	text-align: center;
+}
+
+.text-left {
+	text-align: left;
+}
+
+.text-right {
+	text-align: right;
+}
+
+.hidden {
+	display: none !important;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.clearfix::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+/* Animations */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.fade-in {
+	animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Responsive utilities */
+@media (max-width: 479px) {
+	.hide-on-mobile {
+		display: none !important;
+	}
+
+	.container {
+		padding: 0 var(--spacing-sm);
+	}
+}
+
+html {
+	box-sizing: border-box;
+	line-height: 1.5;
+	font-family: var(--heading-font);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	scroll-behavior: smooth;
+	/* Improve scrolling behavior, especially at the bottom of pages */
+	overscroll-behavior: contain;
+}
+
+/* Improve scroll margins for better intersection detection and transitions */
+.section-container {
+	scroll-margin-top: 150px;
+	/* Match the rootMargin of the IntersectionObserver */
+	scroll-margin-bottom: 50px;
+	/* Add increased padding to ensure there's visible content during transitions */
+	padding-top: 2rem;
+	padding-bottom: 4rem;
+}
+
+/* Increase padding for chapter sections to prevent dead zones during scrolling */
+.section-container[id^="chapter"] {
+	margin-bottom: 5vh;
+	/* Reduced spacing between chapters */
+}
+
+/* Ensure last section can be scrolled fully into view */
+.section-container:last-of-type {
+	margin-bottom: 50vh;
+	padding-bottom: 4rem;
+}

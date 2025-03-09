@@ -12,7 +12,8 @@ VistaKine.content = {
     state: {
         observer: null,
         loadedSections: new Set(),
-        contentInitialized: false
+        contentInitialized: false,
+        lastHistoryUpdate: null
     },
 
     /**
@@ -26,6 +27,7 @@ VistaKine.content = {
 
         VistaKine.utils.log('Initializing content module');
 
+        // DISABLED FOR TESTING - Start
         // Setup the Intersection Observer for lazy loading
         VistaKine.content.setupLazyLoading();
 
@@ -36,15 +38,16 @@ VistaKine.content = {
         VistaKine.content.setupScrollObserver();
 
         // Setup progress indicator if enabled
-        if (VistaKine.config.features.progressIndicator) {
-            VistaKine.content.setupProgressIndicator();
-        }
+        // if (VistaKine.config.features.progressIndicator) {
+        //     VistaKine.content.setupProgressIndicator();
+        // }
+        // DISABLED FOR TESTING - End
 
         // Mark as initialized
         VistaKine.content.state.contentInitialized = true;
         VistaKine.state.initialized.content = true;
 
-        VistaKine.utils.log('Content module initialized successfully', 'success');
+        VistaKine.utils.log('Content module initialized successfully (TESTING MODE - scroll features disabled)', 'success');
     },
 
     /**
@@ -113,38 +116,64 @@ VistaKine.content = {
      * Set up an observer to detect which section is visible while scrolling
      */
     setupScrollObserver: function() {
-        // Use a throttled scroll event to check section visibility
-        let ticking = false;
+        // Check if we're on a tablet
+        const isTablet = window.matchMedia('(min-width: 480px) and (max-width: 991px)').matches;
+
+        // Use properly throttled scroll event as a backup for the IntersectionObserver
+        let lastScrollTime = 0;
+        const scrollThreshold = isTablet ? 350 : 250; // Increased throttling for tablets
+        let scrollTimer = null;
+        let isScrolling = false;
 
         window.addEventListener('scroll', function() {
-            if (!ticking) {
-                window.requestAnimationFrame(function() {
-                    const visibleSection = VistaKine.navigation.findVisibleSection();
+            const now = Date.now();
+            isScrolling = true;
 
-                    if (visibleSection && visibleSection.id) {
-                        // Only update if not already the active section
-                        if (VistaKine.state.activeSection !== visibleSection.id) {
-                            VistaKine.utils.log(`Scroll detected: ${visibleSection.id} now visible`);
+            // First, cancel any pending scroll timer to avoid stacking updates
+            if (scrollTimer) {
+                clearTimeout(scrollTimer);
+            }
 
-                            // Update active section in navigation
-                            VistaKine.navigation.setActiveSection(visibleSection.id);
+            // Only process scroll when scrolling stops or after threshold time
+            scrollTimer = setTimeout(() => {
+                // Only do the expensive check if enough time has passed since last processed scroll
+                if (now - lastScrollTime > scrollThreshold) {
+                    lastScrollTime = now;
 
-                            // Update URL hash if needed
-                            if (window.location.hash !== `#${visibleSection.id}`) {
-                                history.replaceState(null, null, `#${visibleSection.id}`);
+                    // Use requestAnimationFrame to avoid layout thrashing
+                    window.requestAnimationFrame(function() {
+                        // Only process if we're not in the middle of a direct navigation
+                        if (VistaKine.navigation && VistaKine.navigation.state &&
+                            VistaKine.navigation.state.isDirectNavigation) {
+                            return;
+                        }
+
+                        // Prefer to use the Observer-detected section if available
+                        let visibleSection = null;
+
+                        if (VistaKine.navigation.state.visibleSections &&
+                            VistaKine.navigation.state.visibleSections.length > 0) {
+                            // Get the top section from the IntersectionObserver data
+                            visibleSection = VistaKine.navigation.state.visibleSections[0].element;
+                        } else {
+                            // Fallback to the old method
+                            visibleSection = VistaKine.navigation.findVisibleSection();
+                        }
+
+                        if (visibleSection && visibleSection.id) {
+                            // Only update the active section if it's different from current
+                            if (VistaKine.navigation.state.currentSection !== visibleSection.id) {
+                                VistaKine.utils.log(`Scroll event detected section change: ${visibleSection.id}`, 'debug');
+                                VistaKine.navigation.setActiveSection(visibleSection.id);
                             }
                         }
 
-                        // Also ensure this section's content is loaded
-                        VistaKine.content.loadSection(visibleSection);
-                    }
-
-                    ticking = false;
-                });
-
-                ticking = true;
-            }
-        }, { passive: true });
+                        // Flag that we're done scrolling
+                        isScrolling = false;
+                    });
+                }
+            }, isTablet ? 200 : 100); // Short timeout before checking - longer for tablets
+        });
     },
 
     /**

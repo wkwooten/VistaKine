@@ -84,25 +84,13 @@
 #book-content {
 	flex: 1;
 	position: relative;
-	/* We'll handle margin in media queries to avoid specificity issues */
-	margin-left: 0;
+	margin-left: var(--sidebar-width);
 	min-height: 100vh;
 	transition: margin-left 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 	overflow-x: hidden;
-}
-
-/* Apply desktop margin only on desktop sizes */
-@media (min-width: 992px) {
-	#book-content {
-		margin-left: var(--sidebar-width);
-	}
-}
-
-/* Apply tablet margin only on tablet sizes */
-@media (min-width: 480px) and (max-width: 991px) {
-	#book-content {
-		margin-left: var(--sidebar-mini-collapsed-width);
-	}
+	overflow-y: auto;
+	scroll-behavior: smooth;
+	padding-bottom: 100px;
 }
 
 .section-container {
@@ -1390,10 +1378,39 @@
 	/* Hide by default on all devices */
 }
 
-/* Mobile styles */
-@media (max-width: 479px) {
+/* Shared mobile styles for both phones and tablets */
+@media (max-width: 768px) {
+
+	/* Hide reading progress on mobile devices */
 	.reading-progress {
-		height: 3px;
+		display: none;
+	}
+
+	/* Make sidebar overlay the content */
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: -350px;
+		/* Start off-screen */
+		width: 300px;
+		/* Fixed width for predictable behavior */
+		min-width: auto;
+		/* Reset min-width */
+		max-width: 350px;
+		height: 100%;
+		background-color: rgba(255, 255, 255, 0.8);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		z-index: 1000;
+		box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+		border-right: 1px solid rgba(255, 255, 255, 0.7);
+		transition: transform 0.3s ease, left 0.3s ease;
+		padding: var(--spacing-sm);
+		overflow-y: auto;
+	}
+
+	.sidebar.active {
+		left: 0;
 	}
 
 	/* Main content doesn't shift on mobile */
@@ -1410,13 +1427,18 @@
 		right: 15px;
 		width: 36px;
 		height: 36px;
+		background-color: transparent;
+		color: var(--text-color);
 		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.9);
 		align-items: center;
 		justify-content: center;
-		cursor: pointer;
 		z-index: 10;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+
+	.sidebar-close:hover {
+		background-color: rgba(0, 0, 0, 0.05);
 	}
 
 	/* Hide resize handle */
@@ -1455,6 +1477,580 @@
 	table {
 		font-size: 14px;
 		min-width: 100%;
+	}
+}
+
+/* Mobile styles - phones and small devices */
+@media (max-width: 480px) {
+
+	/* Phone-specific sidebar adjustments */
+	.sidebar {
+		width: 85%;
+	}
+
+	/* Additional phone-specific adjustments */
+	.section-inner {
+		padding: var(--spacing-sm);
+	}
+
+	.content-section {
+		padding: var(--spacing-sm);
+		margin-bottom: var(--spacing-md);
+	}
+
+	.visualization-container {
+		height: 250px;
+		/* Smaller height for phones */
+	}
+
+	.viz-grid-toggle {
+		bottom: 15px;
+		right: 15px;
+	}
+
+	.content-header h1 {
+		font-size: 1.5rem;
+	}
+
+	.content-header .subtitle {
+		font-size: 0.9rem;
+	}
+
+	/* Navigation panel */
+	#chapter-nav {
+		position: fixed;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(255, 255, 255, 0.97);
+		z-index: 100;
+		overflow-y: auto;
+		transition: left 0.3s ease;
+		padding: var(--spacing-sm);
+	}
+
+	#chapter-nav.active {
+		left: 0;
+	}
+
+	/* Book content spacing */
+	#book-content {
+		margin: 0;
+		padding-bottom: 50px;
+	}
+
+	/* Section containers */
+	.section-container {
+		padding: var(--spacing-xs) 0;
+		margin: 0;
+	}
+
+	/* Section content */
+	.section-content {
+		margin: var(--spacing-xs) auto;
+	}
+
+	/* Inner section padding */
+	.section-inner {
+		padding: var(--spacing-sm);
+		margin-bottom: var(--spacing-sm);
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	}
+
+	/* Content sections */
+	.content-section {
+		padding: var(--spacing-md);
+		margin-bottom: var(--spacing-lg);
+		border-left: none !important;
+		/* Remove blue highlight */
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+		border-radius: 8px;
+	}
+
+	/* Text spacing */
+	.section-text {
+		margin: var(--spacing-sm) var(--spacing-xs);
+	}
+
+	.section-text p {
+		margin-bottom: var(--spacing-md);
+		line-height: 1.8;
+		font-size: 17px;
+		letter-spacing: 0.01em;
+	}
+
+	.section-text ul,
+	.section-text ol {
+		margin-bottom: var(--spacing-md);
+		padding-left: var(--spacing-md);
+	}
+
+	.section-text li {
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Header sizes */
+	.content-header h1 {
+		font-size: 1.6rem;
+	}
+
+	.content-header .subtitle {
+		font-size: 1.1rem;
+	}
+
+	.content-section h2 {
+		font-size: 1.3rem;
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Visualization containers */
+	.visualization-container {
+		height: 300px;
+		margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+		border-radius: 6px;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	}
+
+	/* Complete replacement of sidebar behavior for mobile */
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: -100%;
+		/* Start off-screen */
+		width: 85%;
+		/* Keep fixed width for mobile */
+		min-width: auto;
+		/* Override min-width */
+		max-width: 300px;
+		height: 100%;
+		background-color: white;
+		overflow-y: auto;
+		z-index: 1000;
+		box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+		transition: left 0.3s ease;
+		padding: var(--spacing-sm);
+	}
+
+	.sidebar.active {
+		left: 0;
+	}
+
+	/* Force normal display of all sidebar elements on mobile */
+	.sidebar.mini-collapsed,
+	.sidebar.collapsed {
+		width: 85%;
+		max-width: 300px;
+		left: -100%;
+		/* Hide when not active */
+	}
+
+	.sidebar.mini-collapsed.active,
+	.sidebar.collapsed.active {
+		left: 0;
+	}
+
+	/* Ensure all sidebar content is visible */
+	.sidebar .logo h1,
+	.sidebar.mini-collapsed .logo h1,
+	.sidebar.collapsed .logo h1,
+	.sidebar .nav-chapter span,
+	.sidebar.mini-collapsed .nav-chapter span,
+	.sidebar.collapsed .nav-chapter span,
+	.sidebar .subchapter-list,
+	.sidebar.mini-collapsed .subchapter-list,
+	.sidebar.collapsed .subchapter-list {
+		opacity: 1;
+		visibility: visible;
+		width: auto;
+		height: auto;
+		margin: initial;
+		transform: none;
+		display: block;
+	}
+
+	/* Reset icon positions */
+	.sidebar .logo i,
+	.sidebar.mini-collapsed .logo i,
+	.sidebar.collapsed .logo i,
+	.sidebar .chapter-number,
+	.sidebar.mini-collapsed .chapter-number,
+	.sidebar.collapsed .chapter-number {
+		transform: none;
+		margin: initial;
+	}
+
+	/* Main content area */
+	.main-content {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	/* Hide resize handle on mobile */
+	.sidebar-resize-handle {
+		display: none !important;
+	}
+
+	/* Add close button for sidebar */
+	.sidebar-close {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		width: 40px;
+		height: 40px;
+		background-color: transparent;
+		color: #333333;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		cursor: pointer;
+		z-index: 10;
+		transition: transform 0.2s ease;
+	}
+
+	.sidebar-close:hover {
+		transform: scale(1.1);
+	}
+
+	/* Mobile navigation toggle button - Floating Action Button style */
+	.show-nav-toggle {
+		display: flex !important;
+		/* Force display on mobile */
+		position: fixed;
+		top: 20px;
+		left: 20px;
+		width: 60px;
+		height: 60px;
+		background-color: rgba(44, 62, 80, 0.9);
+		color: white;
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+		/* Ensure it's above everything */
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+		cursor: pointer;
+	}
+
+	.show-nav-toggle:hover,
+	.show-nav-toggle:focus {
+		background-color: rgba(44, 62, 80, 1);
+		transform: scale(1.05);
+	}
+
+	.show-nav-toggle:active {
+		transform: scale(0.95);
+	}
+
+	.show-nav-toggle i {
+		font-size: 1.8rem;
+	}
+
+	/* Fallback text if icon doesn't load */
+	.show-nav-toggle i::before {
+		content: "≡";
+		font-style: normal;
+		font-family: Arial, sans-serif;
+		font-size: 28px;
+	}
+
+	/* CTA container for mobile */
+	.cta-container {
+		flex-direction: column;
+	}
+
+	/* Feature list for mobile */
+	.feature-list {
+		flex-direction: column;
+	}
+
+	/* Feature item for mobile */
+	.feature-item {
+		margin-bottom: var(--spacing-sm);
+	}
+
+	/* Applications grid for mobile */
+	.applications-grid {
+		grid-template-columns: 1fr;
+	}
+
+	/* Chapter sections for mobile */
+	.chapter-sections {
+		grid-template-columns: 1fr;
+	}
+
+	/* Navigation buttons for mobile */
+	.navigation-buttons {
+		flex-direction: column;
+		gap: var(--spacing-xs);
+	}
+
+	/* Nav buttons for mobile */
+	.nav-button {
+		width: 100%;
+		padding: 16px;
+		justify-content: center;
+		min-height: 50px;
+	}
+
+	/* Page divider for mobile */
+	.page-divider {
+		margin: var(--spacing-sm) 0;
+	}
+
+	/* Bottom navigation for mobile */
+	.bottom-nav {
+		padding: var(--spacing-xs);
+	}
+
+	/* Mobile bottom navigation buttons */
+	.bottom-nav-button {
+		padding: 12px 16px;
+		min-height: 50px;
+	}
+
+	/* Table responsiveness */
+	table {
+		display: block;
+		width: 100%;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		margin: var(--spacing-sm) 0;
+	}
+
+	/* List adjustments */
+	ul,
+	ol {
+		padding-left: 20px;
+	}
+
+	/* Code blocks */
+	pre,
+	code {
+		font-size: 0.9rem;
+		padding: 8px;
+		white-space: pre-wrap;
+		word-break: break-all;
+	}
+
+	/* Image responsiveness */
+	img {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* Formula containers */
+	.formula-container {
+		padding: var(--spacing-xs);
+		margin: var(--spacing-sm) 0;
+		overflow-x: auto;
+	}
+
+	/* Interactive elements - improved touch targets */
+	button,
+	.cta-button,
+	.nav-chapter,
+	.nav-subchapter,
+	.feature-item,
+	.section-preview-card,
+	.viz-expand-button,
+	.viz-close-button,
+	.viz-grid-toggle {
+		min-height: 50px;
+		min-width: 50px;
+		padding: 14px;
+		margin: 4px 0;
+	}
+
+	/* Search input for mobile */
+	.search-container input {
+		height: 50px;
+		font-size: 16px;
+		/* Prevents zoom on iOS */
+		padding: 0 15px;
+	}
+
+	/* Nav items touch target enhancements */
+	.nav-chapter,
+	.nav-subchapter {
+		margin: 8px 0;
+	}
+
+	/* Visualization controls */
+	.viz-controls button {
+		margin: 6px;
+		padding: 14px;
+		min-height: 50px;
+		min-width: 50px;
+	}
+
+	/* Mobile text improvements for better readability */
+	.section-text {
+		margin: var(--spacing-sm) var(--spacing-xs);
+	}
+
+	.section-text p {
+		margin-bottom: var(--spacing-md);
+		line-height: 1.8;
+		font-size: 17px;
+		letter-spacing: 0.01em;
+	}
+
+	.section-text ul,
+	.section-text ol {
+		margin-bottom: var(--spacing-md);
+		padding-left: var(--spacing-md);
+	}
+
+	.section-text li {
+		margin-bottom: var(--spacing-xs);
+	}
+
+	.content-section {
+		padding: var(--spacing-md);
+		margin-bottom: var(--spacing-lg);
+		border-left: none !important;
+		/* Remove blue highlight */
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+		border-radius: 8px;
+	}
+
+	/* Improved heading spacing */
+	.content-header {
+		margin-bottom: var(--spacing-lg);
+		padding-bottom: var(--spacing-md);
+	}
+
+	.content-section h2 {
+		margin-bottom: var(--spacing-md);
+		font-size: 1.5rem;
+		line-height: 1.3;
+	}
+
+	/* Create more space between content sections */
+	.section-inner > .content-section:not(:last-child) {
+		margin-bottom: calc(var(--spacing-lg) + 10px);
+	}
+
+	/* Enhanced visualization controls for mobile */
+	.viz-expand-button,
+	.viz-grid-toggle,
+	.viz-close-button {
+		width: 44px;
+		height: 44px;
+		background-color: rgba(255, 255, 255, 0.85);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	}
+
+	.viz-expand-button i,
+	.viz-grid-toggle i,
+	.viz-close-button i {
+		font-size: 20px;
+	}
+
+	/* Improved touch targets for mobile */
+	.visualization-container .viz-controls button {
+		min-width: 40px;
+		min-height: 40px;
+		margin: 0 4px;
+		padding: 10px;
+		border-radius: 6px;
+		background-color: rgba(255, 255, 255, 0.85);
+	}
+
+	/* Use a grid layout for buttons in fullscreen mode on small screens */
+	.visualization-container.fullscreen .viz-controls {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+		gap: 8px;
+		position: absolute;
+		bottom: 16px;
+		left: 16px;
+		right: 16px;
+		z-index: 20;
+		background-color: rgba(255, 255, 255, 0.7);
+		padding: 8px;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
+}
+
+/* Extra small screens - phones */
+@media (max-width: 480px) {
+
+	/* Section containers */
+	.section-container {
+		padding: var(--spacing-xs) 0;
+		/* Further reduced, zero horizontal padding */
+	}
+
+	/* Inner section padding */
+	.section-inner {
+		padding: var(--spacing-xs);
+		margin-bottom: var(--spacing-xs);
+		box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+		border-radius: 4px;
+	}
+
+	/* Content sections */
+	.content-section {
+		padding: var(--spacing-xs) 0;
+		/* Zero horizontal padding */
+		margin-bottom: var(--spacing-xs);
+	}
+
+	/* Increase visualization size on very small screens */
+	.visualization-container {
+		height: 320px;
+		/* Even taller for small screens */
+		margin: var(--spacing-md) 0 var(--spacing-lg) 0;
+	}
+
+	/* Expand buttons further apart on small screens */
+	.viz-grid-toggle {
+		right: 52px;
+		/* More space between buttons */
+	}
+
+	/* Make buttons even more touch-friendly */
+	.viz-expand-button,
+	.viz-grid-toggle,
+	.viz-close-button {
+		width: 44px;
+		height: 44px;
+	}
+
+	/* Header sizes for smaller screens */
+	.content-header h1 {
+		font-size: 1.4rem;
+	}
+
+	.content-header .subtitle {
+		font-size: 1rem;
+		margin-top: 0;
+	}
+
+	/* Bottom navigation adjustments */
+	.bottom-nav {
+		border-radius: 0;
+	}
+
+	.bottom-nav-section {
+		display: none;
+		/* Hide section names to save space */
+	}
+
+	/* Page divider for tiny screens */
+	.page-divider {
+		margin: var(--spacing-xs) 0;
+	}
+
+	/* Mobile navigation toggle positioning */
+	.show-nav-toggle {
+		top: 10px;
+		left: 10px;
 	}
 }
 
@@ -1846,30 +2442,9 @@
 	display: none;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 768px) {
 	.sidebar-close {
 		display: block;
-	}
-
-	/* Show navigation toggle button */
-	.show-nav-toggle {
-		display: flex !important;
-		position: fixed;
-		z-index: 999;
-		width: 56px;
-		height: 56px;
-		background-color: rgba(44, 62, 80, 0.9);
-		color: white;
-		border-radius: 50%;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-		cursor: pointer;
-		transition: transform 0.2s ease, background-color 0.2s ease;
-	}
-
-	.show-nav-toggle:hover {
-		transform: scale(1.05);
 	}
 }
 
@@ -1922,14 +2497,23 @@
 }
 
 /* Mobile styles for the chapter color guide */
-@media (max-width: 991px) {
+@media (max-width: 768px) {
 	.chapter-color-guide {
 		gap: var(--spacing-sm);
+	}
+
+	.chapter-color-guide .legend-item {
+		min-width: 70px;
+	}
+
+	.chapter-color-guide .color-sample {
+		width: 30px;
+		height: 30px;
 	}
 }
 
 /* Tablet-specific styles - make sidebar overlay content */
-@media (min-width: 480px) and (max-width: 991px) {
+@media (min-width: 481px) and (max-width: 768px) {
 
 	/* Tablet-specific sidebar adjustments */
 	.sidebar {
@@ -1957,8 +2541,33 @@
 	}
 }
 
+/* Shared styles for navigation toggle on mobile devices */
+@media (max-width: 768px) {
+
+	/* Show navigation toggle button */
+	.show-nav-toggle {
+		display: flex !important;
+		position: fixed;
+		z-index: 999;
+		width: 56px;
+		height: 56px;
+		background-color: rgba(44, 62, 80, 0.9);
+		color: white;
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+		cursor: pointer;
+		transition: transform 0.2s ease, background-color 0.2s ease;
+	}
+
+	.show-nav-toggle:hover {
+		transform: scale(1.05);
+	}
+}
+
 /* Tablet-specific position for FAB */
-@media (min-width: 480px) and (max-width: 991px) {
+@media (min-width: 481px) and (max-width: 768px) {
 	.show-nav-toggle {
 		bottom: 30px;
 		right: 30px;
@@ -1966,7 +2575,7 @@
 }
 
 /* Phone-specific position for FAB */
-@media (max-width: 479px) {
+@media (max-width: 480px) {
 	.show-nav-toggle {
 		top: 20px;
 		left: 20px;
@@ -1982,7 +2591,7 @@
 }
 
 /* About page specific styles */
-@media (max-width: 991px) {
+@media (max-width: 768px) {
 	.desktop-only {
 		display: none;
 		margin-top: 1rem;

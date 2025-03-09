@@ -1,0 +1,96 @@
+/**
+ * VistaKine Variables
+ *
+ * This file contains all CSS variables used throughout the application.
+ * Any new variables should be added here to maintain consistency.
+ */
+
+:root {
+	/* Spacing variables */
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+	--spacing-xxl: 3rem;
+
+	/* Space variables (aliases for consistency with legacy code) */
+	--space-xs: 0.25rem;
+	--space-s: 0.5rem;
+	--space-m: 1rem;
+	--space-l: 1.5rem;
+	--space-xl: 2rem;
+	--space-xxl: 3rem;
+
+	/* Font sizes */
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.25rem;
+	--text-2xl: 1.5rem;
+	--text-3xl: 1.875rem;
+	--text-4xl: 2.25rem;
+
+	/* Fluid typography */
+	--step--2: clamp(0.6944rem, 0.6608rem + 0.1797vw, 0.8rem);
+	--step--1: clamp(0.8333rem, 0.7801rem + 0.2837vw, 1rem);
+	--step-0: clamp(1rem, 0.9202rem + 0.4255vw, 1.25rem);
+	--step-1: clamp(1.2rem, 1.0844rem + 0.6149vw, 1.5625rem);
+	--step-2: clamp(1.44rem, 1.2736rem + 0.8837vw, 1.9531rem);
+	--step-3: clamp(1.728rem, 1.4936rem + 1.2465vw, 2.4414rem);
+	--step-4: clamp(2.0736rem, 1.7461rem + 1.7402vw, 3.0518rem);
+	--step-5: clamp(2.4883rem, 2.0373rem + 2.4052vw, 3.8147rem);
+
+	/* Colors */
+	--primary-color: #2563eb;
+	--primary-color-rgb: 37, 99, 235;
+	--accent-color: #3b82f6;
+	--accent-color-dark: #1d4ed8;
+	--text-color: #333;
+	--text-light: #666;
+	--border-color: #e5e7eb;
+	--hover-bg: rgba(0, 0, 0, 0.04);
+	--hover-color: #d1d5db;
+	--active-bg: rgba(0, 124, 255, 0.1);
+	--active-bg-light: rgba(0, 124, 255, 0.05);
+	--color-mid: #777;
+
+	/* Section color scheme - grayscale progression */
+	--section-cover-bg: #ffffff;
+	--section-about-bg: #fafafa;
+	--section-chapters-bg: #f7f7f7;
+	--section-chapter1-bg: #f3f3f3;
+	--section-chapter2-bg: #ececec;
+	--section-chapter3-bg: #e5e5e5;
+	--section-chapter4-bg: #dedede;
+	--section-chapter5-bg: #d7d7d7;
+
+	/* Text color for darker backgrounds */
+	--text-on-dark: #333;
+
+	/* Other */
+	--transition-fast: 0.15s ease;
+	--transition-normal: 0.3s ease;
+	--max-content-width: 1000px;
+	--wide-content-width: 1200px;
+
+	/* Sidebar widths - desktop default */
+	--sidebar-width: 350px;
+	/* Increased from 300px */
+	--sidebar-mini-collapsed-width: 100px;
+	/* We're no longer using the fully collapsed state on desktop */
+	--sidebar-collapsed-width: 0px;
+	/* Only used on mobile */
+
+	/* Font families */
+	--heading-font: 'Instrument Sans', 'Inter', system-ui, sans-serif;
+
+	/* Shadows */
+	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
+	--shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+
+	/* UI States */
+	--selected-color: #007bff;
+}

@@ -1,0 +1,223 @@
+/**
+ * VistaKine Visualization Component
+ *
+ * This file contains styles for interactive visualization components:
+ * - 3D visualizations
+ * - Interactive elements
+ * - Control buttons
+ */
+
+/* Visualization container */
+.visualization-container {
+	position: relative;
+	background: #f8f9fa;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	margin-bottom: var(--spacing-lg);
+	aspect-ratio: 16 / 9;
+	transition: all 0.3s ease;
+}
+
+.visualization-container canvas {
+	width: 100%;
+	height: 100%;
+	touch-action: none;
+	outline: none;
+}
+
+/* Fullscreen mode */
+.visualization-container.fullscreen {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 2000;
+	border-radius: 0;
+	aspect-ratio: auto;
+	background-color: #000;
+}
+
+.visualization-container.fullscreen canvas {
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+}
+
+/* Expand button */
+.viz-expand-button {
+	position: absolute;
+	top: var(--spacing-sm);
+	right: var(--spacing-sm);
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background-color: rgba(255, 255, 255, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	cursor: pointer;
+	z-index: 10;
+	transition: all 0.2s ease;
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.viz-expand-button:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+}
+
+.viz-expand-button i {
+	color: var(--text-color);
+	font-size: 1.2rem;
+}
+
+/* Close button (for fullscreen) */
+.viz-close-button {
+	position: absolute;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-color: rgba(255, 255, 255, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	cursor: pointer;
+	z-index: 10;
+	transition: all 0.2s ease;
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+	opacity: 0;
+	transform: scale(0.8);
+	visibility: hidden;
+}
+
+.visualization-container.fullscreen .viz-close-button {
+	opacity: 1;
+	transform: scale(1);
+	visibility: visible;
+}
+
+.viz-close-button:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+}
+
+.viz-close-button i {
+	color: var(--text-color);
+	font-size: 1.5rem;
+}
+
+/* Grid toggle */
+.viz-grid-toggle {
+	position: absolute;
+	top: var(--spacing-sm);
+	left: var(--spacing-sm);
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background-color: rgba(255, 255, 255, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	cursor: pointer;
+	z-index: 10;
+	transition: all 0.2s ease;
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.viz-grid-toggle:hover {
+	background-color: rgba(255, 255, 255, 0.9);
+}
+
+.viz-grid-toggle i {
+	color: var(--text-color);
+	font-size: 1.2rem;
+}
+
+.visualization-container.fullscreen .viz-grid-toggle {
+	top: var(--spacing-md);
+	left: var(--spacing-md);
+	width: 40px;
+	height: 40px;
+}
+
+.visualization-container.fullscreen .viz-expand-button {
+	display: none;
+}
+
+/* Messages inside visualization */
+.viz-message {
+	position: absolute;
+	bottom: var(--spacing-md);
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: rgba(0, 0, 0, 0.7);
+	color: white;
+	padding: var(--spacing-xs) var(--spacing-md);
+	border-radius: 20px;
+	font-size: var(--text-sm);
+	max-width: 80%;
+	text-align: center;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Small preview container */
+.section-preview-card .visualization-container {
+	aspect-ratio: 4 / 3;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.visualization-container {
+		aspect-ratio: 4 / 3;
+	}
+
+	.viz-expand-button,
+	.viz-grid-toggle {
+		width: 28px;
+		height: 28px;
+	}
+
+	.viz-message {
+		font-size: var(--text-xs);
+		padding: 4px 10px;
+		bottom: var(--spacing-sm);
+	}
+}
+
+@media (min-width: 480px) and (max-width: 991px) {
+	.viz-grid-toggle {
+		width: 28px;
+		height: 28px;
+	}
+
+	.viz-message {
+		font-size: var(--text-xs);
+		padding: 4px 10px;
+		bottom: var(--spacing-sm);
+	}
+}
+
+@media (max-width: 479px) {
+	.visualization-container {
+		margin-bottom: var(--spacing-md);
+	}
+
+	.viz-grid-toggle {
+		display: none;
+	}
+}

@@ -7,7 +7,6 @@
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/book.css">
 
     <!-- External Libraries -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -19,190 +18,188 @@
     <script src="js/core/main.js?_=1615824"></script>
 </head>
 <body>
-    <!-- Navigation toggle button -->
+    <!-- Navigation toggle button - Mobile/tablet only -->
     <button id="show-nav-toggle" class="show-nav-toggle" aria-label="Show navigation">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path fill="currentColor" d="M228 128a12 12 0 0 1-12 12H40a12 12 0 0 1 0-24h176a12 12 0 0 1 12 12M40 76h176a12 12 0 0 0 0-24H40a12 12 0 0 0 0 24m176 104H40a12 12 0 0 0 0 24h176a12 12 0 0 0 0-24"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path fill="currentColor" d="M228 128a12 12 0 0 1-12 12H40a12 12 0 0 1 0-24h176a12 12 0 0 1 12 12M40 76h176a12 12 0 0 0 0-24H40a12 12 0 0 0 0 24m176 104H40a12 12 0 0 0 0 24h176a12 12 0 0 0 0-24"/></svg>
     </button>
 
-    <!-- Main sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="ph ph-projector-screen-chart"></i>
-                <h1>VistaKine</h1>
-            </div>
-            <div class="sidebar-actions">
-                <button class="sidebar-resize-toggle" aria-label="Toggle sidebar width" title="Toggle sidebar width">
-                    <span class="sidebar-resize-icon"></span>
-                </button>
-                <!-- Add close button for mobile -->
-                <button class="sidebar-close" aria-label="Close sidebar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path fill="currentColor" d="M165.66 101.66L139.31 128l26.35 26.34a8 8 0 0 1-11.32 11.32L128 139.31l-26.34 26.35a8 8 0 0 1-11.32-11.32L116.69 128l-26.35-26.34a8 8 0 0 1 11.32-11.32L128 116.69l26.34-26.35a8 8 0 0 1 11.32 11.32M232 128A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104m-16 0a88 88 0 1 0-88 88a88.1 88.1 0 0 0 88-88"/></svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="search-container">
-            <input type="text" placeholder="Search textbook..." aria-label="Search">
-            <i class="ph ph-magnifying-glass"></i>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="#cover" class="nav-chapter">
-                <div class="chapter-number"><i class="ph ph-house"></i></div>
-                <span>Cover Page</span>
-            </a>
-
-            <a href="#about" class="nav-chapter">
-                <div class="chapter-number"><i class="ph ph-info"></i></div>
-                <span>About</span>
-            </a>
-
-            <a href="#chapters" class="nav-chapter">
-                <div class="chapter-number"><i class="ph ph-books"></i></div>
-                <span>Chapters</span>
-            </a>
-
-            <!-- Color legend removed since it's now on the chapter page -->
-
-            <a href="#chapter1-intro" class="nav-chapter">
-                <div class="chapter-number">1</div>
-                <span>Understanding 3D Space</span>
-            </a>
-            <div class="subchapter-list">
-                <a href="#chapter1-intro" class="nav-subchapter">1.1 Introduction to 3D Coordinates</a>
-                <a href="#chapter1-coordinates" class="nav-subchapter">1.2 Coordinate Systems</a>
-                <a href="#chapter1-matrices" class="nav-subchapter">1.3 Matrices as Transformations</a>
-                <a href="#chapter1-matrix-lab" class="nav-subchapter">1.4 Interactive Matrix Lab</a>
+    <!-- App layout grid container -->
+    <div class="app-layout">
+        <!-- Main sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="ph ph-projector-screen-chart"></i>
+                    <h1>VistaKine</h1>
+                </div>
+                <div class="sidebar-actions">
+                    <!-- Close button for mobile/tablet -->
+                    <button class="sidebar-close" aria-label="Close sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path fill="currentColor" d="M165.66 101.66L139.31 128l26.35 26.34a8 8 0 0 1-11.32 11.32L128 139.31l-26.34 26.35a8 8 0 0 1-11.32-11.32L116.69 128l-26.35-26.34a8 8 0 0 1 11.32-11.32L128 116.69l26.34-26.35a8 8 0 0 1 11.32 11.32"/></svg>
+                    </button>
+                </div>
             </div>
 
-            <a href="#chapter2-intro" class="nav-chapter">
-                <div class="chapter-number">2</div>
-                <span>Vector Fundamentals</span>
-            </a>
-            <div class="subchapter-list">
-                <a href="#chapter2-intro" class="nav-subchapter">2.1 What are Vectors?</a>
-                <a href="#chapter2-operations" class="nav-subchapter">2.2 Vector Operations</a>
-                <a href="#chapter2-dot-products" class="nav-subchapter">2.3 Dot Products</a>
-                <a href="#chapter2-applications" class="nav-subchapter">2.4 Applications: Force and Displacement</a>
+            <div class="search-container">
+                <input type="text" placeholder="Search textbook..." aria-label="Search">
+                <i class="ph ph-magnifying-glass"></i>
             </div>
 
-            <a href="#chapter3-definition" class="nav-chapter">
-                <div class="chapter-number">3</div>
-                <span>Cross Products and Applications</span>
-            </a>
-            <div class="subchapter-list">
-                <a href="#chapter3-definition" class="nav-subchapter">3.1 Cross Product Definition</a>
-                <a href="#chapter3-geometric" class="nav-subchapter">3.2 Geometric Interpretation</a>
-                <a href="#chapter3-applications" class="nav-subchapter">3.3 Applications: Torque and Angular Momentum</a>
-                <a href="#chapter3-triple" class="nav-subchapter">3.4 Triple Products and Volume</a>
+            <nav class="sidebar-nav">
+                <a href="#cover" class="nav-chapter">
+                    <div class="chapter-number"><i class="ph ph-house"></i></div>
+                    <span>Cover Page</span>
+                </a>
+
+                <a href="#about" class="nav-chapter">
+                    <div class="chapter-number"><i class="ph ph-info"></i></div>
+                    <span>About</span>
+                </a>
+
+                <a href="#chapters" class="nav-chapter">
+                    <div class="chapter-number"><i class="ph ph-books"></i></div>
+                    <span>Chapters</span>
+                </a>
+
+                <a href="#chapter1-intro" class="nav-chapter">
+                    <div class="chapter-number">1</div>
+                    <span>Understanding 3D Space</span>
+                </a>
+                <div class="subchapter-list">
+                    <a href="#chapter1-intro" class="nav-subchapter">1.1 Introduction to 3D Coordinates</a>
+                    <a href="#chapter1-coordinates" class="nav-subchapter">1.2 Coordinate Systems</a>
+                    <a href="#chapter1-matrices" class="nav-subchapter">1.3 Matrices as Transformations</a>
+                    <a href="#chapter1-matrix-lab" class="nav-subchapter">1.4 Interactive Matrix Lab</a>
+                </div>
+
+                <a href="#chapter2-intro" class="nav-chapter">
+                    <div class="chapter-number">2</div>
+                    <span>Vector Fundamentals</span>
+                </a>
+                <div class="subchapter-list">
+                    <a href="#chapter2-intro" class="nav-subchapter">2.1 What are Vectors?</a>
+                    <a href="#chapter2-operations" class="nav-subchapter">2.2 Vector Operations</a>
+                    <a href="#chapter2-dot-products" class="nav-subchapter">2.3 Dot Products</a>
+                    <a href="#chapter2-applications" class="nav-subchapter">2.4 Applications: Force and Displacement</a>
+                </div>
+
+                <a href="#chapter3-definition" class="nav-chapter">
+                    <div class="chapter-number">3</div>
+                    <span>Cross Products and Applications</span>
+                </a>
+                <div class="subchapter-list">
+                    <a href="#chapter3-definition" class="nav-subchapter">3.1 Cross Product Definition</a>
+                    <a href="#chapter3-geometric" class="nav-subchapter">3.2 Geometric Interpretation</a>
+                    <a href="#chapter3-applications" class="nav-subchapter">3.3 Applications: Torque and Angular Momentum</a>
+                    <a href="#chapter3-triple" class="nav-subchapter">3.4 Triple Products and Volume</a>
+                </div>
+            </nav>
+
+            <!-- Add the resize handle -->
+            <div class="sidebar-resize-handle" data-tooltip="Resize sidebar">
+                <div class="resize-handle-line"></div>
             </div>
-        </nav>
+        </aside>
 
-        <!-- Add the resize handle -->
-        <div class="sidebar-resize-handle" data-tooltip="Expand sidebar">
-            <div class="resize-handle-line"></div>
-        </div>
-    </aside>
+        <!-- Main content container -->
+        <main class="main-content" id="book-content">
+            <!-- Section containers -->
+            <section id="cover" class="section-container">
+                <div class="section-content" data-src="sections/cover.html">
+                    <div class="loading-placeholder">Loading cover...</div>
+                </div>
+            </section>
 
-    <!-- Main content container -->
-    <main id="book-content">
-        <!-- Section containers -->
-        <section id="cover" class="section-container">
-            <div class="section-content" data-src="sections/cover.html">
-                <div class="loading-placeholder">Loading cover...</div>
-            </div>
-        </section>
+            <section id="about" class="section-container">
+                <div class="section-content" data-src="sections/about.html">
+                    <div class="loading-placeholder">Loading about section...</div>
+                </div>
+            </section>
 
-        <section id="about" class="section-container">
-            <div class="section-content" data-src="sections/about.html">
-                <div class="loading-placeholder">Loading about section...</div>
-            </div>
-        </section>
+            <section id="chapters" class="section-container">
+                <div class="section-content" data-src="sections/chapters.html">
+                    <div class="loading-placeholder">Loading chapters...</div>
+                </div>
+            </section>
 
-        <section id="chapters" class="section-container">
-            <div class="section-content" data-src="sections/chapters.html">
-                <div class="loading-placeholder">Loading chapters...</div>
-            </div>
-        </section>
+            <!-- Chapter 1 sections -->
+            <section id="chapter1-intro" class="section-container">
+                <div class="section-content" data-src="sections/chapter1-intro.html">
+                    <div class="loading-placeholder">Loading section 1.1...</div>
+                </div>
+            </section>
 
-        <!-- Chapter 1 sections -->
-        <section id="chapter1-intro" class="section-container">
-            <div class="section-content" data-src="sections/chapter1-intro.html">
-                <div class="loading-placeholder">Loading section 1.1...</div>
-            </div>
-        </section>
+            <section id="chapter1-coordinates" class="section-container">
+                <div class="section-content" data-src="sections/chapter1-coordinates.html">
+                    <div class="loading-placeholder">Loading section 1.2...</div>
+                </div>
+            </section>
 
-        <section id="chapter1-coordinates" class="section-container">
-            <div class="section-content" data-src="sections/chapter1-coordinates.html">
-                <div class="loading-placeholder">Loading section 1.2...</div>
-            </div>
-        </section>
+            <section id="chapter1-matrices" class="section-container">
+                <div class="section-content" data-src="sections/chapter1-matrices.html">
+                    <div class="loading-placeholder">Loading section 1.3...</div>
+                </div>
+            </section>
 
-        <section id="chapter1-matrices" class="section-container">
-            <div class="section-content" data-src="sections/chapter1-matrices.html">
-                <div class="loading-placeholder">Loading section 1.3...</div>
-            </div>
-        </section>
+            <section id="chapter1-matrix-lab" class="section-container">
+                <div class="section-content" data-src="sections/chapter1-matrix-lab.html">
+                    <div class="loading-placeholder">Loading section 1.4...</div>
+                </div>
+            </section>
 
-        <section id="chapter1-matrix-lab" class="section-container">
-            <div class="section-content" data-src="sections/chapter1-matrix-lab.html">
-                <div class="loading-placeholder">Loading section 1.4...</div>
-            </div>
-        </section>
+            <!-- Chapter 2 sections -->
+            <section id="chapter2-intro" class="section-container">
+                <div class="section-content" data-src="sections/chapter2-intro.html">
+                    <div class="loading-placeholder">Loading section 2.1...</div>
+                </div>
+            </section>
 
-        <!-- Chapter 2 sections -->
-        <section id="chapter2-intro" class="section-container">
-            <div class="section-content" data-src="sections/chapter2-intro.html">
-                <div class="loading-placeholder">Loading section 2.1...</div>
-            </div>
-        </section>
+            <section id="chapter2-operations" class="section-container">
+                <div class="section-content" data-src="sections/chapter2-operations.html">
+                    <div class="loading-placeholder">Loading section 2.2...</div>
+                </div>
+            </section>
 
-        <section id="chapter2-operations" class="section-container">
-            <div class="section-content" data-src="sections/chapter2-operations.html">
-                <div class="loading-placeholder">Loading section 2.2...</div>
-            </div>
-        </section>
+            <section id="chapter2-dot-products" class="section-container">
+                <div class="section-content" data-src="sections/chapter2-dot-products.html">
+                    <div class="loading-placeholder">Loading section 2.3...</div>
+                </div>
+            </section>
 
-        <section id="chapter2-dot-products" class="section-container">
-            <div class="section-content" data-src="sections/chapter2-dot-products.html">
-                <div class="loading-placeholder">Loading section 2.3...</div>
-            </div>
-        </section>
+            <section id="chapter2-applications" class="section-container">
+                <div class="section-content" data-src="sections/chapter2-applications.html">
+                    <div class="loading-placeholder">Loading section 2.4...</div>
+                </div>
+            </section>
 
-        <section id="chapter2-applications" class="section-container">
-            <div class="section-content" data-src="sections/chapter2-applications.html">
-                <div class="loading-placeholder">Loading section 2.4...</div>
-            </div>
-        </section>
+            <!-- Chapter 3 sections -->
+            <section id="chapter3-definition" class="section-container">
+                <div class="section-content" data-src="sections/chapter3-definition.html">
+                    <div class="loading-placeholder">Loading section 3.1...</div>
+                </div>
+            </section>
 
-        <!-- Chapter 3 sections -->
-        <section id="chapter3-definition" class="section-container">
-            <div class="section-content" data-src="sections/chapter3-definition.html">
-                <div class="loading-placeholder">Loading section 3.1...</div>
-            </div>
-        </section>
+            <section id="chapter3-geometric" class="section-container">
+                <div class="section-content" data-src="sections/chapter3-geometric.html">
+                    <div class="loading-placeholder">Loading section 3.2...</div>
+                </div>
+            </section>
 
-        <section id="chapter3-geometric" class="section-container">
-            <div class="section-content" data-src="sections/chapter3-geometric.html">
-                <div class="loading-placeholder">Loading section 3.2...</div>
-            </div>
-        </section>
+            <section id="chapter3-applications" class="section-container">
+                <div class="section-content" data-src="sections/chapter3-applications.html">
+                    <div class="loading-placeholder">Loading section 3.3...</div>
+                </div>
+            </section>
 
-        <section id="chapter3-applications" class="section-container">
-            <div class="section-content" data-src="sections/chapter3-applications.html">
-                <div class="loading-placeholder">Loading section 3.3...</div>
-            </div>
-        </section>
+            <section id="chapter3-triple" class="section-container">
+                <div class="section-content" data-src="sections/chapter3-triple.html">
+                    <div class="loading-placeholder">Loading section 3.4...</div>
+                </div>
+            </section>
+        </main>
+    </div>
 
-        <section id="chapter3-triple" class="section-container">
-            <div class="section-content" data-src="sections/chapter3-triple.html">
-                <div class="loading-placeholder">Loading section 3.4...</div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Minimal Bottom Navigation -->
+    <!-- Bottom Navigation -->
     <div class="bottom-nav-trigger"></div>
     <div class="bottom-nav">
         <button class="bottom-nav-button prev-nav" aria-label="Previous Section">
@@ -215,5 +212,366 @@
             Next <i class="ph ph-caret-right"></i>
         </button>
     </div>
+
+    <!-- Simple standalone sidebar initialization script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM content loaded, initializing sidebar');
+        initSidebar();
+    });
+
+    // Separate the initialization into a function so we can call it directly too
+    function initSidebar() {
+        // Initialize sidebar if it's not already being handled by the main JS
+        if (!window.VistaKine || !window.VistaKine.sidebar || !window.VistaKine.sidebar.state || !window.VistaKine.sidebar.state.sidebarInitialized) {
+            console.log('Initializing sidebar via standalone script');
+
+            // Get elements
+            const sidebar = document.querySelector('.sidebar');
+            const navToggle = document.getElementById('show-nav-toggle'); // Use getElementById instead
+            const closeButton = document.querySelector('.sidebar-close');
+            const resizeHandle = document.querySelector('.sidebar-resize-handle');
+
+            if (!sidebar) {
+                console.error('Sidebar element not found');
+                return;
+            }
+
+            console.log('Sidebar elements:', {
+                sidebar: sidebar ? 'found' : 'not found',
+                navToggle: navToggle ? 'found' : 'not found',
+                closeButton: closeButton ? 'found' : 'not found',
+                resizeHandle: resizeHandle ? 'found' : 'not found'
+            });
+
+            // First remove any existing event listeners by cloning
+            const newNavToggle = navToggle ? navToggle.cloneNode(true) : null;
+            const newCloseButton = closeButton ? closeButton.cloneNode(true) : null;
+
+            if (navToggle && newNavToggle) {
+                navToggle.parentNode.replaceChild(newNavToggle, navToggle);
+            }
+
+            if (closeButton && newCloseButton) {
+                closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+            }
+
+            // Update references to the new elements
+            const updatedNavToggle = document.getElementById('show-nav-toggle');
+            const updatedCloseButton = document.querySelector('.sidebar-close');
+
+            const windowWidth = window.innerWidth;
+            console.log('Window width:', windowWidth);
+
+            // Basic mobile setup
+            if (windowWidth <= 767) {
+                console.log('Setting up mobile sidebar');
+                // Mobile - collapsed by default, toggle to open
+                sidebar.classList.add('collapsed');
+                sidebar.classList.remove('active', 'mini-collapsed');
+                sidebar.style.transform = 'translateX(-100%)'; // Force initial state with inline style
+
+                // Show the toggle button on mobile
+                if (updatedNavToggle) {
+                    updatedNavToggle.style.display = 'flex';
+                }
+
+                // Set up mobile toggle specifically
+                setupMobileToggle(updatedNavToggle, updatedCloseButton, sidebar);
+            }
+            // Tablet setup (768px - 991px)
+            else if (windowWidth <= 991) {
+                console.log('Setting up tablet sidebar');
+                // Tablet - similar to mobile but with different styling
+                sidebar.classList.add('collapsed');
+                sidebar.classList.remove('active', 'mini-collapsed');
+
+                // Make sure we're not in minified mode on tablet, even when closed
+                const appLayout = document.querySelector('.app-layout');
+                if (appLayout) {
+                    appLayout.classList.remove('sidebar-mini-collapsed');
+                }
+
+                sidebar.style.transform = 'translateX(-100%)'; // Force initial state with inline style
+
+                // Show the toggle button on tablet
+                if (updatedNavToggle) {
+                    updatedNavToggle.style.display = 'flex';
+                }
+
+                // Set up mobile toggle specifically
+                setupMobileToggle(updatedNavToggle, updatedCloseButton, sidebar);
+            }
+            // Desktop setup
+            else {
+                console.log('Setting up desktop sidebar');
+                // Desktop - resize handle and minified toggle
+                sidebar.classList.remove('collapsed', 'active');
+
+                // Hide the toggle button on desktop
+                if (updatedNavToggle) {
+                    updatedNavToggle.style.display = 'none';
+                }
+
+                if (resizeHandle) {
+                    // Simple resize with mouse tracking
+                    let isResizing = false;
+                    let startX, startWidth;
+
+                    // Define threshold as a constant to keep it consistent
+                    const RESIZE_THRESHOLD = 200;
+
+                    // Mouse resize events
+                    resizeHandle.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        isResizing = true;
+                        startX = e.clientX;
+                        startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+                        document.body.classList.add('resizing');
+                    });
+
+                    document.addEventListener('mousemove', function(e) {
+                        if (!isResizing) return;
+
+                        const deltaX = e.clientX - startX;
+                        const newWidth = startWidth + deltaX;
+
+                        // Apply limits
+                        const minWidth = 100;
+                        const maxWidth = 400;
+                        const limitedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+                        // Apply width directly for immediate feedback
+                        sidebar.style.width = `${limitedWidth}px`;
+
+                        // REAL-TIME STATE CHANGES: Check against threshold and update classes during drag
+                        const appLayout = document.querySelector('.app-layout');
+
+                        // Only update classes if we're crossing the threshold to avoid constant DOM updates
+                        const currentlyMiniCollapsed = sidebar.classList.contains('mini-collapsed');
+                        const shouldBeMiniCollapsed = limitedWidth < RESIZE_THRESHOLD;
+
+                        if (currentlyMiniCollapsed !== shouldBeMiniCollapsed) {
+                            console.log(`Crossing threshold during drag: ${limitedWidth}px - switching to ${shouldBeMiniCollapsed ? 'mini' : 'expanded'} mode`);
+
+                            if (shouldBeMiniCollapsed) {
+                                sidebar.classList.add('mini-collapsed');
+                                if (appLayout) appLayout.classList.add('sidebar-mini-collapsed');
+                            } else {
+                                sidebar.classList.remove('mini-collapsed');
+                                if (appLayout) appLayout.classList.remove('sidebar-mini-collapsed');
+                            }
+                        }
+                    });
+
+                    document.addEventListener('mouseup', function() {
+                        if (!isResizing) return;
+
+                        isResizing = false;
+                        document.body.classList.remove('resizing');
+
+                        // Get final width
+                        const currentWidth = parseInt(getComputedStyle(sidebar).width, 10);
+
+                        // Remove inline styles
+                        sidebar.style.width = '';
+
+                        // Apply appropriate class based on width - using the same threshold
+                        const appLayout = document.querySelector('.app-layout');
+                        if (currentWidth < RESIZE_THRESHOLD) {
+                            sidebar.classList.add('mini-collapsed');
+                            if (appLayout) appLayout.classList.add('sidebar-mini-collapsed');
+                        } else {
+                            sidebar.classList.remove('mini-collapsed');
+                            if (appLayout) appLayout.classList.remove('sidebar-mini-collapsed');
+                        }
+                    });
+
+                    // Double-click to toggle
+                    resizeHandle.addEventListener('dblclick', function() {
+                        const appLayout = document.querySelector('.app-layout');
+
+                        if (sidebar.classList.contains('mini-collapsed')) {
+                            sidebar.classList.remove('mini-collapsed');
+                            if (appLayout) appLayout.classList.remove('sidebar-mini-collapsed');
+                        } else {
+                            sidebar.classList.add('mini-collapsed');
+                            if (appLayout) appLayout.classList.add('sidebar-mini-collapsed');
+                        }
+                    });
+                }
+            }
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                // This is a simple version - in a real app, you might want to debounce this
+                const width = window.innerWidth;
+                console.log('Window resized to:', width);
+
+                const appLayout = document.querySelector('.app-layout');
+
+                // Always reapply visibility rules for the toggle button
+                const navToggle = document.getElementById('show-nav-toggle');
+
+                if (width <= 991) { // Mobile or Tablet
+                    console.log('Resize detected: Mobile/Tablet mode');
+                    // Only show the toggle button if the sidebar is not active
+                    if (navToggle && !sidebar.classList.contains('active')) {
+                        navToggle.style.display = 'flex';
+                    }
+
+                    sidebar.classList.add('collapsed');
+                    sidebar.classList.remove('mini-collapsed');
+                    if (appLayout) appLayout.classList.remove('sidebar-mini-collapsed');
+
+                    // Re-setup mobile toggle
+                    setupMobileToggle(updatedNavToggle, updatedCloseButton, sidebar);
+                }
+                else { // Desktop
+                    console.log('Resize detected: Desktop mode');
+                    // Hide the toggle button on desktop
+                    if (navToggle) {
+                        navToggle.style.display = 'none';
+                    }
+
+                    // Desktop
+                    sidebar.classList.remove('collapsed', 'active');
+                }
+            });
+        }
+    }
+
+    // Helper function to set up mobile toggle
+    function setupMobileToggle(navToggle, closeButton, sidebar) {
+        if (!sidebar) return;
+
+        // Make sure the toggle is visible
+        if (navToggle) {
+            console.log('Setting up nav toggle button');
+            // Toggle button - direct inline event handler for reliability
+            navToggle.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Stop event propagation
+                console.log('Nav toggle clicked');
+
+                // Clear any transform inline style that might be preventing the sidebar from showing
+                sidebar.style.transform = '';
+
+                // Make sure the sidebar is fully expanded, not minified
+                sidebar.classList.add('active');
+                sidebar.classList.remove('mini-collapsed', 'collapsed');
+
+                // For tablet, set explicit width to ensure it's fully expanded
+                if (window.innerWidth >= 768 && window.innerWidth <= 991) {
+                    sidebar.style.width = '300px'; // Full tablet width
+                }
+
+                // Update app layout if needed
+                const appLayout = document.querySelector('.app-layout');
+                if (appLayout) {
+                    appLayout.classList.remove('sidebar-mini-collapsed');
+                }
+
+                // Hide the toggle button when sidebar is active
+                navToggle.style.display = 'none';
+
+                // Debug what happened
+                console.log('Sidebar classes after click:', sidebar.className);
+                console.log('Sidebar transform:', getComputedStyle(sidebar).transform);
+                console.log('Sidebar display:', getComputedStyle(sidebar).display);
+                console.log('Sidebar visibility:', getComputedStyle(sidebar).visibility);
+                console.log('Sidebar opacity:', getComputedStyle(sidebar).opacity);
+                console.log('Sidebar width:', getComputedStyle(sidebar).width);
+
+                // Force a reflow to ensure the transition happens
+                sidebar.offsetWidth;
+            };
+        } else {
+            console.error('Navigation toggle button not found');
+        }
+
+        // Close button
+        if (closeButton) {
+            console.log('Setting up close button');
+            closeButton.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Stop event propagation
+                console.log('Close button clicked');
+
+                // Reset inline width if it was set
+                sidebar.style.width = '';
+
+                sidebar.classList.remove('active');
+                sidebar.classList.add('collapsed');
+
+                // Show the toggle button again when sidebar is closed
+                if (navToggle) {
+                    setTimeout(() => {
+                        navToggle.style.display = 'flex';
+                    }, 300); // Match transition duration
+                }
+
+                // After transition is complete, set transform back manually
+                setTimeout(() => {
+                    if (!sidebar.classList.contains('active')) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                }, 300); // Match transition duration
+            };
+        }
+
+        // Click outside to close - using capture to ensure it fires
+        document.addEventListener('click', function(e) {
+            if (sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) &&
+                e.target !== navToggle) {
+                console.log('Clicked outside sidebar, closing');
+
+                // Reset inline width if it was set
+                sidebar.style.width = '';
+
+                sidebar.classList.remove('active');
+                sidebar.classList.add('collapsed');
+
+                // Show the toggle button again when sidebar is closed
+                if (navToggle) {
+                    setTimeout(() => {
+                        navToggle.style.display = 'flex';
+                    }, 300); // Match transition duration
+                }
+
+                // After transition is complete, set transform back manually
+                setTimeout(() => {
+                    if (!sidebar.classList.contains('active')) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                }, 300); // Match transition duration
+            }
+        }, true);
+    }
+
+    // Try to initialize immediately if the DOM is already loaded
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log('Document already ready, initializing sidebar now');
+        initSidebar();
+    }
+
+    // Remove any page numbers (we'll add these later)
+    function removePageNumbers() {
+        // Remove any existing page numbers
+        document.querySelectorAll('.page-num').forEach(elem => {
+            elem.remove();
+        });
+
+        // Also remove page numbers in section content
+        document.querySelectorAll('.page-number').forEach(elem => {
+            elem.remove();
+        });
+    }
+
+    // Run this after initialization and also periodically to catch any dynamically added numbers
+    removePageNumbers();
+    setInterval(removePageNumbers, 1000); // Check every second
+    </script>
 </body>
 </html>

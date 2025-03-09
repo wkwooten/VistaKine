@@ -1,0 +1,310 @@
+/**
+ * VistaKine Content Component
+ *
+ * This file contains:
+ * - Main content layout
+ * - Content sections
+ * - Loading states
+ * - Error messages
+ * - Bottom navigation
+ */
+
+/* Main content area */
+.main-content {
+	margin-left: 0;
+	/* No margin needed in grid layout */
+	padding: var(--spacing-xl);
+	min-height: 100vh;
+	transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop-specific styles */
+@media (min-width: 992px) {
+
+	/* In grid layout, we don't need margin-left anymore */
+	.main-content {
+		padding-left: var(--spacing-xl);
+	}
+}
+
+/* Tablet specific styles */
+@media (min-width: 480px) and (max-width: 991px) {
+
+	/* Legacy styles for non-grid layouts */
+	.main-content.legacy-layout {
+		margin-left: var(--sidebar-mini-collapsed-width);
+		padding-left: var(--spacing-lg);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	/* No margin change when expanded in legacy layouts - sidebar overlays content */
+	.sidebar.expanded + .main-content.legacy-layout {
+		margin-left: var(--sidebar-mini-collapsed-width);
+	}
+
+	/* Navigation adjustments for tablets */
+	.navigation-buttons {
+		padding: var(--spacing-md);
+	}
+}
+
+/* Mobile specific styles */
+@media (max-width: 479px) {
+	.main-content {
+		padding: var(--spacing-sm);
+	}
+}
+
+/* Backwards compatibility for non-grid layouts */
+.main-content.legacy-layout {
+	margin-left: var(--sidebar-width);
+}
+
+.sidebar.collapsed + .main-content.legacy-layout,
+.main-content.sidebar-collapsed.legacy-layout {
+	margin-left: var(--sidebar-collapsed-width, 0);
+}
+
+.sidebar.mini-collapsed + .main-content.legacy-layout,
+.main-content.sidebar-mini-collapsed.legacy-layout {
+	margin-left: var(--sidebar-mini-collapsed-width);
+}
+
+/* Alias for backwards compatibility */
+#book-content {
+	flex: 1;
+	min-height: 100vh;
+	overflow-y: auto;
+	padding: var(--spacing-md);
+	transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add desktop-specific margin for #book-content in legacy layouts */
+@media (min-width: 992px) {
+	#book-content.legacy-layout {
+		margin-left: var(--sidebar-width);
+	}
+}
+
+/* Loading placeholder */
+.loading-placeholder {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 200px;
+	background-color: #f5f5f5;
+	border-radius: 4px;
+	color: #666;
+	font-style: italic;
+	position: relative;
+}
+
+.loading-placeholder::after {
+	content: "";
+	position: absolute;
+	width: 60px;
+	height: 4px;
+	bottom: 30%;
+	background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+	animation: loading-shimmer 1.5s infinite;
+	border-radius: 4px;
+}
+
+@keyframes loading-shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(calc(300% + 60px));
+	}
+}
+
+/* Error message */
+.error-message {
+	background-color: #fff0f0;
+	border-left: 4px solid #ff6b6b;
+	padding: var(--spacing-md);
+	margin: var(--spacing-md) 0;
+	border-radius: 4px;
+}
+
+.error-message h2 {
+	color: #d63031;
+	margin-bottom: var(--spacing-sm);
+}
+
+.error-message .error-details {
+	background-color: rgba(0, 0, 0, 0.03);
+	padding: var(--spacing-sm);
+	border-radius: 4px;
+	font-family: monospace;
+	font-size: var(--text-sm);
+	margin: var(--spacing-sm) 0;
+	white-space: pre-wrap;
+}
+
+.error-message button {
+	background-color: #f7f7f7;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: var(--spacing-xs) var(--spacing-md);
+	margin-top: var(--spacing-sm);
+	margin-right: var(--spacing-sm);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.error-message button:hover {
+	background-color: #eee;
+}
+
+/* Bottom navigation */
+.navigation-buttons {
+	display: flex;
+	justify-content: space-between;
+	margin-top: var(--spacing-lg);
+}
+
+.nav-button {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: 4px;
+	border: 1px solid var(--border-color);
+	background-color: white;
+	color: var(--text-color);
+	text-decoration: none;
+	transition: all 0.2s ease;
+	cursor: pointer;
+}
+
+.nav-button:hover {
+	background-color: var(--hover-bg);
+}
+
+.prev-button i,
+.next-button i {
+	font-size: 1.2em;
+}
+
+.prev-button i {
+	margin-right: var(--spacing-xs);
+}
+
+.next-button i {
+	margin-left: var(--spacing-xs);
+}
+
+/* Reading progress indicator */
+.reading-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 0%;
+	height: 4px;
+	background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+	z-index: 1000;
+	transition: width 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Bottom navigation */
+.bottom-nav-trigger {
+	position: fixed;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 80px;
+	height: 20px;
+	background-color: rgba(255, 255, 255, 0.5);
+	border-radius: 8px 8px 0 0;
+	z-index: 90;
+}
+
+.bottom-nav {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: var(--spacing-sm);
+	background-color: rgba(255, 255, 255, 0.9);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border-top: 1px solid var(--border-color);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transform: translateY(100%);
+	transition: transform 0.3s ease;
+	z-index: 95;
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-trigger:hover + .bottom-nav,
+.bottom-nav:hover {
+	transform: translateY(0);
+}
+
+.bottom-nav-section {
+	text-align: center;
+	font-size: var(--text-sm);
+	color: var(--text-light);
+	padding: 0 var(--spacing-md);
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bottom-nav-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-xs) var(--spacing-md);
+	background-color: transparent;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	color: var(--text-color);
+	font-size: var(--text-sm);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.bottom-nav-button:hover {
+	background-color: var(--hover-bg);
+}
+
+/* Responsive adjustments */
+/* Mobile only (below 480px) */
+@media (max-width: 479px) {
+
+	.main-content,
+	#book-content {
+		margin-left: 0;
+		padding: var(--spacing-sm);
+	}
+
+	.navigation-buttons {
+		flex-direction: column;
+		gap: var(--spacing-sm);
+	}
+
+	.nav-button {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.bottom-nav {
+		padding: var(--spacing-xs);
+	}
+
+	.bottom-nav-button {
+		padding: var(--spacing-xs);
+		font-size: var(--text-xs);
+	}
+}
+
+/* Remove the old overlapping media query */
+/* @media (max-width: 768px) - REMOVED */
