@@ -1,0 +1,4301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapier.js Physics Sandbox</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .controls-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            min-width: 200px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .button-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        /* Cursor styles for interactions */
+        .grabbable {
+            cursor: grab;
+            cursor: -webkit-grab;
+        }
+        .grabbing {
+            cursor: grabbing;
+            cursor: -webkit-grabbing;
+        }
+
+        /* Performance panel styles */
+        .performance-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+            min-width: 200px;
+            pointer-events: none;
+        }
+        .performance-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .performance-value {
+            font-weight: bold;
+        }
+        .performance-good {
+            color: #4CAF50; /* Green */
+        }
+        .performance-warning {
+            color: #FFC107; /* Yellow */
+        }
+        .performance-bad {
+            color: #F44336; /* Red */
+        }
+        .performance-chart {
+            width: 100%;
+            height: 40px;
+            margin-top: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            position: relative;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        <div id="info-panel">
+            <div id="fps" style="display: inline-block; font-family: monospace; margin-right: 10px;">FPS: 0</div>
+            <div id="object-count" style="display: inline-block; font-family: monospace;">Objects: 0</div>
+        </div>
+        <div id="camera-controls-hint" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.5); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; pointer-events: none; max-width: 80%;">
+            Mode: OBJECT (Space to switch) | Camera: Left-rotate, Right-pan, Middle-zoom | Alt+Click: Object properties | While dragging: Scroll to rotate Y, Middle+Scroll to rotate Z
+        </div>
+    </div>
+
+    <div class="controls-panel">
+        <div class="button-row">
+            <button id="add-cube">Add Cube</button>
+            <button id="add-sphere">Add Sphere</button>
+        </div>
+        <div class="button-row">
+            <button id="add-polyhedron">Add Polyhedron</button>
+            <button id="clear-all">Clear All</button>
+        </div>
+        <div class="button-row">
+            <button id="import-model">Import GLB Model</button>
+        </div>
+        <div class="button-row">
+            <button id="toggle-boundaries">Show Boundaries</button>
+        </div>
+        <div class="button-row">
+            <button id="toggle-performance">Hide Performance</button>
+        </div>
+        <div class="button-row">
+            <button id="toggle-rotation-panel">Rotation Settings</button>
+        </div>
+        <div class="button-row" style="margin-top: 10px;">
+            <label for="import-scale" style="font-size: 12px;">Import Scale: <span id="scale-value">1.0</span></label>
+            <input type="range" id="import-scale" min="0.1" max="5" step="0.1" value="1.0" style="width: 100%;" />
+        </div>
+        <div class="button-row" style="margin-top: 5px;">
+            <label for="import-mass" style="font-size: 12px;">Import Mass: <span id="mass-value">1.0</span></label>
+            <input type="range" id="import-mass" min="0.1" max="10" step="0.1" value="1.0" style="width: 100%;" />
+        </div>
+        <input type="file" id="model-file-input" accept=".glb" style="display: none;" />
+    </div>
+
+    <div id="selected-object-controls" style="display: none; position: absolute; top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">
+        <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">SELECTED OBJECT</div>
+        <div id="selected-object-info" style="margin-bottom: 10px;"></div>
+        <div style="margin-bottom: 5px;">
+            <label for="object-scale" style="display: block; margin-bottom: 5px;">Scale: <span id="object-scale-value">1.0</span></label>
+            <input type="range" id="object-scale" min="0.1" max="10" step="0.1" value="1.0" style="width: 100%;" />
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button id="apply-scale">Apply Scale</button>
+            <button id="close-object-controls">Close</button>
+        </div>
+    </div>
+
+    <div id="rotation-debug-panel" style="display: none; position: absolute; top: 10px; left: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">
+        <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">ROTATION SETTINGS</div>
+        <div style="margin-bottom: 5px;">
+            <label for="y-rotation-sensitivity" style="display: block; margin-bottom: 5px;">Y-Axis Sensitivity: <span id="y-sensitivity-value">0.1</span></label>
+            <input type="range" id="y-rotation-sensitivity" min="0.01" max="1" step="0.01" value="0.1" style="width: 100%;" />
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label for="z-rotation-sensitivity" style="display: block; margin-bottom: 5px;">Z-Axis Sensitivity: <span id="z-sensitivity-value">0.1</span></label>
+            <input type="range" id="z-rotation-sensitivity" min="0.01" max="1" step="0.01" value="0.1" style="width: 100%;" />
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label for="rotation-smoothing" style="display: block; margin-bottom: 5px;">Smoothness: <span id="smoothing-value">0.2</span></label>
+            <input type="range" id="rotation-smoothing" min="0.05" max="0.5" step="0.01" value="0.2" style="width: 100%;" />
+        </div>
+        <div style="margin-bottom: 5px;">
+            <input type="checkbox" id="enable-smooth-rotation" checked />
+            <label for="enable-smooth-rotation">Enable Smooth Rotation</label>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button id="close-rotation-panel">Close</button>
+        </div>
+    </div>
+
+    <!-- Import Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+            "@dimforge/rapier3d-compat": "https://cdn.skypack.dev/@dimforge/rapier3d-compat"
+        }
+    }
+    </script>
+
+    <!-- Main Script -->
+    <script type="module">
+        // Import libraries
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import RAPIER from '@dimforge/rapier3d-compat';
+
+        // Main Application Class
+        class PhysicsSandbox {
+            constructor() {
+                // Properties
+                this.objects = [];
+                this.objectCount = 0;
+                this.animating = false;
+                this.lastTime = 0;
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+
+                // Add audio support
+                this.audioEnabled = true;
+                this.audioContext = null;
+                this.sounds = {};
+                this.lastSoundTime = 0;
+                this.soundCooldown = 150; // 150ms cooldown between sounds
+
+                // Try to initialize audio
+                this.initAudio();
+
+                // Loaders
+                this.gltfLoader = null; // Will be initialized later
+                this.loadingManager = null; // Will be initialized later
+                this.importScale = 1.0; // Scale for imported models
+                this.importMass = 1.0; // Mass for imported models
+
+                // Drag and interaction properties
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.isDragging = false;
+                this.selectedObject = null;
+                this.dragPlane = new THREE.Plane();
+                this.dragPoint = new THREE.Vector3();
+                this.dragOffset = new THREE.Vector3();
+                this.dragStartPoint = new THREE.Vector3();
+                this.dragCurrentPoint = new THREE.Vector3();
+                this.lastDragPoint = new THREE.Vector3();
+                this.throwVelocityScale = .5; // Reduced from 100 to more manageable level
+                this.throwVelocityThreshold = 0.025; // Slightly higher threshold for more intentional throws
+                this.hoveredObject = null; // Track currently hovered object
+                this.grabLiftAmount = 0.2; // Amount to lift objects when grabbed (in units)
+                this.grabLiftVector = new THREE.Vector3(0, 1, 0); // Direction to lift
+                this.mouseVelocity = new THREE.Vector3(); // Track mouse velocity for throwing
+                this.lastMousePosition = new THREE.Vector3(); // Last world-space mouse position
+                this.velocityHistory = []; // Keep track of velocity over multiple frames
+                this.velocityHistorySize = 3; // Reduced for more responsive throws
+                this.lastUpdateTime = 0; // Track time for velocity calculations
+
+                // Position marker properties
+                this.positionMarker = null; // Will hold the line showing position
+                this.positionMarkerColor = 0x0088ff; // Blue color for position marker
+                this.positionMarkerWidth = 1.5; // Width of the position marker line
+                this.positionMarkerVisible = true; // Whether to show the position marker during drag
+
+                // Axis constraint properties
+                this.constrainedAxis = null; // 'x', 'y', 'z' or null for no constraint
+                this.axisColors = {
+                    x: 0xff0000, // Red for X
+                    y: 0x00ff00, // Green for Y
+                    z: 0x0000ff  // Blue for Z
+                };
+                this.axisConstraintHelpers = {
+                    x: null, // Visual helper for X constraint
+                    y: null, // Visual helper for Y constraint
+                    z: null  // Visual helper for Z constraint
+                };
+                this.initialDragPosition = new THREE.Vector3(); // Store initial position for constrained movement
+                this.constraintPlanes = {
+                    x: new THREE.Plane(), // YZ plane for X constraint
+                    y: new THREE.Plane(), // XZ plane for Y constraint
+                    z: new THREE.Plane()  // XY plane for Z constraint
+                };
+
+                // Object rotation properties
+                this.rotationYSensitivity = 0.1; // Rotation speed for Y-axis (normal scroll)
+                this.rotationZSensitivity = 0.1; // Rotation speed for Z-axis (middle mouse + scroll)
+                this.isMiddleMouseDown = false; // Track middle mouse button state
+                this.dragRotationMode = false; // Whether we're in rotation mode during drag
+                this.smoothRotation = true; // Enable smooth rotation
+                this.rotationSmoothingFactor = 0.2; // How quickly rotation reaches target (0-1)
+                this.targetRotation = new THREE.Quaternion(); // Target rotation for smooth interpolation
+                this.hasTargetRotation = false; // Whether we have a target rotation to interpolate to
+
+                // Camera control properties
+                this.cameraRotating = false;
+                this.cameraPanning = false;
+                this.cameraZooming = false;  // Add flag for zoom state
+                this.cameraStartPosition = new THREE.Vector2();
+                this.cameraTarget = new THREE.Vector3(0, 0, 0);
+                this.rotateSpeed = 0.005;
+                this.panSpeed = 0.003;  // Reduced from 0.01 to match default orbit controls
+                this.zoomSpeed = 0.2;   // Add zoom speed parameter
+
+                // Mode flags
+                this.objectInteractionMode = true; // Default to object interaction mode
+
+                // Debug aids
+                this.debugMode = true; // Set to true to see additional debug info
+
+                // Performance monitoring
+                this.performanceStats = {
+                    fps: 0,
+                    frameTime: 0,
+                    physicsTime: 0,
+                    renderTime: 0,
+                    updateTime: 0,
+                    objectCount: 0,
+                    triangleCount: 0,
+                    drawCalls: 0
+                };
+                this.showPerformance = true; // Whether to show performance stats
+                this.performanceHistory = {
+                    fps: [],
+                    frameTime: [],
+                    physicsTime: []
+                };
+                this.performanceHistorySize = 60; // Keep last 60 frames (about 1 second at 60fps)
+                this.performancePanel = null; // Will hold the performance panel DOM element
+
+                // Memory monitoring
+                this.memoryStats = {
+                    totalJSHeapSize: 0,
+                    usedJSHeapSize: 0,
+                    jsHeapSizeLimit: 0
+                };
+                this.memorySupported = window.performance && window.performance.memory;
+                this.memoryHistory = {
+                    used: []
+                };
+                this.lastMemoryCheck = 0;
+                this.memoryCheckInterval = 1000; // Check memory every 1 second
+
+                // Simulated memory for browsers without memory API
+                this.simulateMemory = !this.memorySupported;
+                this.simulatedMemorySize = 512 * 1024 * 1024; // 512 MB simulated memory
+                this.simulatedMemoryUsed = 100 * 1024 * 1024; // Start with 100 MB used
+                this.simulatedMemoryLimit = 2048 * 1024 * 1024; // 2 GB simulated limit
+                this.simulatedLeakRate = 0; // MB per update (can be modified for testing)
+
+                // Visual feedback for interaction
+                this.hoverOutlineColor = 0xffff00; // Yellow outline for hover
+                this.outlineMaterial = new THREE.MeshBasicMaterial({
+                    color: this.hoverOutlineColor,
+                    side: THREE.BackSide,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                this.hoverOutlineMesh = null;
+
+                // Bind methods
+                this.animate = this.animate.bind(this);
+                this.handleResize = this.handleResize.bind(this);
+                this.handleMouseDown = this.handleMouseDown.bind(this);
+                this.handleMouseMove = this.handleMouseMove.bind(this);
+                this.handleMouseUp = this.handleMouseUp.bind(this);
+                this.checkHover = this.checkHover.bind(this);
+                this.handleKeyDown = this.handleKeyDown.bind(this);
+                this.handleKeyUp = this.handleKeyUp.bind(this);
+
+                // Initialize Three.js
+                this.initThree();
+
+                // Set up event listeners
+                this.setupEventListeners();
+
+                // Initialize Rapier physics
+                this.initRapierPhysics();
+
+                // Add UI elements
+                this.setupUI();
+
+                // Add status indicators
+                this.setupStatusIndicators();
+
+                // Start animation loop
+                this.startAnimation();
+            }
+
+            /**
+             * Initialize Rapier physics engine
+             */
+            async initRapierPhysics() {
+                try {
+                    // Store reference to RAPIER
+                    this.RAPIER = RAPIER;
+
+                    // Initialize Rapier
+                    await RAPIER.init();
+
+                    // Initialize physics world
+                    this.initPhysics();
+
+                    // Start the animation loop
+                    this.startAnimation();
+
+                    console.log('Rapier physics engine initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize Rapier physics engine:', error);
+                    this.showLoadError();
+                }
+            }
+
+            /**
+             * Show loading error to user
+             */
+            showLoadError() {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.position = 'absolute';
+                errorDiv.style.top = '50%';
+                errorDiv.style.left = '50%';
+                errorDiv.style.transform = 'translate(-50%, -50%)';
+                errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                errorDiv.style.color = 'white';
+                errorDiv.style.padding = '20px';
+                errorDiv.style.borderRadius = '10px';
+                errorDiv.style.textAlign = 'center';
+                errorDiv.innerHTML = `
+                    <h2>Error Loading Physics Engine</h2>
+                    <p>Failed to load the Rapier physics engine.</p>
+                    <p>Please check your internet connection and try refreshing the page.</p>
+                    <p>You may also try using a different browser.</p>
+                `;
+                document.body.appendChild(errorDiv);
+            }
+
+            /**
+             * Initialize Three.js scene, camera, renderer
+             */
+            initThree() {
+                // Create scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x282c34);
+
+                // Set up loaders
+                this.loadingManager = new THREE.LoadingManager();
+                this.loadingManager.onProgress = (url, loaded, total) => {
+                    console.log(`Loading: ${url} (${Math.round(loaded / total * 100)}%)`);
+                };
+                this.gltfLoader = new GLTFLoader(this.loadingManager);
+
+                // Create camera
+                this.camera = new THREE.PerspectiveCamera(
+                    45, window.innerWidth / window.innerHeight, 0.1, 1000
+                );
+                this.camera.position.set(0, 10, 20);
+
+                // Create renderer
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('canvas'),
+                    antialias: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+
+                // Add orbit controls - we'll use these for configuration but handle events ourselves
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.rotateSpeed = 0.7;
+                this.controls.panSpeed = 0.1;
+                this.controls.zoomSpeed = 1.2;
+                this.controls.enablePan = true;
+                this.controls.minDistance = 2;  // Reduced from 3 to allow closer zooming
+                this.controls.maxDistance = 100; // Increased from 50 to allow further zooming
+                this.controls.target.copy(this.cameraTarget);
+                this.controls.update();
+
+                // Disable OrbitControls' built-in event handling - we'll handle it ourselves
+                this.controls.dispose();
+
+                // Prevent context menu on right-click
+                this.renderer.domElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+
+                // Update camera controls hint
+                const hint = document.getElementById('camera-controls-hint');
+                if (hint) {
+                    hint.textContent = 'Camera: Left-click to rotate, Right-click to pan, Middle-click to zoom';
+                    hint.style.color = '#ffcc00';
+                    setTimeout(() => {
+                        if (hint) hint.style.color = '';
+                    }, 5000);
+                }
+
+                // Add lights
+                this.addLights();
+
+                // Add ground
+                this.addGround();
+
+                // Initialize performance monitoring
+                this.initPerformanceMonitoring();
+            }
+
+            /**
+             * Initialize the performance monitoring panel
+             */
+            initPerformanceMonitoring() {
+                // Check if memory API is supported
+                this.memorySupported = window.performance && window.performance.memory;
+
+                // Create the performance panel element
+                this.performancePanel = document.createElement('div');
+                this.performancePanel.className = 'performance-panel';
+
+                // Create elements for each metric
+                const metrics = [
+                    { id: 'fps', label: 'FPS' },
+                    { id: 'frameTime', label: 'Frame Time' },
+                    { id: 'physicsTime', label: 'Physics Time' },
+                    { id: 'renderTime', label: 'Render Time' },
+                    { id: 'updateTime', label: 'Update Time' },
+                    { id: 'objectCount', label: 'Objects' },
+                    { id: 'triangleCount', label: 'Triangles' },
+                    { id: 'drawCalls', label: 'Draw Calls' }
+                ];
+
+                // Add memory metrics if supported or simulated
+                if (this.memorySupported || this.simulateMemory) {
+                    metrics.push(
+                        { id: 'memoryUsed', label: 'Memory Used' },
+                        { id: 'memoryTotal', label: 'Memory Total' },
+                        { id: 'memoryLimit', label: 'Memory Limit' }
+                    );
+                }
+
+                // Create the HTML structure
+                let html = '<div style="text-align:center; margin-bottom:5px; font-weight:bold;">PERFORMANCE</div>';
+
+                metrics.forEach(metric => {
+                    html += `
+                    <div class="performance-metric">
+                        <span>${metric.label}:</span>
+                        <span id="perf-${metric.id}" class="performance-value">0</span>
+                    </div>`;
+                });
+
+                // Add charts
+                html += `
+                <div style="margin-top:10px; margin-bottom:5px; font-weight:bold;">FPS History</div>
+                <div id="fps-chart" class="performance-chart"></div>`;
+
+                // Add memory chart and garbage collection button if supported or simulated
+                if (this.memorySupported) {
+                    html += `
+                    <div style="margin-top:10px; margin-bottom:5px; font-weight:bold;">Memory Usage</div>
+                    <div id="memory-chart" class="performance-chart"></div>
+                    <div style="margin-top:5px; text-align:center;">
+                        <button id="force-gc" style="pointer-events:auto; padding:3px 8px; font-size:10px;">Force GC</button>
+                    </div>`;
+                } else if (this.simulateMemory) {
+                    html += `
+                    <div style="margin-top:10px; margin-bottom:5px; font-weight:bold;">Simulated Memory</div>
+                    <div id="memory-chart" class="performance-chart"></div>
+                    <div style="font-size:10px; color:#FF9800; margin:2px 0 5px 0;">
+                        Using simulated values - not real memory data
+                    </div>
+                    <div style="margin-top:5px; text-align:center;">
+                        <button id="force-gc" style="pointer-events:auto; padding:3px 8px; font-size:10px;">Simulate GC</button>
+                        <button id="toggle-leak" style="pointer-events:auto; padding:3px 8px; font-size:10px;">Simulate Leak</button>
+                    </div>`;
+                } else {
+                    // Show message about memory API not being available
+                    html += `
+                    <div style="margin-top:10px; margin-bottom:5px; font-weight:bold;">Memory Monitoring</div>
+                    <div style="font-size:11px; color:#FF9800; margin-bottom:5px;">
+                        Memory API not available in this browser.<br>
+                        Use Chrome with flag: --enable-precise-memory-info
+                    </div>
+                    <div style="text-align:center; margin-top:5px;">
+                        <button id="enable-simulation" style="pointer-events:auto; padding:3px 8px; font-size:10px;">Simulate Memory</button>
+                    </div>`;
+                }
+
+                this.performancePanel.innerHTML = html;
+                document.body.appendChild(this.performancePanel);
+
+                // Add event listeners for buttons
+                if (this.memorySupported) {
+                    const gcButton = document.getElementById('force-gc');
+                    if (gcButton) {
+                        gcButton.addEventListener('click', () => this.forceGarbageCollection());
+                    }
+                } else if (this.simulateMemory) {
+                    // Add listeners for simulated memory controls
+                    const gcButton = document.getElementById('force-gc');
+                    if (gcButton) {
+                        gcButton.addEventListener('click', () => this.forceGarbageCollection());
+                    }
+
+                    const leakButton = document.getElementById('toggle-leak');
+                    if (leakButton) {
+                        leakButton.addEventListener('click', () => this.toggleSimulatedLeak());
+                    }
+                } else {
+                    // Add listener for enabling simulation
+                    const simButton = document.getElementById('enable-simulation');
+                    if (simButton) {
+                        simButton.addEventListener('click', () => {
+                            this.enableMemorySimulation();
+                            this.initPerformanceMonitoring(); // Reinitialize panel
+                        });
+                    }
+                }
+
+                // Initialize chart canvases
+                this.fpsChartCanvas = document.createElement('canvas');
+                this.fpsChartCanvas.width = 200;
+                this.fpsChartCanvas.height = 40;
+                this.fpsChartCanvas.style.position = 'absolute';
+                this.fpsChartCanvas.style.left = '0';
+                this.fpsChartCanvas.style.top = '0';
+                this.fpsChartCanvas.style.width = '100%';
+                this.fpsChartCanvas.style.height = '100%';
+
+                document.getElementById('fps-chart').appendChild(this.fpsChartCanvas);
+                this.fpsChartCtx = this.fpsChartCanvas.getContext('2d');
+
+                // Initialize memory chart if supported or simulated
+                if (this.memorySupported || this.simulateMemory) {
+                    this.memoryChartCanvas = document.createElement('canvas');
+                    this.memoryChartCanvas.width = 200;
+                    this.memoryChartCanvas.height = 40;
+                    this.memoryChartCanvas.style.position = 'absolute';
+                    this.memoryChartCanvas.style.left = '0';
+                    this.memoryChartCanvas.style.top = '0';
+                    this.memoryChartCanvas.style.width = '100%';
+                    this.memoryChartCanvas.style.height = '100%';
+
+                    document.getElementById('memory-chart').appendChild(this.memoryChartCanvas);
+                    this.memoryChartCtx = this.memoryChartCanvas.getContext('2d');
+                }
+
+                // Set the display based on the initial showPerformance value
+                if (!this.showPerformance) {
+                    this.performancePanel.style.display = 'none';
+                }
+
+                // Log memory API status
+                if (this.memorySupported) {
+                    console.log('Memory API available in this browser');
+                } else if (this.simulateMemory) {
+                    console.log('Using simulated memory monitoring');
+                } else {
+                    console.log('Memory API not available in this browser');
+                    console.info('To enable memory monitoring in Chrome, use flag: --enable-precise-memory-info');
+                    console.info('For advanced GC control, use flag: --js-flags="--expose-gc"');
+                }
+            }
+
+            /**
+             * Enable memory simulation
+             */
+            enableMemorySimulation() {
+                this.simulateMemory = true;
+                console.log('Memory simulation enabled');
+
+                // Initialize simulated memory based on scene complexity
+                this.simulatedMemorySize = 512 * 1024 * 1024; // 512 MB
+                this.simulatedMemoryUsed = 100 * 1024 * 1024; // Start with 100 MB
+                this.simulatedMemoryLimit = 2048 * 1024 * 1024; // 2 GB
+                this.simulatedLeakRate = 0; // No leak by default
+
+                // Clear memory history
+                this.memoryHistory.used = [];
+            }
+
+            /**
+             * Toggle simulated memory leak
+             */
+            toggleSimulatedLeak() {
+                if (this.simulatedLeakRate > 0) {
+                    // Turn off leak
+                    this.simulatedLeakRate = 0;
+                    console.log('Simulated memory leak disabled');
+
+                    // Update button
+                    const leakButton = document.getElementById('toggle-leak');
+                    if (leakButton) {
+                        leakButton.textContent = 'Simulate Leak';
+                        leakButton.style.backgroundColor = '#4CAF50'; // Green
+                    }
+                } else {
+                    // Turn on leak - add 1 MB per update
+                    this.simulatedLeakRate = 1;
+                    console.log('Simulated memory leak enabled - adding 1 MB per update');
+
+                    // Update button
+                    const leakButton = document.getElementById('toggle-leak');
+                    if (leakButton) {
+                        leakButton.textContent = 'Stop Leak';
+                        leakButton.style.backgroundColor = '#F44336'; // Red
+                    }
+                }
+            }
+
+            /**
+             * Force garbage collection if available
+             */
+            forceGarbageCollection() {
+                if (window.gc) {
+                    try {
+                        window.gc();
+                        console.log('Garbage collection forced');
+                    } catch (e) {
+                        console.error('Failed to force garbage collection:', e);
+                    }
+                } else if (this.simulateMemory) {
+                    // Simulate GC effect by reducing memory usage
+                    console.log('Simulating garbage collection');
+                    const before = this.simulatedMemoryUsed;
+
+                    // Reduce memory by 30%
+                    this.simulatedMemoryUsed = Math.max(
+                        50 * 1024 * 1024, // Minimum 50 MB
+                        this.simulatedMemoryUsed * 0.7 // 30% reduction
+                    );
+
+                    const after = this.simulatedMemoryUsed;
+                    console.log(`Simulated memory before: ${this.formatBytes(before)}, after: ${this.formatBytes(after)}`);
+
+                    // Update immediately
+                    this.updateMemoryStats();
+                } else {
+                    console.log('Garbage collection not available. In Chrome, start with --js-flags="--expose-gc"');
+
+                    // Try to help the GC indirectly
+                    const memoryBefore = this.memorySupported ? performance.memory.usedJSHeapSize : 0;
+
+                    // Create some pressure to encourage GC
+                    const largeArray = [];
+                    for (let i = 0; i < 1000000; i++) {
+                        largeArray.push(i);
+                    }
+
+                    // Clear the reference
+                    largeArray.length = 0;
+
+                    // Wait a bit and then update memory stats
+                    setTimeout(() => {
+                        if (this.memorySupported) {
+                            const memoryAfter = performance.memory.usedJSHeapSize;
+                            console.log(`Memory before: ${this.formatBytes(memoryBefore)}, after: ${this.formatBytes(memoryAfter)}`);
+                            this.updateMemoryStats();
+                        }
+                    }, 500);
+                }
+            }
+
+            /**
+             * Update the performance panel with current stats including memory
+             */
+            updatePerformancePanel() {
+                if (!this.showPerformance || !this.performancePanel) return;
+
+                // Update the text values
+                document.getElementById('perf-fps').textContent = `${this.performanceStats.fps} fps`;
+                document.getElementById('perf-frameTime').textContent = `${this.performanceStats.frameTime.toFixed(2)} ms`;
+                document.getElementById('perf-physicsTime').textContent = `${this.performanceStats.physicsTime.toFixed(2)} ms`;
+                document.getElementById('perf-renderTime').textContent = `${this.performanceStats.renderTime.toFixed(2)} ms`;
+                document.getElementById('perf-updateTime').textContent = `${this.performanceStats.updateTime.toFixed(2)} ms`;
+                document.getElementById('perf-objectCount').textContent = `${this.performanceStats.objectCount}`;
+                document.getElementById('perf-triangleCount').textContent = `${this.performanceStats.triangleCount.toLocaleString()}`;
+                document.getElementById('perf-drawCalls').textContent = `${this.performanceStats.drawCalls}`;
+
+                // Update memory stats if supported or simulated
+                if (this.memorySupported || this.simulateMemory) {
+                    document.getElementById('perf-memoryUsed').textContent = this.formatBytes(this.memoryStats.usedJSHeapSize);
+                    document.getElementById('perf-memoryTotal').textContent = this.formatBytes(this.memoryStats.totalJSHeapSize);
+                    document.getElementById('perf-memoryLimit').textContent = this.formatBytes(this.memoryStats.jsHeapSizeLimit);
+
+                    // Colorize memory usage based on percentage of limit
+                    const memoryUsedPercent = (this.memoryStats.usedJSHeapSize / this.memoryStats.jsHeapSizeLimit) * 100;
+                    this.colorizeMetric('perf-memoryUsed', memoryUsedPercent, 50, 70, false);
+
+                    // For simulated memory, add indication if leak is active
+                    if (this.simulateMemory && this.simulatedLeakRate > 0) {
+                        document.getElementById('perf-memoryUsed').textContent += ' ⚠️';
+                    }
+                }
+
+                // Set color based on performance
+                this.colorizeMetric('perf-fps', this.performanceStats.fps, 60, 30, true);
+                this.colorizeMetric('perf-frameTime', this.performanceStats.frameTime, 16, 33, false);
+                this.colorizeMetric('perf-physicsTime', this.performanceStats.physicsTime, 5, 10, false);
+                this.colorizeMetric('perf-renderTime', this.performanceStats.renderTime, 5, 10, false);
+
+                // Update the FPS chart
+                this.updateFPSChart();
+
+                // Update memory chart if supported or simulated
+                if (this.memorySupported || this.simulateMemory) {
+                    this.updateMemoryChart();
+                }
+            }
+
+            /**
+             * Update the FPS history chart
+             */
+            updateFPSChart() {
+                if (!this.fpsChartCtx) return;
+
+                const ctx = this.fpsChartCtx;
+                const canvas = ctx.canvas;
+                const width = canvas.width;
+                const height = canvas.height;
+
+                // Clear the canvas
+                ctx.clearRect(0, 0, width, height);
+
+                // No data yet
+                if (this.performanceHistory.fps.length === 0) return;
+
+                // Find min/max values for scaling
+                const maxFps = Math.max(60, ...this.performanceHistory.fps);
+                const minFps = Math.min(0, ...this.performanceHistory.fps);
+                const range = maxFps - minFps;
+
+                // Draw the FPS line
+                ctx.beginPath();
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 2;
+
+                const step = width / this.performanceHistorySize;
+
+                for (let i = 0; i < this.performanceHistory.fps.length; i++) {
+                    const x = i * step;
+                    const normalizedValue = (this.performanceHistory.fps[i] - minFps) / range;
+                    const y = height - (normalizedValue * height);
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+
+                ctx.stroke();
+
+                // Draw the 60fps line
+                const sixtyFpsY = height - ((60 - minFps) / range * height);
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.moveTo(0, sixtyFpsY);
+                ctx.lineTo(width, sixtyFpsY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Draw the 30fps line if it's in range
+                if (minFps < 30 && maxFps > 30) {
+                    const thirtyFpsY = height - ((30 - minFps) / range * height);
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(0, thirtyFpsY);
+                    ctx.lineTo(width, thirtyFpsY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+
+            /**
+             * Colorize a metric based on its value
+             */
+            colorizeMetric(id, value, goodThreshold, warningThreshold, higherIsBetter) {
+                const element = document.getElementById(id);
+                if (!element) return;
+
+                // Remove existing classes
+                element.classList.remove('performance-good', 'performance-warning', 'performance-bad');
+
+                if (higherIsBetter) {
+                    // Higher is better (e.g., FPS)
+                    if (value >= goodThreshold) {
+                        element.classList.add('performance-good');
+                    } else if (value >= warningThreshold) {
+                        element.classList.add('performance-warning');
+                    } else {
+                        element.classList.add('performance-bad');
+                    }
+                } else {
+                    // Lower is better (e.g., frame time)
+                    if (value <= goodThreshold) {
+                        element.classList.add('performance-good');
+                    } else if (value <= warningThreshold) {
+                        element.classList.add('performance-warning');
+                    } else {
+                        element.classList.add('performance-bad');
+                    }
+                }
+            }
+
+            /**
+             * Add lights to the scene
+             */
+            addLights() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x404040, 1);
+                this.scene.add(ambientLight);
+
+                // Directional light (sun)
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+
+                // Configure shadow properties
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                directionalLight.shadow.camera.left = -30;
+                directionalLight.shadow.camera.right = 30;
+                directionalLight.shadow.camera.top = 30;
+                directionalLight.shadow.camera.bottom = -30;
+
+                this.scene.add(directionalLight);
+            }
+
+            /**
+             * Add ground plane
+             */
+            addGround() {
+                // Create a ground plane with Three.js
+                const groundGeometry = new THREE.PlaneGeometry(60, 60);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x808080,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                this.groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+                this.groundMesh.rotation.x = -Math.PI / 2;
+                this.groundMesh.receiveShadow = true;
+                this.scene.add(this.groundMesh);
+
+                // We'll add the physics ground in initPhysics after Rapier loads
+            }
+
+            /**
+             * Initialize physics world and add ground
+             */
+            initPhysics() {
+                // Create a physics world with gravity
+                this.world = new this.RAPIER.World({
+                    x: 0.0,
+                    y: -9.81,
+                    z: 0.0
+                });
+
+                // Create ground collider
+                const groundColliderDesc = this.RAPIER.ColliderDesc.cuboid(30.0, 0.1, 30.0);
+                this.groundCollider = this.world.createCollider(groundColliderDesc);
+
+                // Set ground position
+                this.groundCollider.setTranslation({
+                    x: 0.0,
+                    y: -0.1, // Slightly below the visual plane
+                    z: 0.0
+                });
+
+                // Add invisible boundary walls
+                this.addBoundaryWalls();
+            }
+
+            /**
+             * Add invisible boundary walls around the ground perimeter
+             */
+            addBoundaryWalls() {
+                if (!this.RAPIER) return;
+
+                const groundSize = 60; // Match the visual ground size
+                const wallHeight = 10; // Height of the invisible walls
+                const wallThickness = 0.5; // Thickness of the walls
+                const halfGroundSize = groundSize / 2;
+
+                // Store dimensions for visualization
+                this.boundaryDimensions = {
+                    groundSize,
+                    wallHeight,
+                    wallThickness,
+                    halfGroundSize
+                };
+
+                // Create wall descriptors
+                const walls = [
+                    // North wall (+Z)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(halfGroundSize, wallHeight/2, wallThickness/2),
+                        position: { x: 0, y: wallHeight/2, z: halfGroundSize }
+                    },
+                    // South wall (-Z)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(halfGroundSize, wallHeight/2, wallThickness/2),
+                        position: { x: 0, y: wallHeight/2, z: -halfGroundSize }
+                    },
+                    // East wall (+X)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(wallThickness/2, wallHeight/2, halfGroundSize),
+                        position: { x: halfGroundSize, y: wallHeight/2, z: 0 }
+                    },
+                    // West wall (-X)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(wallThickness/2, wallHeight/2, halfGroundSize),
+                        position: { x: -halfGroundSize, y: wallHeight/2, z: 0 }
+                    }
+                ];
+
+                // Create and position the walls
+                for (const wall of walls) {
+                    const collider = this.world.createCollider(wall.desc);
+                    collider.setTranslation(wall.position);
+
+                    // Store the wall collider for potential later use
+                    if (!this.boundaryWalls) this.boundaryWalls = [];
+                    this.boundaryWalls.push(collider);
+                }
+
+                console.log("Added invisible boundary walls");
+            }
+
+            /**
+             * Set up event listeners for UI controls and window events
+             */
+            setupEventListeners() {
+                // Window resize event
+                window.addEventListener('resize', this.handleResize);
+
+                // Mouse events for dragging and camera control
+                this.renderer.domElement.addEventListener('mousedown', this.handleMouseDown);
+                window.addEventListener('mousemove', this.handleMouseMove);
+                window.addEventListener('mouseup', this.handleMouseUp);
+
+                // Add key events for switching modes
+                window.addEventListener('keydown', (event) => {
+                    // Spacebar to toggle between camera and object mode
+                    if (event.code === 'Space') {
+                        this.objectInteractionMode = !this.objectInteractionMode;
+                        document.body.style.cursor = this.objectInteractionMode ? '' : 'move';
+
+                        // Show mode in console
+                        console.log("Switched to " +
+                            (this.objectInteractionMode ? "OBJECT" : "CAMERA") + " interaction mode");
+
+                        // Update the hint
+                        const hint = document.getElementById('camera-controls-hint');
+                        if (hint) {
+                            hint.textContent = this.objectInteractionMode ?
+                                'Mode: OBJECT (Space to switch) | Camera: Left-rotate, Right-pan, Middle-zoom | Alt+Click: Object properties | While dragging: Scroll to rotate Y, Middle+Scroll to rotate Z' :
+                                'Mode: CAMERA (Space to switch) | Left-rotate, Right-pan, Middle-zoom';
+                            hint.style.color = '#ffcc00';
+                            setTimeout(() => {
+                                if (hint) hint.style.color = '';
+                            }, 2000);
+                        }
+                    }
+
+                    // Shift key for temporary camera mode while held
+                    if (event.key === 'Shift') {
+                        this.previousMode = this.objectInteractionMode;
+                        this.objectInteractionMode = false;
+                        document.body.style.cursor = 'move';
+                    }
+                });
+
+                window.addEventListener('keyup', (event) => {
+                    // Release Shift to go back to previous mode
+                    if (event.key === 'Shift' && this.previousMode !== undefined) {
+                        this.objectInteractionMode = this.previousMode;
+                        document.body.style.cursor = this.objectInteractionMode ? '' : 'move';
+                        this.previousMode = undefined;
+                        this.checkHover(); // Restore hover state if needed
+                    }
+                });
+
+                // Touch events for mobile
+                this.renderer.domElement.addEventListener('touchstart', (event) => {
+                    const touch = event.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.handleMouseDown(mouseEvent);
+                });
+
+                window.addEventListener('touchmove', (event) => {
+                    const touch = event.touches[0];
+                    const mouseEvent = new MouseEvent('mousemove', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.handleMouseMove(mouseEvent);
+                    event.preventDefault(); // Prevent scrolling
+                }, { passive: false });
+
+                window.addEventListener('touchend', () => {
+                    // Create a simple event object with no button/key properties
+                    this.handleMouseUp({ button: 0, altKey: false });
+                });
+
+                // Button click events
+                document.getElementById('add-cube').addEventListener('click', () => this.addCube());
+                document.getElementById('add-sphere').addEventListener('click', () => this.addSphere());
+                document.getElementById('add-polyhedron').addEventListener('click', () => this.addPolyhedron());
+                document.getElementById('clear-all').addEventListener('click', () => this.clearAllObjects());
+
+                // Model import events
+                document.getElementById('import-model').addEventListener('click', () => {
+                    document.getElementById('model-file-input').click();
+                });
+
+                document.getElementById('model-file-input').addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.importGLBModel(file);
+                    }
+                });
+
+                // Import scale slider
+                const scaleSlider = document.getElementById('import-scale');
+                const scaleValue = document.getElementById('scale-value');
+
+                scaleSlider.addEventListener('input', (event) => {
+                    this.importScale = parseFloat(event.target.value);
+                    scaleValue.textContent = this.importScale.toFixed(1);
+                });
+
+                // Import mass slider
+                const massSlider = document.getElementById('import-mass');
+                const massValue = document.getElementById('mass-value');
+
+                massSlider.addEventListener('input', (event) => {
+                    this.importMass = parseFloat(event.target.value);
+                    massValue.textContent = this.importMass.toFixed(1);
+                });
+
+                // Toggle boundaries button
+                document.getElementById('toggle-boundaries').addEventListener('click', () => {
+                    this.toggleBoundaries();
+                });
+
+                // Toggle performance button
+                document.getElementById('toggle-performance').addEventListener('click', () => {
+                    this.togglePerformance();
+                });
+
+                // Toggle rotation panel button
+                document.getElementById('toggle-rotation-panel').addEventListener('click', () => {
+                    this.toggleRotationPanel();
+                });
+
+                // Close rotation panel button
+                document.getElementById('close-rotation-panel').addEventListener('click', () => {
+                    document.getElementById('rotation-debug-panel').style.display = 'none';
+                    document.getElementById('toggle-rotation-panel').textContent = 'Rotation Settings';
+                });
+
+                // Y-axis rotation sensitivity slider
+                const yRotationSlider = document.getElementById('y-rotation-sensitivity');
+                const ySensitivityValue = document.getElementById('y-sensitivity-value');
+
+                yRotationSlider.addEventListener('input', (event) => {
+                    this.rotationYSensitivity = parseFloat(event.target.value);
+                    ySensitivityValue.textContent = this.rotationYSensitivity.toFixed(2);
+                    console.log(`Y-axis rotation sensitivity set to ${this.rotationYSensitivity}`);
+                });
+
+                // Z-axis rotation sensitivity slider
+                const zRotationSlider = document.getElementById('z-rotation-sensitivity');
+                const zSensitivityValue = document.getElementById('z-sensitivity-value');
+
+                zRotationSlider.addEventListener('input', (event) => {
+                    this.rotationZSensitivity = parseFloat(event.target.value);
+                    zSensitivityValue.textContent = this.rotationZSensitivity.toFixed(2);
+                    console.log(`Z-axis rotation sensitivity set to ${this.rotationZSensitivity}`);
+                });
+
+                // Smoothness slider
+                const smoothnessSlider = document.getElementById('rotation-smoothing');
+                const smoothnessValue = document.getElementById('smoothing-value');
+
+                smoothnessSlider.addEventListener('input', (event) => {
+                    this.rotationSmoothingFactor = parseFloat(event.target.value);
+                    smoothnessValue.textContent = this.rotationSmoothingFactor.toFixed(2);
+                    console.log(`Smoothness set to ${this.rotationSmoothingFactor}`);
+                });
+
+                // Enable/disable smooth rotation checkbox
+                const smoothRotationCheckbox = document.getElementById('enable-smooth-rotation');
+                smoothRotationCheckbox.addEventListener('change', (event) => {
+                    this.smoothRotation = event.target.checked;
+                    console.log(`Smooth rotation ${this.smoothRotation ? 'enabled' : 'disabled'}`);
+                });
+
+                // Handle mouse wheel for zoom
+                this.renderer.domElement.addEventListener('wheel', (event) => {
+                    // Prevent default scrolling behavior
+                    event.preventDefault();
+
+                    // If we're dragging an object, use wheel for rotation
+                    if (this.isDragging && this.selectedObject) {
+                        this.handleObjectRotation(event);
+                        return;
+                    }
+
+                    // Otherwise, use wheel for camera zoom
+                    // Calculate zoom amount (negative delta = zoom in, positive = zoom out)
+                    const zoomAmount = event.deltaY * 0.001 *
+                        (event.deltaMode === 1 ? 20 : 1); // Adjust for line-based delta mode
+
+                    // Get camera-to-target direction and distance
+                    const direction = new THREE.Vector3().subVectors(this.camera.position, this.cameraTarget).normalize();
+                    const distance = this.camera.position.distanceTo(this.cameraTarget);
+
+                    // Apply min/max distance constraints
+                    const newDistance = Math.max(
+                        this.controls.minDistance,
+                        Math.min(this.controls.maxDistance, distance + zoomAmount)
+                    );
+
+                    // Calculate new camera position
+                    const offset = direction.multiplyScalar(newDistance);
+                    this.camera.position.copy(this.cameraTarget).add(offset);
+                }, { passive: false });
+
+                // Track middle mouse button state for rotation mode
+                window.addEventListener('mousedown', (event) => {
+                    if (event.button === 1) { // Middle mouse button
+                        this.isMiddleMouseDown = true;
+                    }
+                });
+
+                window.addEventListener('mouseup', (event) => {
+                    if (event.button === 1) { // Middle mouse button
+                        this.isMiddleMouseDown = false;
+                    }
+                });
+
+                // Object scale slider
+                const objectScaleSlider = document.getElementById('object-scale');
+                const objectScaleValue = document.getElementById('object-scale-value');
+
+                objectScaleSlider.addEventListener('input', (event) => {
+                    const scale = parseFloat(event.target.value);
+                    objectScaleValue.textContent = scale.toFixed(1);
+                });
+
+                // Apply scale button
+                document.getElementById('apply-scale').addEventListener('click', () => {
+                    if (this.selectedObjectForControls && this.selectedObjectForControls.type === 'model') {
+                        const newScale = parseFloat(objectScaleSlider.value);
+                        this.rescaleModelAndPhysics(this.selectedObjectForControls, newScale);
+
+                        // Update the info display
+                        const infoElement = document.getElementById('selected-object-info');
+                        const updatedInfo = infoElement.innerHTML.replace(
+                            /Current Scale: [\d.]+/,
+                            `Current Scale: ${newScale.toFixed(2)}`
+                        );
+                        infoElement.innerHTML = updatedInfo;
+                    }
+                });
+
+                // Close object controls button
+                document.getElementById('close-object-controls').addEventListener('click', () => {
+                    document.getElementById('selected-object-controls').style.display = 'none';
+                    this.selectedObjectForControls = null;
+                });
+
+                // Key event handlers
+                window.addEventListener('keydown', this.handleKeyDown);
+                window.addEventListener('keyup', this.handleKeyUp);
+            }
+
+            /**
+             * Handle window resize event
+             */
+            handleResize() {
+                // Update camera aspect ratio
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+
+                // Update renderer size
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            /**
+             * Start the animation loop
+             */
+            startAnimation() {
+                if (!this.animating) {
+                    this.animating = true;
+                    this.lastTime = performance.now();
+                    this.lastFpsUpdate = this.lastTime;
+                    this.frameCount = 0;
+                    requestAnimationFrame(this.animate);
+                }
+            }
+
+            /**
+             * Animation loop
+             */
+            animate(time) {
+                // Request next frame
+                if (this.animating) {
+                    requestAnimationFrame(this.animate);
+                }
+
+                // Start measuring frame time
+                const frameStartTime = performance.now();
+
+                // Calculate delta time
+                const deltaTime = (time - this.lastTime) / 1000;
+                this.lastTime = time;
+
+                // Update FPS counter
+                this.frameCount++;
+                if (time - this.lastFpsUpdate >= 1000) {
+                    const fps = Math.round((this.frameCount * 1000) / (time - this.lastFpsUpdate));
+                    document.getElementById('fps').textContent = `FPS: ${fps}`;
+
+                    // Update FPS in performance stats
+                    this.performanceStats.fps = fps;
+
+                    // Add to history
+                    this.performanceHistory.fps.push(fps);
+                    if (this.performanceHistory.fps.length > this.performanceHistorySize) {
+                        this.performanceHistory.fps.shift();
+                    }
+
+                    this.lastFpsUpdate = time;
+                    this.frameCount = 0;
+                }
+
+                // Update memory statistics
+                this.updateMemoryStats();
+
+                // Measure update time
+                const updateStartTime = performance.now();
+
+                // Update drag position if we're dragging an object
+                if (this.isDragging && this.selectedObject) {
+                    this.updateDragPosition();
+                }
+
+                // Check for object hover if not dragging
+                if (!this.isDragging) {
+                    this.checkHover();
+                }
+
+                // Record update time
+                this.performanceStats.updateTime = performance.now() - updateStartTime;
+
+                // Measure physics time
+                const physicsStartTime = performance.now();
+
+                // Step physics world
+                if (this.world) {
+                    this.world.step();
+
+                    // Update object positions based on physics
+                    this.updateObjectPositions();
+                }
+
+                // Record physics time
+                this.performanceStats.physicsTime = performance.now() - physicsStartTime;
+
+                // Update orbit controls
+                this.controls.update();
+
+                // Measure render time
+                const renderStartTime = performance.now();
+
+                // Render the scene
+                this.renderer.render(this.scene, this.camera);
+
+                // Record render time
+                this.performanceStats.renderTime = performance.now() - renderStartTime;
+
+                // Update object count and triangle count
+                this.performanceStats.objectCount = this.objects.length;
+                this.countSceneTriangles();
+
+                // Calculate total frame time
+                this.performanceStats.frameTime = performance.now() - frameStartTime;
+
+                // Add to history
+                this.performanceHistory.frameTime.push(this.performanceStats.frameTime);
+                if (this.performanceHistory.frameTime.length > this.performanceHistorySize) {
+                    this.performanceHistory.frameTime.shift();
+                }
+
+                this.performanceHistory.physicsTime.push(this.performanceStats.physicsTime);
+                if (this.performanceHistory.physicsTime.length > this.performanceHistorySize) {
+                    this.performanceHistory.physicsTime.shift();
+                }
+
+                // Update performance panel
+                this.updatePerformancePanel();
+
+                // Update smooth rotations
+                this.updateSmoothRotations();
+            }
+
+            /**
+             * Count triangles in the scene
+             */
+            countSceneTriangles() {
+                let triangleCount = 0;
+                let drawCalls = 0;
+
+                this.scene.traverse(object => {
+                    if (object.isMesh) {
+                        drawCalls++;
+                        if (object.geometry) {
+                            if (object.geometry.index !== null) {
+                                triangleCount += object.geometry.index.count / 3;
+                            } else {
+                                triangleCount += object.geometry.attributes.position.count / 3;
+                            }
+                        }
+                    }
+                });
+
+                this.performanceStats.triangleCount = Math.round(triangleCount);
+                this.performanceStats.drawCalls = drawCalls;
+            }
+
+            /**
+             * Update Three.js object positions to match physics bodies
+             */
+            updateObjectPositions() {
+                for (const object of this.objects) {
+                    if (object.body && object.mesh) {
+                        // Get the rigid body position
+                        const position = object.body.translation();
+                        object.mesh.position.set(position.x, position.y, position.z);
+
+                        // Get the rigid body rotation
+                        const rotation = object.body.rotation();
+                        object.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+                    }
+                }
+            }
+
+            /**
+             * Add a cube to the scene
+             */
+            addCube(position = null) {
+                if (!this.RAPIER) return;
+
+                // Create random position if not provided
+                if (!position) {
+                    position = {
+                        x: (Math.random() - 0.5) * 8,
+                        y: Math.random() * 10 + 5,
+                        z: (Math.random() - 0.5) * 8
+                    };
+                }
+
+                // Random size and color
+                const size = Math.random() * 0.5 + 0.5;
+                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+                // Create Three.js cube
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+
+                // Create Rapier rigid body
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(position.x, position.y, position.z);
+                const body = this.world.createRigidBody(rigidBodyDesc);
+
+                // Create Rapier collider
+                const colliderDesc = this.RAPIER.ColliderDesc.cuboid(size/2, size/2, size/2);
+                const collider = this.world.createCollider(colliderDesc, body);
+
+                // Track the object
+                this.objectCount++;
+                const object = {
+                    id: this.objectCount,
+                    type: 'cube',
+                    mesh: mesh,
+                    body: body,
+                    collider: collider,
+                    size: size,
+                    color: color
+                };
+                this.objects.push(object);
+
+                // Update object counter
+                document.getElementById('object-count').textContent = `Objects: ${this.objects.length}`;
+
+                return object;
+            }
+
+            /**
+             * Add a sphere to the scene
+             */
+            addSphere(position = null) {
+                if (!this.RAPIER) return;
+
+                // Create random position if not provided
+                if (!position) {
+                    position = {
+                        x: (Math.random() - 0.5) * 8,
+                        y: Math.random() * 10 + 5,
+                        z: (Math.random() - 0.5) * 8
+                    };
+                }
+
+                // Random size and color
+                const radius = Math.random() * 0.5 + 0.5;
+                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+                // Create Three.js sphere
+                const geometry = new THREE.SphereGeometry(radius, 32, 32);
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+
+                // Create Rapier rigid body
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(position.x, position.y, position.z);
+                const body = this.world.createRigidBody(rigidBodyDesc);
+
+                // Create Rapier collider
+                const colliderDesc = this.RAPIER.ColliderDesc.ball(radius);
+                const collider = this.world.createCollider(colliderDesc, body);
+
+                // Track the object
+                this.objectCount++;
+                const object = {
+                    id: this.objectCount,
+                    type: 'sphere',
+                    mesh: mesh,
+                    body: body,
+                    collider: collider,
+                    radius: radius,
+                    color: color
+                };
+                this.objects.push(object);
+
+                // Update object counter
+                document.getElementById('object-count').textContent = `Objects: ${this.objects.length}`;
+
+                return object;
+            }
+
+            /**
+             * Add a polyhedron (tetrahedron, octahedron, or icosahedron) to the scene
+             */
+            addPolyhedron(position = null) {
+                if (!this.RAPIER) return;
+
+                // Create random position if not provided
+                if (!position) {
+                    position = {
+                        x: (Math.random() - 0.5) * 8,
+                        y: Math.random() * 10 + 5,
+                        z: (Math.random() - 0.5) * 8
+                    };
+                }
+
+                // Random size and color
+                const size = Math.random() * 0.5 + 0.5;
+                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+                // Randomly select a polyhedron type
+                const types = ['tetrahedron', 'octahedron', 'icosahedron'];
+                const type = types[Math.floor(Math.random() * types.length)];
+
+                // Create Three.js geometry based on type
+                let geometry;
+                switch (type) {
+                    case 'tetrahedron':
+                        geometry = new THREE.TetrahedronGeometry(size);
+                        break;
+                    case 'octahedron':
+                        geometry = new THREE.OctahedronGeometry(size);
+                        break;
+                    case 'icosahedron':
+                        geometry = new THREE.IcosahedronGeometry(size);
+                        break;
+                }
+
+                // Create material and mesh
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+
+                // Create Rapier rigid body
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(position.x, position.y, position.z);
+                const body = this.world.createRigidBody(rigidBodyDesc);
+
+                // Extract vertices for convex hull
+                const vertices = this.extractVertices(geometry);
+
+                // Create Rapier convex hull collider
+                const colliderDesc = this.RAPIER.ColliderDesc.convexHull(vertices);
+
+                // If convex hull creation fails, fall back to a ball collider
+                let collider;
+                if (colliderDesc) {
+                    collider = this.world.createCollider(colliderDesc, body);
+                } else {
+                    console.warn('Failed to create convex hull, falling back to ball collider');
+                    collider = this.world.createCollider(
+                        this.RAPIER.ColliderDesc.ball(size), body
+                    );
+                }
+
+                // Track the object
+                this.objectCount++;
+                const object = {
+                    id: this.objectCount,
+                    type: type,
+                    mesh: mesh,
+                    body: body,
+                    collider: collider,
+                    size: size,
+                    color: color
+                };
+                this.objects.push(object);
+
+                // Update object counter
+                document.getElementById('object-count').textContent = `Objects: ${this.objects.length}`;
+
+                return object;
+            }
+
+            /**
+             * Extract vertices from Three.js geometry for convex hull creation
+             */
+            extractVertices(geometry) {
+                const positions = geometry.attributes.position;
+                const vertices = [];
+
+                // Extract unique vertices
+                for (let i = 0; i < positions.count; i++) {
+                    vertices.push(
+                        positions.getX(i),
+                        positions.getY(i),
+                        positions.getZ(i)
+                    );
+                }
+
+                return new Float32Array(vertices);
+            }
+
+            /**
+             * Clear all physics objects from the scene
+             */
+            clearAllObjects() {
+                // Remove Three.js meshes
+                for (const object of this.objects) {
+                    if (object.mesh) {
+                        this.scene.remove(object.mesh);
+                    }
+                }
+
+                // Remove Rapier bodies
+                if (this.world) {
+                    // Rapier automatically removes associated colliders when we remove a body
+                    for (const object of this.objects) {
+                        if (object.body) {
+                            this.world.removeRigidBody(object.body);
+                        }
+                    }
+                }
+
+                // Clear objects array
+                this.objects = [];
+
+                // Update object counter
+                document.getElementById('object-count').textContent = `Objects: 0`;
+            }
+
+            /**
+             * Run a stress test by adding many objects
+             */
+            runStressTest(count = 100) {
+                // Clear existing objects
+                this.clearAllObjects();
+
+                // Create objects in batches to avoid freezing the browser
+                const batchSize = 20;
+                let created = 0;
+
+                const createBatch = () => {
+                    const batchCount = Math.min(batchSize, count - created);
+
+                    for (let i = 0; i < batchCount; i++) {
+                        // Randomly choose object type
+                        const type = Math.floor(Math.random() * 3);
+
+                        // Create object based on type
+                        switch (type) {
+                            case 0:
+                                this.addCube();
+                                break;
+                            case 1:
+                                this.addSphere();
+                                break;
+                            case 2:
+                                this.addPolyhedron();
+                                break;
+                        }
+                    }
+
+                    created += batchCount;
+
+                    // Continue creating batches or finish
+                    if (created < count) {
+                        setTimeout(createBatch, 50); // 50ms delay between batches
+                    } else {
+                        console.log(`Stress test complete: ${count} objects created`);
+                    }
+                };
+
+                // Start creating batches
+                createBatch();
+            }
+
+            /**
+             * Handle mouse down event for object selection and dragging
+             */
+            handleMouseDown(event) {
+                // Calculate mouse position in normalized device coordinates (-1 to +1)
+                this.updateMousePosition(event);
+
+                // First check if we are in object interaction mode
+                if (this.objectInteractionMode) {
+                    // Only handle left mouse button (button 0) for object interaction
+                    if (event.button === 0) {
+                        // Perform raycasting to detect object selection
+                        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                        // Get all objects that could be intersected, including nested model meshes
+                        const objectsToCheck = [];
+                        this.scene.traverse((node) => {
+                            if (node.isMesh && node !== this.groundMesh && node !== this.hoverOutlineMesh) {
+                                objectsToCheck.push(node);
+                            }
+                        });
+
+                        const intersects = this.raycaster.intersectObjects(objectsToCheck);
+
+                        // Check if we hit any objects
+                        if (intersects.length > 0) {
+                            // Find the first object that has a physics body
+                            for (let i = 0; i < intersects.length; i++) {
+                                const object = this.findObjectByMesh(intersects[i].object);
+                                if (object && object.body) {
+                                    // Alt key opens object properties instead of dragging
+                                    if (event.altKey) {
+                                        this.showObjectControls(object);
+                                        return;
+                                    }
+
+                                    // Set cursor to grabbing
+                                    document.body.classList.add('grabbing');
+
+                                    // Set selected object
+                                    this.selectedObject = object;
+                                    this.isDragging = true;
+
+                                    // Initialize timing for velocity calculations
+                                    this.lastUpdateTime = performance.now();
+
+                                    // Clear velocity history when starting a new drag
+                                    this.velocityHistory = [];
+
+                                    // Store intersection point
+                                    this.dragPoint.copy(intersects[i].point);
+                                    this.dragStartPoint.copy(this.dragPoint);
+                                    this.lastDragPoint.copy(this.dragPoint);
+
+                                    // Create drag plane perpendicular to the camera
+                                    this.dragPlane.setFromNormalAndCoplanarPoint(
+                                        this.camera.getWorldDirection(new THREE.Vector3()),
+                                        this.dragPoint
+                                    );
+
+                                    // Calculate the offset from the center of the object to the hit point
+                                    const objectPosition = object.body.translation();
+                                    const objectPos = new THREE.Vector3(
+                                        objectPosition.x, objectPosition.y, objectPosition.z
+                                    );
+                                    this.dragOffset.copy(this.dragPoint).sub(objectPos);
+
+                                    // Apply slight lift effect when grabbed
+                                    const liftAmount = this.grabLiftVector.clone().multiplyScalar(this.grabLiftAmount);
+                                    objectPos.add(liftAmount);
+                                    object.body.setTranslation({
+                                        x: objectPos.x,
+                                        y: objectPos.y,
+                                        z: objectPos.z
+                                    });
+
+                                    // Setup drag interaction physics
+                                    this.prepareDragInteraction();
+
+                                    // Remove hover outline (if any)
+                                    this.removeHoverOutline();
+
+                                    // Stop checking after finding the first physics object
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If we get here, we're not interacting with an object, so handle camera controls
+
+                // Handle left-click for camera rotation
+                if (event.button === 0 && !this.isDragging) {
+                    this.cameraRotating = true;
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    document.body.style.cursor = 'move';
+                    return;
+                }
+
+                // Handle right-click for camera panning
+                if (event.button === 2 && !this.isDragging) {
+                    this.cameraPanning = true;
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    document.body.style.cursor = 'move';
+                    return;
+                }
+
+                // Handle middle-click for zooming
+                if (event.button === 1 && !this.isDragging) {
+                    this.cameraZooming = true;
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    document.body.style.cursor = 'ns-resize'; // Use vertical resize cursor to indicate zoom
+                    return;
+                }
+            }
+
+            /**
+             * Show controls for a selected object
+             */
+            showObjectControls(object) {
+                // Store reference to the selected object
+                this.selectedObjectForControls = object;
+
+                const controlsPanel = document.getElementById('selected-object-controls');
+                const infoElement = document.getElementById('selected-object-info');
+                const scaleSlider = document.getElementById('object-scale');
+                const scaleValue = document.getElementById('object-scale-value');
+
+                // Update object info
+                let infoHTML = '';
+                if (object.type === 'model') {
+                    infoHTML = `
+                        <div>Type: Imported Model</div>
+                        <div>Name: ${object.name || 'Unknown'}</div>
+                        <div>Current Scale: ${object.scale.toFixed(2)}</div>
+                        <div>Mass: ${object.mass.toFixed(2)}</div>
+                    `;
+                } else {
+                    infoHTML = `
+                        <div>Type: ${object.type.charAt(0).toUpperCase() + object.type.slice(1)}</div>
+                        <div>ID: ${object.id}</div>
+                    `;
+                }
+                infoElement.innerHTML = infoHTML;
+
+                // Set scale slider to current value (for model objects)
+                if (object.type === 'model' && object.scale) {
+                    scaleSlider.value = object.scale;
+                    scaleValue.textContent = object.scale.toFixed(1);
+                } else {
+                    // Hide scale controls for non-model objects
+                    document.getElementById('object-scale').parentElement.style.display = 'none';
+                    document.getElementById('apply-scale').style.display = 'none';
+                }
+
+                // Show the controls panel
+                controlsPanel.style.display = 'block';
+            }
+
+            /**
+             * Handle mouse move event for dragging objects and camera control
+             */
+            handleMouseMove(event) {
+                // Update mouse position
+                this.updateMousePosition(event);
+
+                // Handle camera rotation
+                if (this.cameraRotating) {
+                    const deltaX = event.clientX - this.cameraStartPosition.x;
+                    const deltaY = event.clientY - this.cameraStartPosition.y;
+
+                    // Rotate camera around target
+                    this.camera.position.sub(this.cameraTarget);
+
+                    // Rotate around vertical axis
+                    const quaternionY = new THREE.Quaternion();
+                    quaternionY.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * this.rotateSpeed);
+                    this.camera.position.applyQuaternion(quaternionY);
+
+                    // Rotate around horizontal axis
+                    const right = new THREE.Vector3();
+                    right.crossVectors(this.camera.up, this.camera.position).normalize();
+                    const quaternionX = new THREE.Quaternion();
+                    quaternionX.setFromAxisAngle(right, -deltaY * this.rotateSpeed);
+                    this.camera.position.applyQuaternion(quaternionX);
+
+                    this.camera.position.add(this.cameraTarget);
+                    this.camera.lookAt(this.cameraTarget);
+
+                    // Update controls target (though we don't use the controls directly)
+                    this.controls.target.copy(this.cameraTarget);
+
+                    // Reset start position for next move
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    return;
+                }
+
+                // Handle camera panning
+                if (this.cameraPanning) {
+                    const deltaX = event.clientX - this.cameraStartPosition.x;
+                    const deltaY = event.clientY - this.cameraStartPosition.y;
+
+                    // Calculate horizontal and vertical pan directions
+                    const distance = this.camera.position.distanceTo(this.cameraTarget);
+
+                    // Get right vector (perpendicular to up and view direction)
+                    const right = new THREE.Vector3();
+                    right.crossVectors(this.camera.up, this.camera.position.clone().sub(this.cameraTarget)).normalize();
+
+                    // Calculate pan amounts
+                    const horizontalPan = right.clone().multiplyScalar(-deltaX * this.panSpeed * distance);
+                    const verticalPan = this.camera.up.clone().multiplyScalar(deltaY * this.panSpeed * distance);
+
+                    // Apply pan to both camera and target
+                    this.camera.position.add(horizontalPan).add(verticalPan);
+                    this.cameraTarget.add(horizontalPan).add(verticalPan);
+
+                    // Update controls target
+                    this.controls.target.copy(this.cameraTarget);
+
+                    // Reset start position for next move
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    return;
+                }
+
+                // Handle camera zooming
+                if (this.cameraZooming) {
+                    // Calculate vertical mouse movement for zoom (up = zoom in, down = zoom out)
+                    const deltaY = event.clientY - this.cameraStartPosition.y;
+
+                    // Get camera-to-target direction and distance
+                    const direction = new THREE.Vector3().subVectors(this.camera.position, this.cameraTarget).normalize();
+                    const distance = this.camera.position.distanceTo(this.cameraTarget);
+
+                    // Calculate zoom amount based on current distance (faster when far, slower when close)
+                    const zoomAmount = deltaY * this.zoomSpeed * Math.max(0.1, distance / 10);
+
+                    // Apply min/max distance constraints
+                    const newDistance = Math.max(
+                        this.controls.minDistance,
+                        Math.min(this.controls.maxDistance, distance + zoomAmount)
+                    );
+
+                    // Calculate new camera position
+                    const offset = direction.multiplyScalar(newDistance);
+                    this.camera.position.copy(this.cameraTarget).add(offset);
+
+                    // Reset start position for next move
+                    this.cameraStartPosition.x = event.clientX;
+                    this.cameraStartPosition.y = event.clientY;
+                    return;
+                }
+
+                // If we're dragging an object, update the drag position
+                if (this.isDragging && this.selectedObject) {
+                    this.updateDragPosition();
+                    return;
+                }
+
+                // Check for hover if we're in object interaction mode and not dragging
+                if (this.objectInteractionMode && !this.isDragging) {
+                    this.checkHover();
+                }
+            }
+
+            /**
+             * Handle mouse up event for dragging objects and camera control
+             */
+            handleMouseUp(event) {
+                // If user has a temporary camera mode, restore previous mode
+                if (this.previousMode !== undefined && event.key === 'Shift') {
+                    this.objectInteractionMode = this.previousMode;
+                    this.previousMode = undefined;
+                    document.body.style.cursor = this.objectInteractionMode ? '' : 'move';
+                }
+
+                // End camera control
+                if (this.cameraRotating || this.cameraPanning || this.cameraZooming) {
+                    this.cameraRotating = false;
+                    this.cameraPanning = false;
+                    this.cameraZooming = false;
+
+                    // Reset cursor for camera controls
+                    if (!this.objectInteractionMode) {
+                        document.body.style.cursor = 'move';
+                    } else {
+                        document.body.style.cursor = '';
+                    }
+                } else if (!this.isDragging) {
+                    document.body.style.cursor = '';
+                }
+
+                // If we were dragging an object, apply throw velocity
+                if (this.isDragging && this.selectedObject) {
+                    this.applyThrowVelocity();
+
+                    // Clean up dragging state
+                    this.endDragInteraction();
+                    this.isDragging = false;
+                    this.selectedObject = null;
+
+                    // Hide the position marker
+                    this.hidePositionMarker();
+
+                    // Reset cursor
+                    document.body.classList.remove('grabbing');
+
+                    // Check for hover (in case the mouse is still over an object)
+                    if (this.objectInteractionMode) {
+                        this.checkHover();
+                    }
+                }
+            }
+
+            /**
+             * Update mouse position in normalized device coordinates
+             */
+            updateMousePosition(event) {
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            }
+
+            /**
+             * Create a physics joint for dragging the selected object
+             */
+            prepareDragInteraction() {
+                if (!this.selectedObject || !this.selectedObject.body) return;
+
+                // Convert dragPoint to Rapier coordinates
+                const anchor = this.dragPoint.clone().sub(this.dragOffset);
+                // Apply lift effect
+                anchor.add(this.grabLiftVector.clone().multiplyScalar(this.grabLiftAmount));
+
+                // Store the world position of the initial drag point for velocity calculations
+                this.lastMousePosition.copy(anchor);
+
+                // Set the body to kinematic mode for dragging
+                this.originalBodyType = this.selectedObject.body.bodyType();
+                this.selectedObject.body.setBodyType(this.RAPIER.RigidBodyType.KinematicPositionBased);
+
+                // Apply initial lift effect
+                const currentPos = this.selectedObject.body.translation();
+                const liftedPos = {
+                    x: currentPos.x,
+                    y: currentPos.y + this.grabLiftAmount,
+                    z: currentPos.z
+                };
+                this.selectedObject.body.setTranslation(liftedPos);
+
+                // Store the original damping values so we can restore them later
+                this.originalLinearDamping = this.selectedObject.body.linearDamping();
+                this.originalAngularDamping = this.selectedObject.body.angularDamping();
+
+                // Add higher damping during dragging for stability
+                this.selectedObject.body.setLinearDamping(0.9);
+                this.selectedObject.body.setAngularDamping(0.9);
+
+                // Wake up the body to ensure physics are applied
+                this.selectedObject.body.wakeUp();
+
+                // Initialize position marker
+                if (this.selectedObject && this.selectedObject.body) {
+                    // Determine the bottom offset based on object type
+                    let bottomOffset = 0;
+
+                    if (this.selectedObject.type === 'model') {
+                        // For models, use bounding box
+                        const bbox = new THREE.Box3().setFromObject(this.selectedObject.mesh);
+                        const size = new THREE.Vector3();
+                        bbox.getSize(size);
+
+                        // Calculate offset from center to bottom
+                        const center = new THREE.Vector3();
+                        bbox.getCenter(center);
+                        bottomOffset = center.y - bbox.min.y;
+                    } else if (this.selectedObject.type === 'cube') {
+                        bottomOffset = this.selectedObject.size / 2;
+                    } else if (this.selectedObject.type === 'sphere') {
+                        bottomOffset = this.selectedObject.radius;
+                    } else if (this.selectedObject.type === 'polyhedron') {
+                        bottomOffset = this.selectedObject.size / 2;
+                    }
+
+                    // Get the current position
+                    const position = this.selectedObject.body.translation();
+                    const pos = new THREE.Vector3(position.x, position.y, position.z);
+
+                    // Initialize the marker
+                    this.updatePositionMarker(pos, bottomOffset);
+                }
+            }
+
+            /**
+             * Update the position of the dragged object based on mouse movement
+             */
+            updateDragPosition() {
+                if (!this.isDragging || !this.selectedObject) return;
+
+                // Calculate time delta for velocity calculations
+                const now = performance.now();
+                const timeDelta = (now - this.lastUpdateTime) / 1000; // Convert to seconds
+                this.lastUpdateTime = now;
+
+                // Cast a ray from the camera through the mouse position onto the drag plane
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                // Store the previous point for velocity calculation
+                this.lastDragPoint.copy(this.dragCurrentPoint);
+
+                let targetPoint = new THREE.Vector3();
+                let usedConstraint = false;
+
+                // If we have an axis constraint active, handle it differently
+                if (this.constrainedAxis) {
+                    // Update the constraint helper position
+                    if (this.axisConstraintHelpers[this.constrainedAxis]) {
+                        this.scene.remove(this.axisConstraintHelpers[this.constrainedAxis]);
+                        this.createAxisConstraintHelper(this.constrainedAxis);
+                    }
+
+                    // Handle movement based on the constrained axis
+                    if (this.constrainedAxis === 'x') {
+                        // For X constraint, we need to find intersection with the YZ plane
+                        if (this.raycaster.ray.intersectPlane(this.constraintPlanes.x, this.dragCurrentPoint)) {
+                            // We only care about the X coordinate from the intersection
+                            targetPoint.set(
+                                this.dragCurrentPoint.x,
+                                this.initialDragPosition.y,
+                                this.initialDragPosition.z
+                            );
+                            targetPoint.sub(this.dragOffset);
+                            usedConstraint = true;
+                        }
+                    } else if (this.constrainedAxis === 'y') {
+                        // For Y constraint, we need to find intersection with the XZ plane
+                        if (this.raycaster.ray.intersectPlane(this.constraintPlanes.y, this.dragCurrentPoint)) {
+                            // We only care about the Y coordinate from the intersection
+                            targetPoint.set(
+                                this.initialDragPosition.x,
+                                this.dragCurrentPoint.y,
+                                this.initialDragPosition.z
+                            );
+                            targetPoint.sub(this.dragOffset);
+                            usedConstraint = true;
+                        }
+                    } else if (this.constrainedAxis === 'z') {
+                        // For Z constraint, we need to find intersection with the XY plane
+                        if (this.raycaster.ray.intersectPlane(this.constraintPlanes.z, this.dragCurrentPoint)) {
+                            // We only care about the Z coordinate from the intersection
+                            targetPoint.set(
+                                this.initialDragPosition.x,
+                                this.initialDragPosition.y,
+                                this.dragCurrentPoint.z
+                            );
+                            targetPoint.sub(this.dragOffset);
+                            usedConstraint = true;
+                        }
+                    }
+
+                    // Apply lift amount when using Y constraint
+                    if (this.constrainedAxis === 'y') {
+                        // No additional lift needed as we're already controlling Y directly
+                    } else if (usedConstraint) {
+                        // For X and Z constraints, maintain the lift
+                        targetPoint.add(this.grabLiftVector.clone().multiplyScalar(this.grabLiftAmount));
+                    }
+                } else {
+                    // Normal drag plane intersection (no constraint)
+                    if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragCurrentPoint)) {
+                        // Calculate the position for the object, accounting for the original offset
+                        targetPoint = this.dragCurrentPoint.clone().sub(this.dragOffset);
+
+                        // Apply lift amount to keep it elevated while dragging
+                        targetPoint.add(this.grabLiftVector.clone().multiplyScalar(this.grabLiftAmount));
+                    }
+                }
+
+                // Only proceed if we have a valid target point (either from constraint or normal drag)
+                if (targetPoint.length() > 0) {
+                    // Only calculate velocity if sufficient movement has occurred (fixes very small movements being counted as zero)
+                    const displacement = new THREE.Vector3().copy(targetPoint).sub(this.lastMousePosition);
+                    const distanceMoved = displacement.length();
+
+                    // Calculate mouse velocity in world space based on position change and time delta
+                    // Only if meaningful movement occurred and time elapsed
+                    if (timeDelta > 0 && distanceMoved > 0.001) {
+                        // Velocity = displacement / time
+                        const frameVelocity = displacement.divideScalar(timeDelta); // This gives units/second
+
+                        if (this.debugMode) {
+                            console.log(`Raw velocity: (${frameVelocity.x.toFixed(2)}, ${frameVelocity.y.toFixed(2)}, ${frameVelocity.z.toFixed(2)}) units/s, distance: ${distanceMoved.toFixed(4)}`);
+                        }
+
+                        // Add current velocity to history only if it's non-zero
+                        if (frameVelocity.length() > 0.01) {
+                            this.velocityHistory.push(frameVelocity.clone());
+
+                            // Keep velocity history at the right size
+                            if (this.velocityHistory.length > this.velocityHistorySize) {
+                                this.velocityHistory.shift();
+                            }
+                        }
+                    }
+
+                    // Calculate average velocity over last few frames for smoother throws
+                    // Only use the most recent non-zero entries
+                    this.mouseVelocity.set(0, 0, 0);
+                    let count = 0;
+
+                    // Consider only the last 3 entries for most recent movement
+                    // Start from the end of the array (most recent entries)
+                    for (let i = this.velocityHistory.length - 1; i >= Math.max(0, this.velocityHistory.length - 3); i--) {
+                        if (i >= 0) {
+                            this.mouseVelocity.add(this.velocityHistory[i]);
+                            count++;
+                        }
+                    }
+
+                    if (count > 0) {
+                        this.mouseVelocity.divideScalar(count);
+                    }
+
+                    // Store current position for next frame's velocity calculation
+                    this.lastMousePosition.copy(targetPoint);
+
+                    // Apply new position to the physics body with boundary checks
+                    let newPos = targetPoint.clone();
+
+                    // Check if the object would clip through the floor
+                    let objectHeight = 0;
+                    let objectBottomOffset = 0;
+
+                    // Determine object dimensions based on type
+                    if (this.selectedObject.type === 'model') {
+                        // For models, use bounding box
+                        const bbox = new THREE.Box3().setFromObject(this.selectedObject.mesh);
+                        const size = new THREE.Vector3();
+                        bbox.getSize(size);
+                        objectHeight = size.y;
+
+                        // Calculate distance from center to bottom
+                        const center = new THREE.Vector3();
+                        bbox.getCenter(center);
+                        objectBottomOffset = center.y - bbox.min.y;
+                    } else if (this.selectedObject.type === 'cube') {
+                        objectHeight = this.selectedObject.size;
+                        objectBottomOffset = this.selectedObject.size / 2;
+                    } else if (this.selectedObject.type === 'sphere') {
+                        objectHeight = this.selectedObject.radius * 2;
+                        objectBottomOffset = this.selectedObject.radius;
+                    } else if (this.selectedObject.type === 'polyhedron') {
+                        objectHeight = this.selectedObject.size;
+                        objectBottomOffset = this.selectedObject.size / 2;
+                    }
+
+                    // Enforce minimum height constraint (prevent going through floor)
+                    // Floor is at y=0, so the minimum height is objectBottomOffset
+                    const minHeight = objectBottomOffset;
+
+                    // Get the boundary dimensions to enforce wall constraints
+                    let maxX = Infinity, minX = -Infinity, maxZ = Infinity, minZ = -Infinity;
+
+                    if (this.boundaryDimensions) {
+                        const { halfGroundSize } = this.boundaryDimensions;
+                        const padding = 0.5; // Small padding to prevent exact edge collisions
+
+                        // For models, adjust boundary based on object width/depth
+                        let objectWidthHalf = 0;
+                        let objectDepthHalf = 0;
+
+                        // Get object width and depth based on type
+                        if (this.selectedObject.type === 'model') {
+                            const bbox = new THREE.Box3().setFromObject(this.selectedObject.mesh);
+                            const size = new THREE.Vector3();
+                            bbox.getSize(size);
+                            objectWidthHalf = size.x / 2;
+                            objectDepthHalf = size.z / 2;
+                        } else if (this.selectedObject.type === 'cube') {
+                            objectWidthHalf = this.selectedObject.size / 2;
+                            objectDepthHalf = this.selectedObject.size / 2;
+                        } else if (this.selectedObject.type === 'sphere') {
+                            objectWidthHalf = this.selectedObject.radius;
+                            objectDepthHalf = this.selectedObject.radius;
+                        } else if (this.selectedObject.type === 'polyhedron') {
+                            objectWidthHalf = this.selectedObject.size / 2;
+                            objectDepthHalf = this.selectedObject.size / 2;
+                        }
+
+                        // Set boundary constraints considering object dimensions
+                        maxX = halfGroundSize - objectWidthHalf - padding;
+                        minX = -halfGroundSize + objectWidthHalf + padding;
+                        maxZ = halfGroundSize - objectDepthHalf - padding;
+                        minZ = -halfGroundSize + objectDepthHalf + padding;
+                    }
+
+                    // Apply constraints to position
+                    const oldPosX = newPos.x;
+                    const oldPosY = newPos.y;
+                    const oldPosZ = newPos.z;
+
+                    newPos.y = Math.max(newPos.y, minHeight);
+                    newPos.x = Math.min(Math.max(newPos.x, minX), maxX);
+                    newPos.z = Math.min(Math.max(newPos.z, minZ), maxZ);
+
+                    // Check if we hit any boundaries during constraint application
+                    const hitFloor = newPos.y !== oldPosY && oldPosY < minHeight;
+                    const hitWallX = newPos.x !== oldPosX;
+                    const hitWallZ = newPos.z !== oldPosZ;
+
+                    // Detect if we're making contact with the floor this frame
+                    const wasTouchingFloor = this.isTouchingFloor;
+                    this.isTouchingFloor = Math.abs(newPos.y - minHeight) < 0.05;
+
+                    // Apply a bounce effect if we just hit the floor
+                    if (this.isTouchingFloor && !wasTouchingFloor) {
+                        // The faster we were moving downward, the stronger the bounce
+                        const downwardSpeed = -Math.min(0, this.mouseVelocity.y);
+
+                        if (downwardSpeed > 0.5) {
+                            // Apply a small vertical bounce based on downward velocity
+                            const bounceHeight = Math.min(0.3, downwardSpeed * 0.05);
+                            newPos.y += bounceHeight;
+
+                            if (this.debugMode) {
+                                console.log(`Floor bounce: ${bounceHeight.toFixed(3)} units`);
+                            }
+
+                            // Play floor hit sound with volume based on impact velocity
+                            const volume = Math.min(1.0, downwardSpeed / 10);
+                            this.playSound('floorHit', volume);
+                        }
+                    }
+
+                    // Check if we hit any walls and play appropriate sounds
+                    if (hitWallX || hitWallZ) {
+                        // Calculate wall impact speed
+                        let wallImpactSpeed = 0;
+
+                        if (hitWallX) {
+                            wallImpactSpeed = Math.abs(this.mouseVelocity.x);
+                        }
+
+                        if (hitWallZ) {
+                            wallImpactSpeed = Math.max(wallImpactSpeed, Math.abs(this.mouseVelocity.z));
+                        }
+
+                        if (wallImpactSpeed > 1.0) {
+                            // Play wall hit sound with volume based on impact velocity
+                            const volume = Math.min(1.0, wallImpactSpeed / 10);
+                            this.playSound('wallHit', volume);
+
+                            if (this.debugMode) {
+                                console.log(`Wall impact speed: ${wallImpactSpeed.toFixed(2)}`);
+                            }
+                        }
+                    }
+
+                    // Update the object position
+                    this.selectedObject.body.setTranslation({
+                        x: newPos.x,
+                        y: newPos.y,
+                        z: newPos.z
+                    });
+
+                    // If object is touching the floor, show visual feedback
+                    if (this.isTouchingFloor) {
+                        // Visual feedback for floor contact
+                        if (this.debugMode) {
+                            console.log("Object touching floor during drag");
+                        }
+
+                        // Create or update a visual effect at the contact point
+                        this.showFloorContactEffect(newPos.x, newPos.z);
+                    } else {
+                        // Hide contact effect if not touching floor
+                        this.hideFloorContactEffect();
+                    }
+
+                    // Update position marker
+                    this.updatePositionMarker(newPos, objectBottomOffset);
+                }
+            }
+
+            /**
+             * Create and update the position marker that shows the vertical position of the object
+             * @param {THREE.Vector3} position - The position of the object
+             * @param {number} bottomOffset - Distance from the center to the bottom of the object
+             */
+            updatePositionMarker(position, bottomOffset) {
+                // Create the marker if it doesn't exist
+                if (!this.positionMarker && this.positionMarkerVisible) {
+                    // Create a line geometry for the marker
+                    const geometry = new THREE.BufferGeometry();
+
+                    // We'll set the positions later
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
+
+                    // Create a material with the specified color
+                    const material = new THREE.LineBasicMaterial({
+                        color: this.positionMarkerColor,
+                        linewidth: this.positionMarkerWidth,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+
+                    // Create the line and add it to the scene
+                    this.positionMarker = new THREE.Line(geometry, material);
+                    this.scene.add(this.positionMarker);
+
+                    if (this.debugMode) {
+                        console.log("Created position marker");
+                    }
+                }
+
+                // Update marker position if it exists
+                if (this.positionMarker) {
+                    // Calculate bottom point of the object (subtract the bottom offset from y)
+                    const bottomPoint = new THREE.Vector3(
+                        position.x,
+                        position.y - bottomOffset,
+                        position.z
+                    );
+
+                    // Create the ground projection point (same x,z but y=0)
+                    const groundPoint = new THREE.Vector3(position.x, 0.01, position.z);
+
+                    // Update the line vertices
+                    const positions = this.positionMarker.geometry.attributes.position.array;
+
+                    // Bottom of object point
+                    positions[0] = bottomPoint.x;
+                    positions[1] = bottomPoint.y;
+                    positions[2] = bottomPoint.z;
+
+                    // Ground point
+                    positions[3] = groundPoint.x;
+                    positions[4] = groundPoint.y;
+                    positions[5] = groundPoint.z;
+
+                    // Mark the positions attribute as needing update
+                    this.positionMarker.geometry.attributes.position.needsUpdate = true;
+
+                    // Ensure the marker is visible
+                    this.positionMarker.visible = true;
+                }
+            }
+
+            /**
+             * Hide the position marker
+             */
+            hidePositionMarker() {
+                if (this.positionMarker) {
+                    this.positionMarker.visible = false;
+                }
+            }
+
+            /**
+             * Show a visual effect at the floor contact point
+             */
+            showFloorContactEffect(x, z) {
+                // Create the effect if it doesn't exist
+                if (!this.floorContactEffect) {
+                    // Create a ring geometry
+                    const geometry = new THREE.RingGeometry(0.3, 0.5, 32);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0x44aaff,
+                        transparent: true,
+                        opacity: 0.6,
+                        side: THREE.DoubleSide
+                    });
+
+                    this.floorContactEffect = new THREE.Mesh(geometry, material);
+                    this.floorContactEffect.rotation.x = -Math.PI / 2; // Flat on the ground
+                    this.floorContactEffect.position.y = 0.01; // Slightly above ground to prevent z-fighting
+                    this.scene.add(this.floorContactEffect);
+
+                    // Add animation properties
+                    this.floorContactEffect.userData.pulseTime = 0;
+                }
+
+                // Update position
+                this.floorContactEffect.position.x = x;
+                this.floorContactEffect.position.z = z;
+
+                // Make visible
+                this.floorContactEffect.visible = true;
+
+                // Animate the effect (expansion/contraction)
+                this.floorContactEffect.userData.pulseTime += 0.1;
+                const scale = 1 + 0.2 * Math.sin(this.floorContactEffect.userData.pulseTime);
+                this.floorContactEffect.scale.set(scale, scale, scale);
+
+                // Reset opacity
+                this.floorContactEffect.material.opacity = 0.6;
+            }
+
+            /**
+             * Hide the floor contact effect
+             */
+            hideFloorContactEffect() {
+                if (this.floorContactEffect) {
+                    // Fade out instead of immediately hiding
+                    this.floorContactEffect.material.opacity -= 0.1;
+
+                    if (this.floorContactEffect.material.opacity <= 0) {
+                        this.floorContactEffect.visible = false;
+                    }
+                }
+            }
+
+            /**
+             * Apply a throw velocity to the object based on drag movement
+             */
+            applyThrowVelocity() {
+                if (!this.selectedObject || !this.selectedObject.body) return;
+
+                // Calculate the magnitude of the mouse velocity
+                const velocityMagnitude = this.mouseVelocity.length();
+
+                // Debug velocity
+                console.log(`Final mouse velocity magnitude: ${velocityMagnitude.toFixed(4)} units/s`);
+                console.log(`Velocity vector: (${this.mouseVelocity.x.toFixed(2)}, ${this.mouseVelocity.y.toFixed(2)}, ${this.mouseVelocity.z.toFixed(2)})`);
+
+                // Temporarily store the original position (to restore after changing body type)
+                const originalPosition = this.selectedObject.body.translation();
+                const pos = {x: originalPosition.x, y: originalPosition.y, z: originalPosition.z};
+
+                // First switch body back to dynamic BEFORE applying velocity
+                this.selectedObject.body.setBodyType(this.originalBodyType || this.RAPIER.RigidBodyType.Dynamic);
+
+                // Restore exact position (sometimes changing body type causes slight position shift)
+                this.selectedObject.body.setTranslation(pos);
+
+                // Wake up the body explicitly
+                this.selectedObject.body.wakeUp();
+
+                // Only apply throwing velocity if mouse was moving fast enough
+                if (velocityMagnitude > this.throwVelocityThreshold) {
+                    // Scale mouseVelocity by the throw scale factor for appropriate throwing force
+                    const throwVelocity = this.mouseVelocity.clone().multiplyScalar(this.throwVelocityScale);
+
+                    // Don't add upward force - let the natural motion prevail
+                    // Modify the y component based on the throw direction
+                    // If throwing upward, add a bit extra to overcome gravity
+                    if (throwVelocity.y > 0) {
+                        // Throwing upward - add a bit more lift to overcome gravity
+                        throwVelocity.y *= 1.2; // Reduced from 1.3 to be more natural
+                    }
+
+                    // Log the throw for debugging
+                    console.log(`Applied throw velocity: ${throwVelocity.x.toFixed(2)}, ${throwVelocity.y.toFixed(2)}, ${throwVelocity.z.toFixed(2)}`);
+
+                    // Apply the velocity to the object - ensure this happens AFTER switching to dynamic
+                    this.selectedObject.body.setLinvel({
+                        x: throwVelocity.x,
+                        y: throwVelocity.y,
+                        z: throwVelocity.z
+                    }, true);
+
+                    // Add a small random angular velocity for more natural throws
+                    // Reduced randomness for more predictable behavior
+                    const randomAngVel = {
+                        x: (Math.random() - 0.5) * velocityMagnitude * 0.1,
+                        y: (Math.random() - 0.5) * velocityMagnitude * 0.1,
+                        z: (Math.random() - 0.5) * velocityMagnitude * 0.1
+                    };
+                    this.selectedObject.body.setAngvel(randomAngVel, true);
+
+                    // Create a visual indicator to debug the throw direction
+                    if (this.debugMode) {
+                        this.visualizeThrowDirection(throwVelocity);
+                    }
+                } else {
+                    // If not throwing, just gently release with minimal velocity
+                    // Still maintain a bit of the existing motion for more natural feel
+                    const minThrowVelocity = this.mouseVelocity.clone().multiplyScalar(8); // Reduced from 15
+
+                    console.log(`Gentle release velocity: ${minThrowVelocity.x.toFixed(2)}, ${minThrowVelocity.y.toFixed(2)}, ${minThrowVelocity.z.toFixed(2)}`);
+
+                    // Apply the velocity
+                    this.selectedObject.body.setLinvel({
+                        x: minThrowVelocity.x,
+                        y: Math.max(minThrowVelocity.y, 0), // Ensure it doesn't push down
+                        z: minThrowVelocity.z
+                    }, true);
+
+                    // Minimal angular velocity for stability
+                    this.selectedObject.body.setAngvel({
+                        x: 0,
+                        y: 0,
+                        z: 0
+                    }, true);
+
+                    console.log("Object released gently (minimal throw)");
+                }
+
+                // Restore original damping AFTER setting velocity
+                if (this.originalLinearDamping !== undefined) {
+                    this.selectedObject.body.setLinearDamping(this.originalLinearDamping);
+                }
+
+                if (this.originalAngularDamping !== undefined) {
+                    this.selectedObject.body.setAngularDamping(this.originalAngularDamping);
+                }
+            }
+
+            /**
+             * Release the drag joint and apply throw velocity if appropriate
+             */
+            endDragInteraction() {
+                // Remove any axis constraint
+                if (this.constrainedAxis) {
+                    this.constrainedAxis = null;
+                    this.removeAxisConstraintHelper();
+
+                    // Hide any active notification
+                    if (this.notificationContainer) {
+                        this.notificationContainer.style.opacity = '0';
+                    }
+                }
+
+                // Clear the velocity history
+                this.velocityHistory = [];
+                this.lastMousePosition.set(0, 0, 0);
+                this.dragCurrentPoint.set(0, 0, 0);
+                this.dragOffset.set(0, 0, 0);
+                this.dragStartPoint.set(0, 0, 0);
+                this.dragPoint.set(0, 0, 0);
+                this.lastDragPoint.set(0, 0, 0);
+                this.mouseVelocity.set(0, 0, 0);
+                this.isTouchingFloor = false;
+            }
+
+            /**
+             * Visualize the throw direction with an arrow helper
+             */
+            visualizeThrowDirection(velocity) {
+                if (!this.selectedObject) return;
+
+                // Get current object position
+                const position = this.selectedObject.body.translation();
+                const origin = new THREE.Vector3(position.x, position.y, position.z);
+
+                // Create normalized direction vector
+                const direction = velocity.clone().normalize();
+
+                // Get velocity magnitude (for arrow length)
+                const length = Math.min(velocity.length() * 0.2, 10); // Scale down for visualization, cap at 10 units
+
+                // Create arrow helper
+                const arrowHelper = new THREE.ArrowHelper(
+                    direction,
+                    origin,
+                    length,
+                    0xff0000, // Red color
+                    length * 0.2, // Head length
+                    length * 0.1  // Head width
+                );
+
+                // Add to scene
+                this.scene.add(arrowHelper);
+
+                // Remove after 3 seconds (increased from 2 for better visibility)
+                setTimeout(() => {
+                    this.scene.remove(arrowHelper);
+                }, 3000);
+            }
+
+            /**
+             * Find the object data by its Three.js mesh
+             */
+            findObjectByMesh(mesh) {
+                // Direct match (works for primitive shapes)
+                const directMatch = this.objects.find(obj => obj.mesh === mesh);
+                if (directMatch) return directMatch;
+
+                // Check for parent-child relationship (for imported models with nested meshes)
+                for (const object of this.objects) {
+                    if (object.type === 'model') {
+                        // Check if the mesh is part of this model
+                        let isPartOfModel = false;
+
+                        // Traverse the model to find all of its meshes
+                        object.mesh.traverse((node) => {
+                            if (node === mesh) {
+                                isPartOfModel = true;
+                            }
+                        });
+
+                        if (isPartOfModel) {
+                            return object;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            /**
+             * Check for object hover to update cursor and visual feedback
+             */
+            checkHover() {
+                // Cast a ray from the camera through the mouse position
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                // Get all objects that could be intersected, including nested model meshes
+                const objectsToCheck = [];
+                this.scene.traverse((node) => {
+                    if (node.isMesh && node !== this.groundMesh && node !== this.hoverOutlineMesh) {
+                        objectsToCheck.push(node);
+                    }
+                });
+
+                const intersects = this.raycaster.intersectObjects(objectsToCheck);
+
+                // Flag to track if we found a hoverable object
+                let foundHoverable = false;
+
+                // Check if we hit any objects
+                if (intersects.length > 0) {
+                    // Find the first object that has a physics body
+                    for (let i = 0; i < intersects.length; i++) {
+                        const object = this.findObjectByMesh(intersects[i].object);
+                        if (object && object.body) {
+                            // We found a hoverable object
+                            foundHoverable = true;
+
+                            // If it's not the currently hovered object, update
+                            if (this.hoveredObject !== object) {
+                                // Remove outline from previously hovered object
+                                this.removeHoverOutline();
+
+                                // Set new hovered object
+                                this.hoveredObject = object;
+
+                                // Add outline to new hovered object
+                                this.addHoverOutline(object);
+
+                                // Change cursor to grab
+                                document.body.classList.add('grabbable');
+                            }
+
+                            // Break after finding the first interactive object
+                            break;
+                        }
+                    }
+                }
+
+                // If we didn't find any hoverable objects, but had one before
+                if (!foundHoverable && this.hoveredObject) {
+                    // Remove outline
+                    this.removeHoverOutline();
+
+                    // Reset hovered object
+                    this.hoveredObject = null;
+
+                    // Reset cursor
+                    document.body.classList.remove('grabbable');
+                }
+            }
+
+            /**
+             * Add hover outline to an object
+             */
+            addHoverOutline(object) {
+                // Create outline mesh if needed
+                if (!object || !object.mesh) return;
+
+                // Remove any existing outline
+                this.removeHoverOutline();
+
+                // For primitive objects, use the geometry directly
+                if (object.type !== 'model') {
+                    // Clone the object's geometry
+                    const outlineGeometry = object.mesh.geometry.clone();
+
+                    // Create outline mesh with outline material
+                    this.hoverOutlineMesh = new THREE.Mesh(outlineGeometry, this.outlineMaterial);
+
+                    // Make the outline slightly larger
+                    this.hoverOutlineMesh.scale.multiplyScalar(1.05);
+
+                    // Position the outline at the same position as the object
+                    const position = object.body.translation();
+                    this.hoverOutlineMesh.position.set(position.x, position.y, position.z);
+
+                    // Match the rotation of the object
+                    const rotation = object.body.rotation();
+                    this.hoverOutlineMesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+
+                    // Add to scene
+                    this.scene.add(this.hoverOutlineMesh);
+                } else {
+                    // For models, we need to create a bounding box outline or individual outlines for each mesh
+                    try {
+                        // Compute the overall bounding box
+                        const bbox = new THREE.Box3().setFromObject(object.mesh);
+                        const size = new THREE.Vector3();
+                        bbox.getSize(size);
+
+                        // Create a box geometry for the outline
+                        const boxGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+
+                        // Create outline mesh with outline material
+                        this.hoverOutlineMesh = new THREE.Mesh(boxGeometry, this.outlineMaterial);
+
+                        // Position the outline at the center of the bounding box
+                        const center = new THREE.Vector3();
+                        bbox.getCenter(center);
+                        this.hoverOutlineMesh.position.copy(center);
+
+                        // Match the rotation of the object (for models, this is trickier)
+                        const position = object.body.translation();
+                        const rotation = object.body.rotation();
+
+                        // Update the outline's quaternion to match the physics body
+                        this.hoverOutlineMesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+
+                        // Add to scene
+                        this.scene.add(this.hoverOutlineMesh);
+                    } catch (error) {
+                        console.error('Error creating model outline:', error);
+                    }
+                }
+            }
+
+            /**
+             * Remove hover outline
+             */
+            removeHoverOutline() {
+                if (this.hoverOutlineMesh) {
+                    this.scene.remove(this.hoverOutlineMesh);
+                    this.hoverOutlineMesh.geometry.dispose();
+                    this.hoverOutlineMesh = null;
+                }
+            }
+
+            /**
+             * Import a GLB model from file
+             */
+            importGLBModel(file) {
+                // Create a URL for the file
+                const fileURL = URL.createObjectURL(file);
+
+                // Show loading indicator
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.style.position = 'absolute';
+                loadingIndicator.style.top = '50%';
+                loadingIndicator.style.left = '50%';
+                loadingIndicator.style.transform = 'translate(-50%, -50%)';
+                loadingIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                loadingIndicator.style.color = 'white';
+                loadingIndicator.style.padding = '20px';
+                loadingIndicator.style.borderRadius = '10px';
+                loadingIndicator.style.zIndex = '1000';
+                loadingIndicator.innerHTML = `<h3>Loading ${file.name}...</h3>`;
+                document.body.appendChild(loadingIndicator);
+
+                // Load the GLB file
+                this.gltfLoader.load(
+                    fileURL,
+                    (gltf) => {
+                        // Success callback
+                        console.log('GLB loaded successfully:', gltf);
+
+                        // Process the loaded model
+                        this.processImportedModel(gltf, file.name);
+
+                        // Clean up URL
+                        URL.revokeObjectURL(fileURL);
+
+                        // Remove loading indicator
+                        document.body.removeChild(loadingIndicator);
+                    },
+                    (xhr) => {
+                        // Progress callback
+                        const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                        loadingIndicator.innerHTML = `<h3>Loading ${file.name}... ${percent}%</h3>`;
+                    },
+                    (error) => {
+                        // Error callback
+                        console.error('Error loading GLB:', error);
+
+                        // Show error in loading indicator
+                        loadingIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                        loadingIndicator.innerHTML = `<h3>Error loading ${file.name}</h3><p>${error.message}</p>`;
+
+                        // Remove indicator after delay
+                        setTimeout(() => {
+                            if (document.body.contains(loadingIndicator)) {
+                                document.body.removeChild(loadingIndicator);
+                            }
+                        }, 3000);
+
+                        // Clean up URL
+                        URL.revokeObjectURL(fileURL);
+                    }
+                );
+
+                // Clear the input so the same file can be selected again
+                document.getElementById('model-file-input').value = '';
+            }
+
+            /**
+             * Process an imported GLTF/GLB model and add it to the scene with physics
+             */
+            processImportedModel(gltf, fileName) {
+                // Get the model from the GLTF scene
+                const model = gltf.scene;
+
+                // Calculate initial position - place at camera target with slight vertical offset
+                const position = {
+                    x: this.cameraTarget.x,
+                    y: this.cameraTarget.y + 2, // Slightly above the target point
+                    z: this.cameraTarget.z
+                };
+
+                // Apply a consistent scale to the model
+                model.scale.set(this.importScale, this.importScale, this.importScale);
+
+                // Set initial position
+                model.position.set(position.x, position.y, position.z);
+
+                // Force all materials to cast and receive shadows
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                });
+
+                // Add model to scene
+                this.scene.add(model);
+
+                // Create a compound physics body for the model
+                this.createPhysicsForModel(model, position, fileName);
+
+                // Reset the velocity scale to something reasonable for this model
+                this.throwVelocityScale = 0.5 / this.importScale;
+
+                // Log to console
+                console.log(`Imported model: ${fileName} at position (${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)})`);
+                console.log(`Scale: ${this.importScale}, Mass: ${this.importMass}, Velocity Scale: ${this.throwVelocityScale.toFixed(2)}`);
+            }
+
+            /**
+             * Create physics bodies for an imported model
+             */
+            createPhysicsForModel(model, position, modelName) {
+                // Create a rigid body for the model
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(position.x, position.y, position.z);
+
+                // Set the mass based on the slider
+                if (this.importMass !== 1.0) {
+                    rigidBodyDesc.setAdditionalMass(this.importMass);
+                }
+
+                const body = this.world.createRigidBody(rigidBodyDesc);
+
+                // We'll track all meshes and their bounding boxes to create a compound collider
+                const meshes = [];
+
+                // Find all meshes in the model
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        // Store the original geometry and world transform to create accurate colliders
+                        node.updateMatrixWorld(true);
+                        meshes.push(node);
+                    }
+                });
+
+                console.log(`Found ${meshes.length} meshes in model ${modelName}`);
+
+                if (meshes.length === 0) {
+                    console.warn('No meshes found in the imported model');
+                    this.scene.remove(model);
+                    return;
+                }
+
+                // Log scale for debugging
+                console.log(`Creating physics colliders with scale factor: ${this.importScale}`);
+
+                // Strategy: Use a simplified collision shape based on the model
+                // For simple models or small mesh counts, attempt to use convex hulls
+                // For complex models, fall back to a cuboid or compound shape
+
+                if (meshes.length <= 5) {
+                    // For models with few meshes, try to create precise convex hull colliders
+                    for (const mesh of meshes) {
+                        try {
+                            // Clone the geometry and apply the world transform including scale
+                            const geometry = mesh.geometry.clone();
+
+                            // Get the full world matrix which includes the model's scale
+                            geometry.applyMatrix4(mesh.matrixWorld);
+
+                            // Get vertices from the transformed geometry
+                            const vertices = this.extractVertices(geometry);
+
+                            // Create a convex hull collider
+                            if (vertices.length > 0) {
+                                const colliderDesc = this.RAPIER.ColliderDesc.convexHull(vertices);
+                                if (colliderDesc) {
+                                    const collider = this.world.createCollider(colliderDesc, body);
+                                    console.log(`Created convex hull collider for mesh in ${modelName}`);
+
+                                    // If debug mode is on, visualize the convex hull
+                                    if (this.debugMode) {
+                                        this.visualizeConvexHull(vertices, position);
+                                    }
+                                }
+                            }
+
+                            // Clean up temporary geometry
+                            geometry.dispose();
+                        } catch (error) {
+                            console.error('Error creating convex hull for mesh:', error);
+                        }
+                    }
+                } else {
+                    // For complex models, create a simple cuboid collider based on the bounding box
+                    try {
+                        // Compute the overall bounding box - this already includes the model's scale
+                        const bbox = new THREE.Box3().setFromObject(model);
+                        const size = new THREE.Vector3();
+                        bbox.getSize(size);
+
+                        // Create a cuboid collider matching the bounding box
+                        const halfExtents = {
+                            x: size.x / 2,
+                            y: size.y / 2,
+                            z: size.z / 2
+                        };
+
+                        // Get center of the bounding box relative to model position
+                        const center = new THREE.Vector3();
+                        bbox.getCenter(center);
+                        const relativeCenter = {
+                            x: center.x - position.x,
+                            y: center.y - position.y,
+                            z: center.z - position.z
+                        };
+
+                        // Create the cuboid collider
+                        const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                            halfExtents.x, halfExtents.y, halfExtents.z
+                        );
+
+                        // Set the collider's position relative to the rigid body
+                        colliderDesc.setTranslation(
+                            relativeCenter.x, relativeCenter.y, relativeCenter.z
+                        );
+
+                        const collider = this.world.createCollider(colliderDesc, body);
+                        console.log(`Created bounding box collider for complex model ${modelName} with size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+
+                        // If debug mode is on, visualize the bounding box
+                        if (this.debugMode) {
+                            this.visualizeBoundingBox(
+                                new THREE.Vector3(position.x + relativeCenter.x, position.y + relativeCenter.y, position.z + relativeCenter.z),
+                                new THREE.Vector3(halfExtents.x * 2, halfExtents.y * 2, halfExtents.z * 2)
+                            );
+                        }
+                    } catch (error) {
+                        console.error('Error creating bounding box collider:', error);
+                    }
+                }
+
+                // Create a new object entry
+                this.objectCount++;
+                const object = {
+                    id: this.objectCount,
+                    type: 'model',
+                    name: modelName,
+                    mesh: model, // Note: this is the full model, not just a mesh
+                    body: body,
+                    scale: this.importScale,
+                    mass: this.importMass
+                };
+
+                this.objects.push(object);
+
+                // Update object counter
+                document.getElementById('object-count').textContent = `Objects: ${this.objects.length}`;
+
+                return object;
+            }
+
+            /**
+             * Visualize a convex hull for debugging
+             */
+            visualizeConvexHull(vertices, position) {
+                try {
+                    // Create a buffer geometry from the vertices
+                    const geometry = new THREE.BufferGeometry();
+                    const vertexArray = [];
+
+                    // Each set of 3 consecutive values is a vertex
+                    for (let i = 0; i < vertices.length; i += 3) {
+                        vertexArray.push(vertices[i], vertices[i + 1], vertices[i + 2]);
+                    }
+
+                    // Set the vertices
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertexArray, 3));
+
+                    // Create a material for the visualization
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0x00ff00, // Green color
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+
+                    // Create mesh and add to scene
+                    const mesh = new THREE.Mesh(geometry, material);
+                    this.scene.add(mesh);
+
+                    // Remove the visualization after a few seconds
+                    setTimeout(() => {
+                        this.scene.remove(mesh);
+                        geometry.dispose();
+                        material.dispose();
+                    }, 5000);
+                } catch (error) {
+                    console.error('Error visualizing convex hull:', error);
+                }
+            }
+
+            /**
+             * Visualize a bounding box for debugging
+             */
+            visualizeBoundingBox(center, size) {
+                try {
+                    // Create a box geometry
+                    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+
+                    // Create a wireframe material
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0xff0000, // Red color
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+
+                    // Create mesh and add to scene
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.copy(center);
+                    this.scene.add(mesh);
+
+                    // Remove the visualization after a few seconds
+                    setTimeout(() => {
+                        this.scene.remove(mesh);
+                        geometry.dispose();
+                        material.dispose();
+                    }, 5000);
+                } catch (error) {
+                    console.error('Error visualizing bounding box:', error);
+                }
+            }
+
+            /**
+             * Toggle the visibility of boundary walls
+             */
+            toggleBoundaries() {
+                if (this.boundaryVisualizers) {
+                    // If visualizers exist, remove them
+                    for (const visualizer of this.boundaryVisualizers) {
+                        this.scene.remove(visualizer);
+                    }
+                    this.boundaryVisualizers = null;
+
+                    // Update button text
+                    document.getElementById('toggle-boundaries').textContent = 'Show Boundaries';
+                    console.log("Hiding boundary visualizers");
+                } else {
+                    // Create visualizers
+                    this.createBoundaryVisualizers();
+
+                    // Update button text
+                    document.getElementById('toggle-boundaries').textContent = 'Hide Boundaries';
+                    console.log("Showing boundary visualizers");
+                }
+            }
+
+            /**
+             * Create visual representations of the boundary walls
+             */
+            createBoundaryVisualizers() {
+                if (!this.boundaryDimensions) return;
+
+                const { groundSize, wallHeight, wallThickness, halfGroundSize } = this.boundaryDimensions;
+
+                // Create a semi-transparent material for the walls
+                const wallMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3399ff,
+                    transparent: true,
+                    opacity: 0.25,
+                    side: THREE.DoubleSide
+                });
+
+                // Store visualizers
+                this.boundaryVisualizers = [];
+
+                // Define wall dimensions and positions (same as in addBoundaryWalls)
+                const walls = [
+                    // North wall (+Z)
+                    {
+                        size: [groundSize, wallHeight, wallThickness],
+                        position: [0, wallHeight/2, halfGroundSize]
+                    },
+                    // South wall (-Z)
+                    {
+                        size: [groundSize, wallHeight, wallThickness],
+                        position: [0, wallHeight/2, -halfGroundSize]
+                    },
+                    // East wall (+X)
+                    {
+                        size: [wallThickness, wallHeight, groundSize],
+                        position: [halfGroundSize, wallHeight/2, 0]
+                    },
+                    // West wall (-X)
+                    {
+                        size: [wallThickness, wallHeight, groundSize],
+                        position: [-halfGroundSize, wallHeight/2, 0]
+                    }
+                ];
+
+                // Create and add visualizers for each wall
+                for (const wall of walls) {
+                    const geometry = new THREE.BoxGeometry(...wall.size);
+                    const mesh = new THREE.Mesh(geometry, wallMaterial);
+                    mesh.position.set(...wall.position);
+
+                    this.scene.add(mesh);
+                    this.boundaryVisualizers.push(mesh);
+                }
+
+                // Add ground outline to better visualize the boundaries
+                const groundOutlineGeometry = new THREE.EdgesGeometry(
+                    new THREE.BoxGeometry(groundSize, 0.1, groundSize)
+                );
+                const groundOutlineMaterial = new THREE.LineBasicMaterial({ color: 0x3399ff });
+                const groundOutline = new THREE.LineSegments(groundOutlineGeometry, groundOutlineMaterial);
+                groundOutline.position.set(0, 0, 0);
+
+                this.scene.add(groundOutline);
+                this.boundaryVisualizers.push(groundOutline);
+            }
+
+            /**
+             * Toggle the visibility of the performance panel
+             */
+            togglePerformance() {
+                this.showPerformance = !this.showPerformance;
+                if (this.performancePanel) {
+                    this.performancePanel.style.display = this.showPerformance ? 'block' : 'none';
+                }
+
+                // Update button text
+                const button = document.getElementById('toggle-performance');
+                if (button) {
+                    button.textContent = this.showPerformance ? 'Hide Performance' : 'Show Performance';
+                }
+
+                console.log(`Performance monitoring ${this.showPerformance ? 'enabled' : 'disabled'}`);
+            }
+
+            /**
+             * Update memory statistics
+             */
+            updateMemoryStats() {
+                const now = performance.now();
+                if (now - this.lastMemoryCheck < this.memoryCheckInterval) return;
+
+                this.lastMemoryCheck = now;
+
+                if (this.memorySupported) {
+                    // Get real memory stats from browser API
+                    const memory = performance.memory;
+                    this.memoryStats.totalJSHeapSize = memory.totalJSHeapSize;
+                    this.memoryStats.usedJSHeapSize = memory.usedJSHeapSize;
+                    this.memoryStats.jsHeapSizeLimit = memory.jsHeapSizeLimit;
+                } else if (this.simulateMemory) {
+                    // Use simulated memory values
+
+                    // Update simulated memory based on object count and scene complexity
+                    const baseMemory = 100 * 1024 * 1024; // 100 MB base memory usage
+                    const perObjectMemory = 1 * 1024 * 1024; // 1 MB per physics object
+                    const perTriangleMemory = 100; // 100 bytes per triangle
+
+                    // Calculate used memory based on scene complexity
+                    let calculatedMemory = baseMemory +
+                        (this.performanceStats.objectCount * perObjectMemory) +
+                        (this.performanceStats.triangleCount * perTriangleMemory);
+
+                    // Add simulated memory leak if enabled
+                    if (this.simulatedLeakRate > 0) {
+                        this.simulatedMemoryUsed += this.simulatedLeakRate * 1024 * 1024;
+                    } else {
+                        // Use calculated value based on scene complexity
+                        this.simulatedMemoryUsed = calculatedMemory;
+
+                        // Add some random fluctuation to simulate GC
+                        const fluctuation = Math.sin(now / 10000) * 20 * 1024 * 1024; // +/- 20 MB sinusoidal fluctuation
+                        this.simulatedMemoryUsed += fluctuation;
+
+                        // Ensure values are within reasonable bounds
+                        this.simulatedMemoryUsed = Math.max(baseMemory, Math.min(this.simulatedMemoryLimit, this.simulatedMemoryUsed));
+                    }
+
+                    // Set the stats object with simulated values
+                    this.memoryStats.totalJSHeapSize = this.simulatedMemorySize;
+                    this.memoryStats.usedJSHeapSize = this.simulatedMemoryUsed;
+                    this.memoryStats.jsHeapSizeLimit = this.simulatedMemoryLimit;
+                }
+
+                // Add to history
+                this.memoryHistory.used.push(this.memoryStats.usedJSHeapSize);
+                if (this.memoryHistory.used.length > this.performanceHistorySize) {
+                    this.memoryHistory.used.shift();
+                }
+
+                // Check for memory leaks
+                this.checkMemoryTrend();
+            }
+
+            /**
+             * Check for consistent memory growth which might indicate a leak
+             */
+            checkMemoryTrend() {
+                // Need at least 10 samples to detect a trend
+                if (this.memoryHistory.used.length < 10) return;
+
+                // Check the last 10 measurements
+                const samples = this.memoryHistory.used.slice(-10);
+
+                // Calculate linear regression slope
+                const n = samples.length;
+                let sumX = 0;
+                let sumY = 0;
+                let sumXY = 0;
+                let sumXX = 0;
+
+                for (let i = 0; i < n; i++) {
+                    sumX += i;
+                    sumY += samples[i];
+                    sumXY += i * samples[i];
+                    sumXX += i * i;
+                }
+
+                const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+
+                // Calculate average memory and threshold for growth detection
+                const avgMemory = sumY / n;
+                const growthThreshold = avgMemory * 0.005; // 0.5% growth per measurement
+
+                // If we have consistent positive slope above a threshold, it might be a leak
+                if (slope > growthThreshold) {
+                    // Count consecutive growth measurements
+                    let growthCount = 0;
+                    for (let i = 1; i < n; i++) {
+                        if (samples[i] > samples[i-1]) {
+                            growthCount++;
+                        }
+                    }
+
+                    // If 80% of measurements show growth, warn about potential leak
+                    if (growthCount >= n * 0.8) {
+                        console.warn('Potential memory leak detected: Memory usage is consistently growing');
+                        console.warn(`Growth rate: ${this.formatBytes(slope)} per measurement`);
+                        console.warn(`Current memory: ${this.formatBytes(this.memoryStats.usedJSHeapSize)}`);
+
+                        // Only show warning in UI every 10 seconds to avoid spam
+                        const now = performance.now();
+                        if (!this.lastLeakWarning || now - this.lastLeakWarning > 10000) {
+                            this.lastLeakWarning = now;
+
+                            // Create or update warning message
+                            if (!this.memoryLeakWarning) {
+                                this.memoryLeakWarning = document.createElement('div');
+                                this.memoryLeakWarning.style.position = 'absolute';
+                                this.memoryLeakWarning.style.bottom = '10px';
+                                this.memoryLeakWarning.style.right = '10px';
+                                this.memoryLeakWarning.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                                this.memoryLeakWarning.style.color = 'white';
+                                this.memoryLeakWarning.style.padding = '10px';
+                                this.memoryLeakWarning.style.borderRadius = '5px';
+                                this.memoryLeakWarning.style.fontSize = '12px';
+                                document.body.appendChild(this.memoryLeakWarning);
+                            }
+
+                            this.memoryLeakWarning.innerHTML = `
+                                <div style="font-weight:bold; margin-bottom:5px;">⚠️ Potential Memory Leak</div>
+                                <div>Memory is growing consistently</div>
+                                <div>Growth: ${this.formatBytes(slope)} per measurement</div>
+                                <div>Used: ${this.formatBytes(this.memoryStats.usedJSHeapSize)}</div>
+                            `;
+
+                            // Auto-hide warning after 5 seconds
+                            setTimeout(() => {
+                                if (this.memoryLeakWarning) {
+                                    this.memoryLeakWarning.style.display = 'none';
+                                }
+                            }, 5000);
+                        }
+                    }
+                } else if (this.memoryLeakWarning) {
+                    // Hide warning if growth trend stops
+                    this.memoryLeakWarning.style.display = 'none';
+                }
+            }
+
+            /**
+             * Format bytes to human-readable format
+             */
+            formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            /**
+             * Update the memory chart
+             */
+            updateMemoryChart() {
+                if (!this.memorySupported || !this.memoryChartCtx) return;
+
+                const ctx = this.memoryChartCtx;
+                const canvas = ctx.canvas;
+                const width = canvas.width;
+                const height = canvas.height;
+
+                // Clear the canvas
+                ctx.clearRect(0, 0, width, height);
+
+                // No data yet
+                if (this.memoryHistory.used.length === 0) return;
+
+                // Find min/max values for scaling
+                const maxMemory = Math.max(...this.memoryHistory.used);
+                const minMemory = 0; // Always start at 0 for memory
+                const range = maxMemory - minMemory;
+
+                // Draw the memory line
+                ctx.beginPath();
+                ctx.strokeStyle = '#FF9800'; // Orange color
+                ctx.lineWidth = 2;
+
+                const step = width / this.performanceHistorySize;
+
+                for (let i = 0; i < this.memoryHistory.used.length; i++) {
+                    const x = i * step;
+                    const normalizedValue = (this.memoryHistory.used[i] - minMemory) / range;
+                    const y = height - (normalizedValue * height);
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+
+                ctx.stroke();
+
+                // Draw a line at 70% of the limit
+                if (this.memoryStats.jsHeapSizeLimit) {
+                    const seventyPercentY = height - ((this.memoryStats.jsHeapSizeLimit * 0.7 - minMemory) / range * height);
+                    if (seventyPercentY >= 0 && seventyPercentY <= height) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([5, 5]);
+                        ctx.moveTo(0, seventyPercentY);
+                        ctx.lineTo(width, seventyPercentY);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            /**
+             * Update physics collider for a model when scale changes
+             * @param {Object} object - The physics object to update
+             * @param {Number} newScale - The new scale factor
+             */
+            updateModelScale(object, newScale) {
+                if (!object || object.type !== 'model' || !object.body) {
+                    console.warn('Cannot update scale: Not a valid model object');
+                    return;
+                }
+
+                // Record current position, rotation, and velocity to restore after physics update
+                const position = object.body.translation();
+                const rotation = object.body.rotation();
+                const linvel = object.body.linvel();
+                const angvel = object.body.angvel();
+
+                // Update visual model scale
+                object.mesh.scale.set(newScale, newScale, newScale);
+
+                // Remove old colliders by removing the body
+                this.world.removeRigidBody(object.body);
+
+                // Create a new rigid body at the same position
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(position.x, position.y, position.z)
+                    .setRotation(rotation)
+                    .setLinvel(linvel)
+                    .setAngvel(angvel);
+
+                // Set the mass
+                if (object.mass !== 1.0) {
+                    rigidBodyDesc.setAdditionalMass(object.mass);
+                }
+
+                // Create the new body
+                const newBody = this.world.createRigidBody(rigidBodyDesc);
+
+                // Update the scale in the object
+                const oldScale = object.scale;
+                object.scale = newScale;
+
+                console.log(`Updating model scale from ${oldScale} to ${newScale}`);
+
+                // Create new colliders based on the updated model
+                const model = object.mesh;
+                const meshes = [];
+
+                // Find all meshes in the model
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        // Ensure world matrices are updated
+                        node.updateMatrixWorld(true);
+                        meshes.push(node);
+                    }
+                });
+
+                if (meshes.length === 0) {
+                    console.warn('No meshes found in the model after scale update');
+                    return;
+                }
+
+                // Same logic as in createPhysicsForModel
+                if (meshes.length <= 5) {
+                    // For models with few meshes, use convex hulls
+                    for (const mesh of meshes) {
+                        try {
+                            const geometry = mesh.geometry.clone();
+                            geometry.applyMatrix4(mesh.matrixWorld);
+
+                            const vertices = this.extractVertices(geometry);
+
+                            if (vertices.length > 0) {
+                                const colliderDesc = this.RAPIER.ColliderDesc.convexHull(vertices);
+                                if (colliderDesc) {
+                                    this.world.createCollider(colliderDesc, newBody);
+                                }
+                            }
+
+                            geometry.dispose();
+                        } catch (error) {
+                            console.error('Error updating convex hull for mesh:', error);
+                        }
+                    }
+                } else {
+                    // For complex models, use a bounding box
+                    try {
+                        const bbox = new THREE.Box3().setFromObject(model);
+                        const size = new THREE.Vector3();
+                        bbox.getSize(size);
+
+                        const halfExtents = {
+                            x: size.x / 2,
+                            y: size.y / 2,
+                            z: size.z / 2
+                        };
+
+                        const center = new THREE.Vector3();
+                        bbox.getCenter(center);
+
+                        // For the position, we need to calculate relative to the body position
+                        const relativeCenter = {
+                            x: center.x - position.x,
+                            y: center.y - position.y,
+                            z: center.z - position.z
+                        };
+
+                        const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                            halfExtents.x, halfExtents.y, halfExtents.z
+                        );
+
+                        colliderDesc.setTranslation(
+                            relativeCenter.x, relativeCenter.y, relativeCenter.z
+                        );
+
+                        this.world.createCollider(colliderDesc, newBody);
+                        console.log(`Updated bounding box collider with size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+                    } catch (error) {
+                        console.error('Error updating bounding box collider:', error);
+                    }
+                }
+
+                // Update the body reference in the object
+                object.body = newBody;
+
+                // Adjust velocity scaling factor for more natural throwing
+                if (object.type === 'model') {
+                    this.throwVelocityScale = 0.5 / newScale;
+                }
+            }
+
+            /**
+             * Rescale a model and update its physics collider
+             * @param {Object} object - The object to rescale
+             * @param {number} newScale - The new scale to apply
+             */
+            rescaleModelAndPhysics(object, newScale) {
+                if (!object || object.type !== 'model') return;
+
+                // Get current model position
+                const position = object.body.translation();
+                const pos = {
+                    x: position.x,
+                    y: position.y,
+                    z: position.z
+                };
+
+                // Store old scale to calculate ratio
+                const oldScale = object.scale;
+                const scaleRatio = newScale / oldScale;
+
+                console.log(`Rescaling model from ${oldScale} to ${newScale} (ratio: ${scaleRatio})`);
+
+                // Update the visual model scale
+                object.mesh.scale.set(newScale, newScale, newScale);
+
+                // Store the new scale
+                object.scale = newScale;
+
+                // We need to recreate the physics body with the new scale
+                // First, remove existing rigid body and colliders
+                if (object.body) {
+                    this.world.removeRigidBody(object.body);
+                }
+
+                // Create a new rigid body at the same position
+                const rigidBodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(pos.x, pos.y, pos.z);
+
+                // Set the mass
+                if (object.mass !== 1.0) {
+                    rigidBodyDesc.setAdditionalMass(object.mass);
+                }
+
+                const body = this.world.createRigidBody(rigidBodyDesc);
+
+                // Update the object reference to use the new body
+                object.body = body;
+
+                // Compute the new bounding box which includes the model's updated scale
+                const bbox = new THREE.Box3().setFromObject(object.mesh);
+                const size = new THREE.Vector3();
+                bbox.getSize(size);
+
+                // Create a cuboid collider matching the bounding box
+                const halfExtents = {
+                    x: size.x / 2,
+                    y: size.y / 2,
+                    z: size.z / 2
+                };
+
+                // Get center of the bounding box relative to model position
+                const center = new THREE.Vector3();
+                bbox.getCenter(center);
+                const relativeCenter = {
+                    x: center.x - pos.x,
+                    y: center.y - pos.y,
+                    z: center.z - pos.z
+                };
+
+                // Create the cuboid collider
+                const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                    halfExtents.x, halfExtents.y, halfExtents.z
+                );
+
+                // Set the collider's position relative to the rigid body
+                colliderDesc.setTranslation(
+                    relativeCenter.x, relativeCenter.y, relativeCenter.z
+                );
+
+                const collider = this.world.createCollider(colliderDesc, body);
+
+                console.log(`Updated physics collider for rescaled model with size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+
+                // Wake up the body to ensure physics are active
+                body.wakeUp();
+
+                return object;
+            }
+
+            /**
+             * Initialize audio context and load sounds
+             */
+            initAudio() {
+                try {
+                    // Create audio context
+                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioContext();
+
+                    // Create sounds
+                    this.createFloorHitSound();
+                    this.createWallHitSound();
+
+                    console.log('Audio system initialized');
+                } catch (e) {
+                    console.warn('Audio system could not be initialized:', e);
+                    this.audioEnabled = false;
+                }
+            }
+
+            /**
+             * Create a soft thud sound for floor hits
+             */
+            createFloorHitSound() {
+                if (!this.audioContext) return;
+
+                // Create an audio buffer for a soft thud
+                const bufferSize = this.audioContext.sampleRate * 0.5; // 0.5 seconds
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                // Generate a dampened sine wave
+                for (let i = 0; i < bufferSize; i++) {
+                    // Frequency decreases over time (120 Hz to 40 Hz)
+                    const frequency = 120 - (80 * i / bufferSize);
+                    const value = Math.sin(i * frequency * Math.PI * 2 / this.audioContext.sampleRate);
+
+                    // Apply an envelope (attack and decay)
+                    const attack = Math.min(1, i / (0.01 * this.audioContext.sampleRate));
+                    const decay = Math.max(0, 1 - (i / (0.5 * this.audioContext.sampleRate)));
+                    const envelope = attack * decay * decay; // Faster decay for a thud
+
+                    data[i] = value * envelope * 0.5; // 50% volume
+                }
+
+                this.sounds.floorHit = buffer;
+                console.log('Floor hit sound created');
+            }
+
+            /**
+             * Create a higher pitched sound for wall hits
+             */
+            createWallHitSound() {
+                if (!this.audioContext) return;
+
+                // Create an audio buffer for a wall hit
+                const bufferSize = this.audioContext.sampleRate * 0.3; // 0.3 seconds
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                // Generate a dampened sine wave with higher frequency
+                for (let i = 0; i < bufferSize; i++) {
+                    // Higher frequency for walls (200 Hz to 120 Hz)
+                    const frequency = 200 - (80 * i / bufferSize);
+                    const value = Math.sin(i * frequency * Math.PI * 2 / this.audioContext.sampleRate);
+
+                    // Apply an envelope (attack and decay)
+                    const attack = Math.min(1, i / (0.005 * this.audioContext.sampleRate));
+                    const decay = Math.max(0, 1 - (i / (0.3 * this.audioContext.sampleRate)));
+                    const envelope = attack * decay;
+
+                    data[i] = value * envelope * 0.4; // 40% volume
+                }
+
+                this.sounds.wallHit = buffer;
+                console.log('Wall hit sound created');
+            }
+
+            /**
+             * Play a sound from our sound bank
+             */
+            playSound(soundName, volume = 1.0) {
+                if (!this.audioEnabled || !this.audioContext || !this.sounds[soundName]) return;
+
+                // Respect cooldown to prevent sound spam
+                const now = performance.now();
+                if (now - this.lastSoundTime < this.soundCooldown) return;
+                this.lastSoundTime = now;
+
+                // Create a buffer source
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.sounds[soundName];
+
+                // Create a gain node for volume control
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = volume;
+
+                // Connect and play
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                source.start();
+
+                if (this.debugMode) {
+                    console.log(`Playing sound: ${soundName}`);
+                }
+            }
+
+            /**
+             * Handle object rotation based on mouse wheel movement
+             * @param {WheelEvent} event - The wheel event
+             */
+            handleObjectRotation(event) {
+                if (!this.isDragging || !this.selectedObject) return;
+
+                // Get rotation amount based on wheel delta
+                const delta = event.deltaY;
+                const rotationAmount = delta * 0.01; // Base rotation amount
+
+                if (this.isMiddleMouseDown) {
+                    // Rotation around Z axis (forward/backward roll)
+                    this.rotateObjectAroundAxis(this.selectedObject, 'z', rotationAmount * this.rotationZSensitivity);
+                } else {
+                    // Rotation around Y axis (left/right turn)
+                    this.rotateObjectAroundAxis(this.selectedObject, 'y', rotationAmount * this.rotationYSensitivity);
+                }
+            }
+
+            /**
+             * Rotate an object around a specified axis
+             * @param {Object} object - The object to rotate
+             * @param {string} axis - The axis to rotate around ('x', 'y', or 'z')
+             * @param {number} angle - The rotation angle in radians
+             */
+            rotateObjectAroundAxis(object, axis, angle) {
+                if (!object || !object.mesh) return;
+
+                // Get current rotation as a quaternion
+                const currentRotation = object.mesh.quaternion.clone();
+
+                // Create a quaternion for the new rotation
+                const rotationAxis = new THREE.Vector3();
+                if (axis === 'x') rotationAxis.set(1, 0, 0);
+                else if (axis === 'y') rotationAxis.set(0, 1, 0);
+                else if (axis === 'z') rotationAxis.set(0, 0, 1);
+
+                const quaternion = new THREE.Quaternion();
+                quaternion.setFromAxisAngle(rotationAxis, angle);
+
+                if (this.smoothRotation) {
+                    // For smooth rotation, we compute the target and then interpolate in the animation loop
+                    // First, create a copy of the current rotation
+                    this.targetRotation.copy(currentRotation);
+                    // Then apply the new rotation to it
+                    this.targetRotation.multiply(quaternion);
+                    // Flag that we have a target to interpolate to
+                    this.hasTargetRotation = true;
+                    // Store which object has the target rotation
+                    this.rotatingObject = object;
+
+                    if (this.debugMode) {
+                        console.log(`Set rotation target for ${axis}-axis by ${angle.toFixed(4)} radians`);
+                    }
+                } else {
+                    // For immediate rotation, apply directly
+                    // Apply the rotation to the current rotation
+                    currentRotation.multiply(quaternion);
+
+                    // Update the mesh rotation
+                    object.mesh.quaternion.copy(currentRotation);
+
+                    // Update the physics body rotation to match
+                    this.updatePhysicsBodyRotation(object);
+
+                    if (this.debugMode) {
+                        console.log(`Rotated object around ${axis}-axis by ${angle.toFixed(4)} radians`);
+                    }
+                }
+            }
+
+            /**
+             * Update smooth rotations in the animation loop
+             */
+            updateSmoothRotations() {
+                // If no target rotation or object is no longer valid, exit
+                if (!this.hasTargetRotation || !this.rotatingObject || !this.rotatingObject.mesh) {
+                    this.hasTargetRotation = false;
+                    return;
+                }
+
+                // Interpolate current rotation toward target
+                this.rotatingObject.mesh.quaternion.slerp(this.targetRotation, this.rotationSmoothingFactor);
+
+                // Update physics body to match visual rotation
+                this.updatePhysicsBodyRotation(this.rotatingObject);
+
+                // If we're very close to the target, consider it reached
+                if (this.rotatingObject.mesh.quaternion.angleTo(this.targetRotation) < 0.01) {
+                    this.hasTargetRotation = false;
+                }
+            }
+
+            /**
+             * Update the physics body rotation to match the visual mesh
+             * @param {Object} object - The object to update
+             */
+            updatePhysicsBodyRotation(object) {
+                if (!object || !object.body || !object.mesh) return;
+
+                // Get the quaternion from the mesh
+                const q = object.mesh.quaternion;
+
+                // Convert to Rapier quaternion format
+                const rapierQuat = {
+                    x: q.x,
+                    y: q.y,
+                    z: q.z,
+                    w: q.w
+                };
+
+                // Update the rigid body rotation
+                object.body.setRotation(rapierQuat);
+
+                // Wake up the body to ensure physics are applied
+                object.body.wakeUp();
+            }
+
+            /**
+             * Toggle the visibility of the rotation debug panel
+             */
+            toggleRotationPanel() {
+                const panel = document.getElementById('rotation-debug-panel');
+                const isVisible = panel.style.display !== 'none';
+
+                if (!isVisible) {
+                    // Set UI elements to match current values when opening the panel
+                    document.getElementById('y-rotation-sensitivity').value = this.rotationYSensitivity;
+                    document.getElementById('y-sensitivity-value').textContent = this.rotationYSensitivity.toFixed(2);
+
+                    document.getElementById('z-rotation-sensitivity').value = this.rotationZSensitivity;
+                    document.getElementById('z-sensitivity-value').textContent = this.rotationZSensitivity.toFixed(2);
+
+                    document.getElementById('rotation-smoothing').value = this.rotationSmoothingFactor;
+                    document.getElementById('smoothing-value').textContent = this.rotationSmoothingFactor.toFixed(2);
+
+                    document.getElementById('enable-smooth-rotation').checked = this.smoothRotation;
+                }
+
+                panel.style.display = isVisible ? 'none' : 'block';
+
+                // Update button text
+                const button = document.getElementById('toggle-rotation-panel');
+                if (button) {
+                    button.textContent = isVisible ? 'Rotation Settings' : 'Hide Settings';
+                }
+            }
+
+            /**
+             * Handle key down event
+             */
+            handleKeyDown(event) {
+                // Handle axis constraints
+                if (this.isDragging && this.selectedObject) {
+                    const key = event.key.toLowerCase();
+
+                    // Check for axis constraint keys
+                    if (key === 'x' || key === 'y' || key === 'z') {
+                        // Don't set constraint if key was already pressed
+                        if (this.constrainedAxis !== key) {
+                            this.constrainedAxis = key;
+                            console.log(`Movement constrained to ${this.constrainedAxis.toUpperCase()} axis`);
+
+                            // Show a notification to the user
+                            this.showNotification(`${this.constrainedAxis.toUpperCase()}-Axis Movement`,
+                                                 this.axisColors[this.constrainedAxis]);
+
+                            // Store initial position for constraint reference
+                            if (this.selectedObject && this.selectedObject.body) {
+                                const pos = this.selectedObject.body.translation();
+                                this.initialDragPosition.set(pos.x, pos.y, pos.z);
+
+                                // Create constraint plane perpendicular to the axis
+                                if (key === 'x') {
+                                    // YZ plane at current X
+                                    this.constraintPlanes.x.setFromNormalAndCoplanarPoint(
+                                        new THREE.Vector3(1, 0, 0),
+                                        this.initialDragPosition
+                                    );
+                                } else if (key === 'y') {
+                                    // XZ plane at current Y
+                                    this.constraintPlanes.y.setFromNormalAndCoplanarPoint(
+                                        new THREE.Vector3(0, 1, 0),
+                                        this.initialDragPosition
+                                    );
+                                } else if (key === 'z') {
+                                    // XY plane at current Z
+                                    this.constraintPlanes.z.setFromNormalAndCoplanarPoint(
+                                        new THREE.Vector3(0, 0, 1),
+                                        this.initialDragPosition
+                                    );
+                                }
+
+                                // Show visual indicator for the constraint
+                                this.createAxisConstraintHelper(key);
+                            }
+                        }
+                    }
+                }
+
+                // Handle shift key for camera control mode toggle
+                if (event.key === 'Shift' && this.previousMode === undefined) {
+                    this.previousMode = this.objectInteractionMode;
+                    this.objectInteractionMode = false;
+                    document.body.style.cursor = 'move';
+                }
+            }
+
+            /**
+             * Handle key up event
+             */
+            handleKeyUp(event) {
+                const key = event.key.toLowerCase();
+
+                // Release axis constraint when key is released
+                if ((key === 'x' || key === 'y' || key === 'z') && this.constrainedAxis === key) {
+                    this.constrainedAxis = null;
+                    console.log("Movement constraint released");
+
+                    // Show notification that constraint is released
+                    this.showNotification("Free Movement", 0xffffff);
+
+                    // Remove the constraint helper
+                    this.removeAxisConstraintHelper();
+                }
+
+                // Handle shift key for camera control mode toggle
+                if (event.key === 'Shift' && this.previousMode !== undefined) {
+                    this.objectInteractionMode = this.previousMode;
+                    this.previousMode = undefined;
+                    document.body.style.cursor = this.objectInteractionMode ? '' : 'move';
+                }
+            }
+
+            /**
+             * Show a notification message to the user
+             * @param {string} message - The message to display
+             * @param {number} color - The color of the notification (hex)
+             */
+            showNotification(message, color) {
+                // Create notification container if it doesn't exist
+                if (!this.notificationContainer) {
+                    this.notificationContainer = document.createElement('div');
+                    this.notificationContainer.style.position = 'absolute';
+                    this.notificationContainer.style.top = '20px';
+                    this.notificationContainer.style.left = '50%';
+                    this.notificationContainer.style.transform = 'translateX(-50%)';
+                    this.notificationContainer.style.padding = '10px 20px';
+                    this.notificationContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                    this.notificationContainer.style.color = 'white';
+                    this.notificationContainer.style.fontFamily = 'Arial, sans-serif';
+                    this.notificationContainer.style.fontSize = '16px';
+                    this.notificationContainer.style.fontWeight = 'bold';
+                    this.notificationContainer.style.borderRadius = '5px';
+                    this.notificationContainer.style.zIndex = '1000';
+                    this.notificationContainer.style.pointerEvents = 'none'; // Don't interfere with mouse events
+                    this.notificationContainer.style.transition = 'opacity 0.3s ease';
+                    this.notificationContainer.style.opacity = '0';
+                    document.body.appendChild(this.notificationContainer);
+                }
+
+                // Convert color to CSS color
+                const colorCSS = '#' + color.toString(16).padStart(6, '0');
+
+                // Set message and color
+                this.notificationContainer.textContent = message;
+                this.notificationContainer.style.borderLeft = `4px solid ${colorCSS}`;
+
+                // Show the notification
+                this.notificationContainer.style.opacity = '1';
+
+                // Clear any existing timeout
+                if (this.notificationTimeout) {
+                    clearTimeout(this.notificationTimeout);
+                }
+
+                // Hide after a delay
+                this.notificationTimeout = setTimeout(() => {
+                    this.notificationContainer.style.opacity = '0';
+                }, 2000);
+            }
+
+            /**
+             * Create a visual helper for the current axis constraint
+             */
+            createAxisConstraintHelper(axis) {
+                // Remove any existing helper
+                this.removeAxisConstraintHelper();
+
+                if (!this.selectedObject || !this.selectedObject.body) return;
+
+                // Get the current object position
+                const position = this.selectedObject.body.translation();
+                const pos = new THREE.Vector3(position.x, position.y, position.z);
+
+                // Create a line geometry to indicate the constrained axis
+                const axisLength = 15; // Length of the axis indicator
+
+                // Define the line's start and end based on the constrained axis
+                let start = new THREE.Vector3();
+                let end = new THREE.Vector3();
+
+                if (axis === 'x') {
+                    start.set(pos.x - axisLength, pos.y, pos.z);
+                    end.set(pos.x + axisLength, pos.y, pos.z);
+                } else if (axis === 'y') {
+                    start.set(pos.x, pos.y - axisLength, pos.z);
+                    end.set(pos.x, pos.y + axisLength, pos.z);
+                } else if (axis === 'z') {
+                    start.set(pos.x, pos.y, pos.z - axisLength);
+                    end.set(pos.x, pos.y, pos.z + axisLength);
+                }
+
+                // Create the geometry and material
+                const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+                const material = new THREE.LineBasicMaterial({
+                    color: this.axisColors[axis],
+                    linewidth: 3,
+                    transparent: true,
+                    opacity: 0.7,
+                    depthTest: false // Draw on top of other objects
+                });
+
+                // Create the line and add it to the scene
+                this.axisConstraintHelpers[axis] = new THREE.Line(geometry, material);
+                this.scene.add(this.axisConstraintHelpers[axis]);
+
+                // If we're in debug mode, log the creation
+                if (this.debugMode) {
+                    console.log(`Created ${axis.toUpperCase()} axis constraint helper`);
+                }
+            }
+
+            /**
+             * Remove any existing axis constraint helpers
+             */
+            removeAxisConstraintHelper() {
+                // Remove any existing constraint helpers
+                for (const axis of ['x', 'y', 'z']) {
+                    if (this.axisConstraintHelpers[axis]) {
+                        this.scene.remove(this.axisConstraintHelpers[axis]);
+                        this.axisConstraintHelpers[axis] = null;
+                    }
+                }
+            }
+
+            /**
+             * Set up status indicators for the application
+             */
+            setupStatusIndicators() {
+                // Create a container for status indicators
+                const statusContainer = document.createElement('div');
+                statusContainer.id = 'status-indicators';
+                statusContainer.style.position = 'absolute';
+                statusContainer.style.bottom = '10px';
+                statusContainer.style.left = '10px';
+                statusContainer.style.padding = '5px';
+                statusContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                statusContainer.style.color = 'white';
+                statusContainer.style.fontFamily = 'Arial, sans-serif';
+                statusContainer.style.fontSize = '14px';
+                statusContainer.style.borderRadius = '5px';
+                statusContainer.style.display = 'flex';
+                statusContainer.style.flexDirection = 'row';
+                statusContainer.style.gap = '10px';
+                statusContainer.style.alignItems = 'center';
+                statusContainer.style.zIndex = '1000';
+                statusContainer.style.pointerEvents = 'none'; // Don't interfere with mouse events
+
+                // Create axis constraint indicator
+                this.axisConstraintIndicator = document.createElement('div');
+                this.axisConstraintIndicator.id = 'axis-constraint-indicator';
+                this.axisConstraintIndicator.style.padding = '3px 8px';
+                this.axisConstraintIndicator.style.borderRadius = '3px';
+                this.axisConstraintIndicator.style.fontWeight = 'bold';
+                this.axisConstraintIndicator.style.display = 'none'; // Hidden by default
+
+                // Add to status container
+                statusContainer.appendChild(this.axisConstraintIndicator);
+
+                // Add to document
+                document.body.appendChild(statusContainer);
+            }
+
+            /**
+             * Update the axis constraint indicator
+             */
+            updateAxisConstraintIndicator() {
+                if (!this.axisConstraintIndicator) return;
+
+                if (this.constrainedAxis) {
+                    // Show the indicator
+                    this.axisConstraintIndicator.style.display = 'block';
+
+                    // Set text and color based on axis
+                    this.axisConstraintIndicator.textContent = `${this.constrainedAxis.toUpperCase()}-Axis Lock`;
+
+                    // Set background color based on axis
+                    let bgColor = '';
+                    if (this.constrainedAxis === 'x') {
+                        bgColor = 'rgba(255, 0, 0, 0.7)'; // Red for X
+                    } else if (this.constrainedAxis === 'y') {
+                        bgColor = 'rgba(0, 255, 0, 0.7)'; // Green for Y
+                    } else if (this.constrainedAxis === 'z') {
+                        bgColor = 'rgba(0, 0, 255, 0.7)'; // Blue for Z
+                    }
+
+                    this.axisConstraintIndicator.style.backgroundColor = bgColor;
+                } else {
+                    // Hide the indicator when no constraint is active
+                    this.axisConstraintIndicator.style.display = 'none';
+                }
+            }
+        }
+
+        // Initialize the application when the page loads
+        window.addEventListener('load', () => {
+            window.app = new PhysicsSandbox();
+        });
+    </script>
+</body>
+</html>

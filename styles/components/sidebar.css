@@ -1,10 +1,11 @@
 /**
  * VistaKine Sidebar Component
  *
- * Simplified sidebar with three clear states:
- * - Expanded: Full sidebar with all navigation information
- * - Minified: Icon-only state with tooltips for desktop
- * - Collapsed: Hidden sidebar for mobile (shown with overlay when toggled)
+ * This combined file handles:
+ * - Sidebar structure and layout
+ * - Navigation menu items and styling
+ * - Responsive behavior for all device sizes
+ * - State management (expanded, mini-collapsed, collapsed)
  */
 
 /* ========== BASE VARIABLES ========== */
@@ -15,13 +16,15 @@
 	--chapter-icon-size-mini: 32px;
 }
 
-/* ========== BASE SIDEBAR ========== */
+/* ========== BASE CONTAINER ========== */
 .sidebar {
 	height: 100vh;
 	width: var(--sidebar-width);
-	background-color: white;
-	border-right: 1px solid rgba(255, 255, 255, 0.6);
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+	background-color: rgba(255, 255, 255, 0.75);
+	border-right: 1px solid rgba(255, 255, 255, 0.8);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
 	display: flex;
 	flex-direction: column;
 	z-index: 200;
@@ -57,6 +60,21 @@
 	width: 100%;
 	overflow: hidden;
 	white-space: nowrap;
+	cursor: pointer;
+	/* Indicate it's clickable */
+	user-select: none;
+	/* Prevent text selection on double-click */
+	transition: background-color 0.2s ease;
+}
+
+.sidebar-header:hover {
+	background-color: rgba(0, 0, 0, 0.02);
+	/* Subtle highlight on hover */
+}
+
+.sidebar-header:active {
+	background-color: rgba(0, 0, 0, 0.05);
+	/* Subtle feedback on click */
 }
 
 .logo {
@@ -108,12 +126,202 @@
 	z-index: 5;
 }
 
+/* ========== ACTION BUTTONS ========== */
+.sidebar-actions {
+	display: flex;
+	gap: var(--spacing-xs);
+}
+
+/* Close button - hidden by default (desktop) */
+.sidebar-close {
+	display: none;
+	/* Explicitly hidden by default on desktop */
+}
+
+/* Toggle button - hidden by default (desktop) */
+.show-nav-toggle {
+	display: none !important;
+	/* Hidden on desktop by default */
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+	z-index: 9999;
+	/* Extremely high z-index to ensure it's always visible */
+	background-color: white;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	padding: 0.5rem;
+	box-shadow: var(--shadow-md);
+	cursor: pointer;
+	/* Make it more touchable */
+	width: 45px;
+	height: 45px;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+}
+
+.show-nav-toggle:hover {
+	background-color: #f8f8f8;
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-lg);
+}
+
+.show-nav-toggle:active {
+	transform: translateY(0);
+}
+
 /* ========== SIDEBAR NAV CONTAINER ========== */
 .sidebar-nav {
+	padding: 0 var(--spacing-md) var(--spacing-md);
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: var(--spacing-md) var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+}
+
+/* ========== NAVIGATION ELEMENTS ========== */
+/* Navigation chapter */
+.nav-chapter {
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+	color: var(--text-color);
+	padding: var(--spacing-sm) var(--spacing-sm);
+	border-radius: 6px;
+	position: relative;
+	transition: all 0.2s ease;
+	overflow: hidden;
+	font-weight: 500;
+	gap: var(--spacing-sm);
+}
+
+.nav-chapter:hover {
+	background-color: var(--hover-bg);
+	color: var(--text-color);
+}
+
+.nav-chapter.active {
+	background-color: var(--active-bg);
+	color: var(--primary-color);
+	font-weight: 500;
+}
+
+/* Parent chapter with active subchapter styling */
+.nav-chapter.parent-active {
+	background-color: var(--active-bg-light, rgba(0, 123, 255, 0.08));
+	color: var(--primary-color);
+	position: relative;
+}
+
+/* Chapter numbers */
+.chapter-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	background-color: #f0f0f0;
+	/* Grey background */
+	color: var(--text-light);
+	/* Grey text */
+	border-radius: 50%;
+	font-size: var(--text-sm);
+	transition: all 0.3s ease;
+	flex-shrink: 0;
+}
+
+/* Hover feedback for chapter numbers */
+.nav-chapter:hover .chapter-number {
+	background-color: #e8e8e8;
+}
+
+/* Active chapter styling */
+.nav-chapter.active .chapter-number {
+	background-color: rgba(var(--primary-color-rgb), 0.15);
+	color: var(--text-color);
+	border: 1px solid rgba(var(--primary-color-rgb), 0.4);
+}
+
+/* Parent active style */
+.nav-chapter.parent-active .chapter-number {
+	border: 1px solid rgba(var(--primary-color-rgb), 0.4);
+	background-color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.nav-chapter span {
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Visual indicators for active states */
+.nav-chapter.active::before,
+.nav-chapter.parent-active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	background-color: var(--primary-color);
+	opacity: 1;
+}
+
+/* Slightly transparent indicator for parent-active (not active) */
+.nav-chapter.parent-active:not(.active)::before {
+	opacity: 0.6;
+}
+
+/* Subchapter items */
+.subchapter-list {
+	display: flex;
+	flex-direction: column;
+	margin-left: calc(24px + var(--spacing-sm));
+	padding-left: var(--spacing-sm);
+	gap: 2px;
+	transition: all 0.2s ease-in-out;
+	max-height: 1000px;
+	/* Default max height that should accommodate most lists */
+	overflow: hidden;
+}
+
+.nav-subchapter {
+	display: flex;
+	align-items: center;
+	padding: var(--spacing-xs) var(--spacing-sm);
+	text-decoration: none;
+	color: var(--text-light);
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	position: relative;
+	font-size: var(--text-sm);
+}
+
+.nav-subchapter:hover {
+	background-color: var(--hover-bg);
+	color: var(--text-color);
+}
+
+.nav-subchapter.active {
+	color: var(--primary-color);
+	background-color: var(--active-bg);
+	font-weight: 500;
+	position: relative;
+}
+
+/* Add left indicator for active subchapters */
+.nav-subchapter.active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	background-color: var(--primary-color);
 }
 
 /* ========== RESIZE HANDLE ========== */
@@ -153,62 +361,16 @@
 	background-color: rgba(var(--primary-color-rgb), 0.1);
 }
 
-/* ========== ACTION BUTTONS ========== */
-.sidebar-actions {
-	display: flex;
-	gap: var(--spacing-xs);
-}
-
-/* Close button - hidden by default (desktop) */
-.sidebar-close {
-	display: none;
-	/* Explicitly hidden by default on desktop */
-}
-
-/* Toggle button - hidden by default (desktop) */
-.show-nav-toggle {
-	display: none !important;
-	/* Hidden on desktop by default, use !important to override any conflicting rules */
-	position: fixed;
-	top: 1rem;
-	left: 1rem;
-	z-index: 9999;
-	/* Extremely high z-index to ensure it's always visible */
-	background-color: white;
-	border: 1px solid var(--border-color);
-	border-radius: 4px;
-	padding: 0.5rem;
-	box-shadow: var(--shadow-md);
-	cursor: pointer;
-	/* Make it more touchable */
-	width: 45px;
-	height: 45px;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.2s ease;
-}
-
-.show-nav-toggle:hover {
-	background-color: #f8f8f8;
-	transform: translateY(-2px);
-	box-shadow: var(--shadow-lg);
-}
-
-.show-nav-toggle:active {
-	transform: translateY(0);
-}
-
 /* ========== SIDEBAR STATES ========== */
-
-/* 1. Expanded state (default) */
-/* Default expanded state styles already defined above */
-
-/* 2. Minified state */
+/* 1. Mini-collapsed state */
 .sidebar.mini-collapsed {
 	width: var(--sidebar-mini-collapsed-width);
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
 }
 
-/* Header in minified mode */
+/* Header in mini-collapsed mode */
 .sidebar.mini-collapsed .logo h1 {
 	opacity: 0;
 	transform: translateX(-20px);
@@ -225,14 +387,14 @@
 	margin: 0;
 }
 
-/* Hide text in minified mode */
+/* Hide text in mini-collapsed mode */
 .sidebar.mini-collapsed .sidebar-header,
 .sidebar.mini-collapsed .sidebar-nav,
 .sidebar.mini-collapsed .search-container {
 	transform: translateX(0);
 }
 
-/* Hide search input in minified mode */
+/* Hide search input in mini-collapsed mode */
 .sidebar.mini-collapsed .search-container input {
 	opacity: 0;
 	width: 0;
@@ -240,14 +402,58 @@
 	border: none;
 }
 
-/* Center and enlarge the search icon in minified mode */
+/* Center search icon in mini-collapsed mode */
 .sidebar.mini-collapsed .search-container i {
 	right: 50%;
 	transform: translate(50%, -50%);
 	font-size: 1.25rem;
 }
 
-/* 3. Collapsed state (mobile) */
+/* Navigation in mini-collapsed mode */
+.sidebar.mini-collapsed .nav-chapter {
+	justify-content: center;
+	padding: 0.5rem;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	position: relative;
+}
+
+.sidebar.mini-collapsed .nav-chapter span,
+.sidebar.mini-collapsed .page-num {
+	display: none;
+}
+
+.sidebar.mini-collapsed .subchapter-list {
+	max-height: 0;
+	opacity: 0;
+	visibility: hidden;
+}
+
+/* Chapter numbers in mini-collapsed mode */
+.sidebar.mini-collapsed .chapter-number {
+	width: var(--chapter-icon-size-mini);
+	height: var(--chapter-icon-size-mini);
+	font-size: 1.1rem;
+	margin: 0;
+	background-color: white;
+	border: 1px solid #e0e0e0;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.mini-collapsed .chapter-number:hover {
+	transform: scale(1.05);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Active chapter in mini-collapsed mode */
+.sidebar.mini-collapsed .nav-chapter.active .chapter-number {
+	background-color: rgba(var(--primary-color-rgb), 0.1);
+	border-color: var(--primary-color);
+	transform: scale(1.05);
+	box-shadow: 0 0 0 4px rgba(var(--primary-color-rgb), 0.15);
+}
+
+/* 2. Collapsed state (mobile) */
 .sidebar.collapsed {
 	transform: translateX(-100%);
 	box-shadow: none;
@@ -264,8 +470,9 @@
 /* When active (mobile toggled open) */
 .sidebar.collapsed.active,
 .sidebar.active {
-	transform: translateX(0) !important;
-	box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+	transform: translateX(0);
+	background-color: rgba(255, 255, 255, 0.8);
+	box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 	left: 0 !important;
 	/* Force left position */
 	/* Make sure it's visible */
@@ -275,21 +482,18 @@
 }
 
 /* ========== RESPONSIVE BEHAVIOR ========== */
+/* Desktop (992px and above) - already covered by default styles */
+@media (min-width: 992px) {
+	.nav-chapter {
+		padding: var(--spacing-sm) var(--spacing-md);
+	}
 
-/* Desktop layout */
-.app-layout {
-	display: grid;
-	grid-template-columns: var(--sidebar-width) 1fr;
-	min-height: 100vh;
-	position: relative;
+	.sidebar-nav {
+		padding: 0 var(--spacing-lg) var(--spacing-md);
+	}
 }
 
-/* Grid adjustments for minified sidebar */
-.app-layout.sidebar-mini-collapsed {
-	grid-template-columns: var(--sidebar-mini-collapsed-width) 1fr;
-}
-
-/* Tablet behavior (768px - 991px) */
+/* Tablet (768px to 991px) */
 @media (min-width: 768px) and (max-width: 991px) {
 
 	/* Make sidebar position fixed to overlay content */
@@ -304,14 +508,14 @@
 		width: 300px;
 		/* Fixed width for tablet */
 		box-shadow: none;
-		/* Reset any minified styling */
+		/* Reset any mini-collapsed styling */
 		min-width: 300px;
 	}
 
 	/* Show toggle button */
 	.show-nav-toggle {
 		display: flex !important;
-		/* Use !important to override any other display property */
+		/* Override hidden default */
 		position: fixed;
 		top: 1rem;
 		left: 1rem;
@@ -334,12 +538,12 @@
 		transform: translateX(0);
 		/* Bring into view */
 		box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
-		/* Ensure we get full width, not minified */
+		/* Ensure we get full width, not mini-collapsed */
 		width: 300px !important;
 		min-width: 300px !important;
 	}
 
-	/* Reset any minified styling when active */
+	/* Reset any mini-collapsed styling when active */
 	.sidebar.active .logo h1,
 	.sidebar.active .nav-chapter span,
 	.sidebar.active .search-container input {
@@ -371,21 +575,52 @@
 		gap: 2px !important;
 	}
 
-	/* Improved styling for parent-active to show relationship */
+	/* Improved styling for parent-active - remove background color override */
 	.sidebar.active .nav-chapter.parent-active {
-		background-color: var(--active-bg-light) !important;
 		color: var(--primary-color) !important;
 		font-weight: 500 !important;
 	}
 
-	.sidebar.active .nav-subchapter {
-		display: block !important;
-		opacity: 1 !important;
-		visibility: visible !important;
+	/* Default is mini-collapsed on tablets */
+	.sidebar .chapter-number {
+		width: 40px;
+		height: 40px;
+		font-size: 1.1rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto;
+	}
+
+	.sidebar .nav-chapter span {
+		display: none;
+	}
+
+	.sidebar .nav-chapter .page-num {
+		display: none;
+	}
+
+	.sidebar .subchapter-list {
+		display: none;
+	}
+
+	/* Special handling for tablets in mini-collapsed mode */
+	/* Show subchapters when parent is active in mini-collapsed mode */
+	.sidebar.mini-collapsed .nav-chapter.parent-active + .subchapter-list {
+		max-height: 1000px;
+		opacity: 1;
+		visibility: visible;
+		margin-left: 0;
+		padding-left: 0;
+	}
+
+	/* Make mini-collapsed parent more visible */
+	.sidebar.mini-collapsed .nav-chapter.parent-active {
+		background-color: var(--active-bg);
 	}
 }
 
-/* Mobile behavior (up to 767px) */
+/* Mobile (up to 767px) */
 @media (max-width: 767px) {
 
 	/* Make sidebar position fixed to overlay content */
@@ -401,14 +636,14 @@
 		width: 85%;
 		/* Wider percentage for small screens */
 		max-width: 300px;
-		/* Reset any minified styling */
+		/* Reset any mini-collapsed styling */
 		box-shadow: none;
 	}
 
 	/* Show toggle button */
 	.show-nav-toggle {
 		display: flex !important;
-		/* Use !important to override any other display property */
+		/* Override hidden default */
 		position: fixed;
 		top: 1rem;
 		left: 1rem;
@@ -431,7 +666,7 @@
 		transform: translateX(0);
 		/* Bring into view */
 		box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
-		/* Ensure we get full width, not minified */
+		/* Ensure we get full width, not mini-collapsed */
 		width: 85% !important;
 		max-width: 300px !important;
 	}
@@ -459,136 +694,134 @@
 		display: flex !important;
 	}
 
-	/* Stronger visual indicator for active items on mobile */
+	/* Stronger visual indicator for active items */
 	.sidebar.active .nav-chapter.active,
 	.sidebar.active .nav-chapter.parent-active {
-		background-color: var(--active-bg) !important;
-		color: var(--primary-color) !important;
-		font-weight: 500 !important;
-		border-left: 3px solid var(--primary-color) !important;
-		/* Add border for better visibility */
+		background-color: var(--active-bg);
+		color: var(--primary-color);
+		font-weight: 500;
 	}
 
+	/* Ensure mobile subchapter visibility */
 	.sidebar.active .nav-subchapter {
 		display: block !important;
 		opacity: 1 !important;
 		visibility: visible !important;
 	}
-}
 
-/* Add overlay when sidebar is active on mobile/tablet */
-@media (max-width: 991px) {
-
-	/* Explicitly overriding any other classes that might be applied */
-	.sidebar.collapsed.active {
-		transform: translateX(0) !important;
-		left: 0 !important;
-		visibility: visible !important;
-		opacity: 1 !important;
+	/* Active subchapter styling */
+	.sidebar.active .nav-subchapter.active {
+		background-color: var(--active-bg);
+		color: var(--primary-color);
+		font-weight: 500;
 	}
 
-	/* Remove overlay effect - comment out or remove this block
-	.sidebar.active::after {
-		content: "";
-		position: fixed;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		background-color: rgba(0, 0, 0, 0.5);
-		z-index: -1;
-		animation: fadeIn 0.3s ease-in-out;
+	/* More compact chapter links */
+	.nav-chapter {
+		padding: var(--spacing-xs) var(--spacing-sm);
+		margin-bottom: 2px;
 	}
 
-	@keyframes fadeIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-	*/
-
-	/* Add a slight animation to the sidebar */
-	.sidebar {
-		transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+	/* Smaller chapter numbers */
+	.chapter-number {
+		width: 22px;
+		height: 22px;
+		font-size: 0.75rem;
+		min-width: 22px;
 	}
 
-	/* Make sure the toggle button is styled properly */
-	.show-nav-toggle {
-		display: flex !important;
-		align-items: center;
-		justify-content: center;
+	/* Reduced font size for better fit */
+	.nav-chapter span {
+		font-size: 0.85rem;
 	}
 
-	/* Improved close button visibility */
-	.sidebar-close {
-		width: 36px;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background-color: rgba(255, 255, 255, 0.1);
-		border-radius: 50%;
-	}
-
-	.sidebar-close:hover {
-		background-color: rgba(255, 255, 255, 0.2);
-	}
-
-	/* Only show toggle button on mobile and tablet */
-	.show-nav-toggle {
-		display: flex !important;
-	}
-
-	/* Hide the button when sidebar is active (only for mobile) */
-	.sidebar.active ~ .show-nav-toggle,
-	.sidebar.active + * .show-nav-toggle,
-	body:has(.sidebar.active) .show-nav-toggle {
-		display: none !important;
+	/* More compact subchapters */
+	.nav-subchapter {
+		padding: 4px 8px;
+		font-size: 0.8rem;
 	}
 }
 
-/* Disable resize on mobile and tablet */
+/* Common tablet/mobile styles */
 @media (max-width: 991px) {
+
+	/* Make resize handle invisible on tablet/mobile */
 	.sidebar-resize-handle {
 		display: none;
 	}
+
+	/* Hide sidebar close button when not active */
+	.sidebar-close {
+		background: transparent;
+		border: none;
+		color: var(--text-color);
+		font-size: 1.5rem;
+		padding: 0;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.sidebar-close:hover {
+		color: var(--primary-color);
+	}
+
+	/* Toggle button styling */
+	.show-nav-toggle {
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	/* Hide toggle button when sidebar is visible */
+	.sidebar.active ~ .show-nav-toggle,
+	.sidebar.active + .show-nav-toggle,
+	#show-nav-toggle.hidden {
+		opacity: 0 !important;
+		transform: translateX(-100px) !important;
+		pointer-events: none !important;
+		display: none !important;
+		/* Force hiding */
+		visibility: hidden !important;
+		/* Extra hiding for older browsers */
+	}
 }
 
-/* Prevent content shift during resize */
+/* Handle body when sidebar is being resized */
 body.resizing .sidebar,
-body.resizing .main-content {
+body.resizing .sidebar-nav,
+body.resizing .search-container,
+body.resizing .logo,
+body.resizing .logo h1 {
 	transition: none !important;
-	/* Use !important to override any other transitions */
 }
 
-/* Also disable transitions on mini-collapsed elements during resizing */
 body.resizing .sidebar .logo h1,
-body.resizing .sidebar .nav-chapter span,
 body.resizing .sidebar .search-container input,
-body.resizing .sidebar .logo,
-body.resizing .sidebar .search-container i {
-	transition: none !important;
+body.resizing .sidebar .nav-chapter span {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-/* Override mini-collapsed styles when active state is present */
+/* Special fix for when sidebar is both active and mini-collapsed */
 .sidebar.active.mini-collapsed {
-	width: 300px !important;
-	min-width: 300px !important;
+	width: var(--sidebar-mini-collapsed-width) !important;
 }
 
 .sidebar.active.mini-collapsed .logo h1,
 .sidebar.active.mini-collapsed .nav-chapter span,
 .sidebar.active.mini-collapsed .search-container input {
-	display: block !important;
-	opacity: 1 !important;
-	visibility: visible !important;
-	transform: translateX(0) !important;
+	display: none !important;
+	opacity: 0 !important;
+	visibility: hidden !important;
 }
 
 .sidebar.active.mini-collapsed .logo {
-	justify-content: flex-start !important;
+	justify-content: center !important;
 }
 
 .sidebar.active.mini-collapsed .search-container i {
-	right: 2rem !important;
-	transform: translateY(-50%) !important;
+	right: 50% !important;
+	transform: translate(50%, -50%) !important;
 }

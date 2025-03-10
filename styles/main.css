@@ -49,9 +49,9 @@
 
 /* Components */
 @import 'components/sidebar.css';
-/* Import sidebar first */
-@import 'components/navigation.css';
-/* Then navigation, which will override any duplicate properties */
+/* Combined sidebar and navigation styles */
+/* @import 'components/sidebar.css'; */
+/* @import 'components/navigation.css'; */
 @import 'components/cover.css';
 @import 'components/visualization.css';
 @import 'components/content.css';

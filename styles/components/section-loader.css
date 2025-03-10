@@ -1,0 +1,131 @@
+/**
+ * Section Loader Styles
+ * These styles are for section loading, unloading, and error states
+ */
+
+/* Section Loading States */
+.section-container {
+	transition: opacity 0.3s ease;
+}
+
+.section-container.loading {
+	opacity: 0.7;
+}
+
+.section-container.loaded {
+	opacity: 1;
+}
+
+.section-container.unloaded {
+	opacity: 0.5;
+}
+
+.section-container.load-error {
+	opacity: 1;
+	background-color: rgba(255, 200, 200, 0.1);
+}
+
+/* Loading Placeholder */
+.loading-placeholder {
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-secondary);
+	font-style: italic;
+	border: 1px dashed var(--border-color);
+	border-radius: 4px;
+	margin: 1rem 0;
+	background-color: var(--bg-light);
+}
+
+/* Error Indicator */
+.error-indicator {
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-error, #d32f2f);
+	background-color: var(--bg-error, rgba(211, 47, 47, 0.1));
+	border: 1px solid var(--border-error, rgba(211, 47, 47, 0.3));
+	border-radius: 4px;
+	margin: 1rem 0;
+}
+
+.error-indicator h3 {
+	margin-top: 0;
+	color: var(--text-error, #d32f2f);
+}
+
+.error-indicator .error-message {
+	font-family: monospace;
+	background-color: rgba(0, 0, 0, 0.05);
+	padding: 0.5rem;
+	border-radius: 3px;
+	margin: 1rem 0;
+	word-break: break-word;
+}
+
+.error-indicator button {
+	background-color: var(--bg-button, #f0f0f0);
+	border: 1px solid var(--border-color, #ccc);
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.2s ease;
+}
+
+.error-indicator button:hover {
+	background-color: var(--bg-button-hover, #e0e0e0);
+}
+
+/* Animation for loading sections */
+@keyframes pulse {
+	0% {
+		opacity: 0.6;
+	}
+
+	50% {
+		opacity: 0.8;
+	}
+
+	100% {
+		opacity: 0.6;
+	}
+}
+
+.section-container.loading .loading-placeholder {
+	animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Medium devices (tablets) */
+@media screen and (max-width: 1024px) {
+
+	.loading-placeholder,
+	.error-indicator {
+		padding: 1.5rem;
+		margin: 0.75rem 0;
+	}
+}
+
+/* Small devices (mobile) */
+@media screen and (max-width: 768px) {
+
+	.loading-placeholder,
+	.error-indicator {
+		padding: 1rem;
+		margin: 0.5rem 0;
+	}
+
+	.error-indicator h3 {
+		font-size: 1.1rem;
+	}
+}
+
+/* Improved visibility for high-contrast mode */
+@media (prefers-contrast: high) {
+	.section-container.loading {
+		opacity: 0.9;
+	}
+
+	.error-indicator {
+		border-width: 2px;
+	}
+}

@@ -51,6 +51,13 @@ ol[class] {
 	list-style: none;
 }
 
+/* Styling for regular lists to ensure bullets are inside the parent list */
+ul:not([class]),
+ol:not([class]) {
+	padding-left: 1.5rem;
+	list-style-position: inside;
+}
+
 /* Make images easier to work with */
 img {
 	max-width: 100%;

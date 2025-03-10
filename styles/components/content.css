@@ -14,8 +14,10 @@
 	margin-left: 0;
 	/* No margin needed in grid layout */
 	padding: var(--spacing-xl);
+	padding-top: var(--spacing-md);
 	min-height: 100vh;
 	transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	scroll-padding-top: 2rem;
 }
 
 /* Desktop-specific styles */
@@ -24,11 +26,18 @@
 	/* In grid layout, we don't need margin-left anymore */
 	.main-content {
 		padding-left: var(--spacing-xl);
+		padding-top: var(--spacing-md);
 	}
 }
 
 /* Tablet specific styles */
 @media (min-width: 480px) and (max-width: 991px) {
+
+	/* Adjusted for tablet view */
+	.main-content {
+		padding: var(--spacing-lg);
+		padding-top: var(--spacing-md);
+	}
 
 	/* Legacy styles for non-grid layouts */
 	.main-content.legacy-layout {
