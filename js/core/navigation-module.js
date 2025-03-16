@@ -28,28 +28,26 @@ VistaKine.navigation = {
 
         VistaKine.utils.log('Initializing navigation module');
 
-        // DISABLED FOR TESTING - Start
         // Setup navigation links
         VistaKine.navigation.setupLinks();
 
         // Setup bottom navigation
-        // VistaKine.navigation.setupBottomNav();
+        VistaKine.navigation.setupBottomNav();
 
         // Set up the Intersection Observer for efficient section visibility detection
-        // VistaKine.navigation.setupIntersectionObserver();
+        VistaKine.navigation.setupIntersectionObserver();
 
         // Handle initial hash
-        // VistaKine.navigation.handleInitialHash();
+        VistaKine.navigation.handleInitialHash();
 
         // Listen for hash changes
-        // window.addEventListener('hashchange', VistaKine.navigation.handleHashChange);
-        // DISABLED FOR TESTING - End
+        window.addEventListener('hashchange', VistaKine.navigation.handleHashChange);
 
         // Mark as initialized
         VistaKine.navigation.state.navInitialized = true;
         VistaKine.state.initialized.navigation = true;
 
-        VistaKine.utils.log('Navigation initialized successfully (TESTING MODE - scroll/hash features disabled)', 'success');
+        VistaKine.utils.log('Navigation initialized successfully', 'success');
     },
 
     /**
@@ -219,6 +217,8 @@ VistaKine.navigation = {
         // Skip if invalid sectionId
         if (!sectionId) return;
 
+        VistaKine.utils.log(`Updating active nav links for section: ${sectionId}`);
+
         // Check device type
         const isMobile = window.matchMedia('(max-width: 479px)').matches;
         const isTablet = window.matchMedia('(min-width: 480px) and (max-width: 991px)').matches;
@@ -248,122 +248,62 @@ VistaKine.navigation = {
             // If we're between chapters, try to find the nearest chapter
             if (sectionId.includes('chapter')) {
                 // Extract chapter number or prefix
-                let chapterPrefix = null;
+                const chapterMatch = sectionId.match(/chapter(\d+)/i);
+                if (chapterMatch) {
+                    const chapterNum = parseInt(chapterMatch[1]);
+                    // Try to find a parent chapter (for subchapters)
+                    const parentSelector = `.nav-chapter[href="#chapter${chapterNum}-intro"], .nav-chapter[href="#chapter${chapterNum}"]`;
+                    const parentLinks = document.querySelectorAll(parentSelector);
 
-                // Try to extract chapter prefix (e.g., "chapter1" from "chapter1-intro")
-                const matchPrefix = sectionId.match(/^(chapter\d+)/i);
-                if (matchPrefix) {
-                    chapterPrefix = matchPrefix[1];
-                    // Try to find the chapter link using the prefix
-                    const chapterLink = document.querySelector(`.nav-chapter[href="#${chapterPrefix}"]`);
-                    if (chapterLink) {
-                        VistaKine.utils.log(`Found chapter link for ${sectionId} using prefix ${chapterPrefix}`, 'debug');
-                        chapterLink.classList.add('active');
-
-                        // Also try to find the subchapter if this is a subchapter
-                        if (sectionId !== chapterPrefix) {
-                            const subchapterLink = document.querySelector(`.nav-subchapter[href="#${sectionId}"]`);
-                            if (subchapterLink) {
-                                subchapterLink.classList.add('active');
-                            }
-                        }
+                    if (parentLinks.length > 0) {
+                        parentLinks.forEach(link => {
+                            link.classList.add('active');
+                            VistaKine.utils.log(`Found parent chapter link for ${sectionId}: ${link.getAttribute('href')}`);
+                        });
+                    } else {
+                        VistaKine.utils.log(`No parent chapter found for ${sectionId}`, 'warn');
                     }
                 }
             }
-            return;
-        }
-
-        // Modified scrollIntoView behavior for improved performance
-        const handleScrollIntoView = () => {
-            const activeLink = document.querySelector(`${selector}.active`);
-            if (!activeLink || !sidebarNav) return;
-
-            // Get sidebar state (expanded, mini-collapsed, etc.)
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarState = sidebar ?
-                (sidebar.classList.contains('mini-collapsed') ? 'mini' :
-                 sidebar.classList.contains('active') ? 'active' : 'normal') : 'normal';
-
-            // Calculate if link is out of view
-            const linkRect = activeLink.getBoundingClientRect();
-            const navRect = sidebarNav.getBoundingClientRect();
-
-            // Only scroll into view if substantially out of view
-            // This prevents small jumps when scrolling between nearby sections
-            const isSubstantiallyOutOfView =
-                linkRect.top < navRect.top - 20 ||
-                linkRect.bottom > navRect.bottom + 20;
-
-            // Different behavior based on device
-            const isDirectNavigation = VistaKine.navigation.state.isDirectNavigation || false;
-
-            // For mobile, we want more aggressive scrolling to ensure the active link is visible
-            // even during normal scrolling, but with a higher threshold to prevent constant jumps
-            if ((isSubstantiallyOutOfView && (!isTablet || isDirectNavigation)) ||
-                (isMobile && Math.abs(linkRect.top - navRect.top) > 100)) {
-
-                // Use requestAnimationFrame for smoother scrolling
-                requestAnimationFrame(() => {
-                    // Use a better scroll position that keeps context visible
-                    const scrollBlock = isMobile ? 'center' : isTablet ? 'center' : 'nearest';
-                    const scrollBehavior = isDirectNavigation ? 'smooth' : isMobile ? 'smooth' : 'auto';
-
-                    // For mobile, only scroll if the sidebar is actually visible
-                    if (!isMobile || (isMobile && sidebar && sidebar.classList.contains('active'))) {
-                        activeLink.scrollIntoView({
-                            behavior: scrollBehavior,
-                            block: scrollBlock
-                        });
-                    }
-
-                    // Reset direct navigation flag
-                    VistaKine.navigation.state.isDirectNavigation = false;
-                });
-            }
-        };
-
-        // Only handle scroll into view after a small delay to avoid performance issues
-        // This is especially important on tablets and mobile
-        clearTimeout(VistaKine.navigation.state.scrollTimeout);
-        VistaKine.navigation.state.scrollTimeout = setTimeout(
-            handleScrollIntoView,
-            isMobile ? 150 : isTablet ? 100 : 50
-        );
-
-        // Ensure active links are updated immediately
-        if (activeLinks.length > 0) {
+        } else {
             activeLinks.forEach(link => {
                 link.classList.add('active');
 
-                // If it's a subchapter, also activate its parent chapter
-                if (link.classList.contains('nav-subchapter')) {
-                    const parentList = link.closest('.subchapter-list');
-                    if (parentList) {
-                        const parentChapter = parentList.previousElementSibling;
-                        if (parentChapter && parentChapter.classList.contains('nav-chapter')) {
-                            parentChapter.classList.add('parent-active');
+                // Force a reflow to ensure the transition happens
+                link.offsetWidth;
 
-                            // Handle mobile/tablet mini-collapsed mode
-                            if (isMobile || isTablet) {
-                                const sidebar = document.querySelector('.sidebar');
-                                if (sidebar && (sidebar.classList.contains('mini-collapsed') || isMobile)) {
-                                    // Ensure parent chapter is visibly marked on mobile
-                                    parentChapter.style.backgroundColor = 'var(--active-bg)';
+                VistaKine.utils.log(`Set active class on ${link.getAttribute('href')}`);
+            });
 
-                                    // For mobile, ensure subchapter list is visible when parent is active
-                                    if (isMobile && parentList) {
-                                        parentList.style.display = 'flex';
-                                        parentList.style.maxHeight = 'none';
-                                        parentList.style.opacity = '1';
-                                        parentList.style.visibility = 'visible';
-                                    }
-                                }
+            // For subchapters, also mark the parent chapter as parent-active
+            if (!isChapter && activeLinks.length > 0) {
+                const subchapterLink = activeLinks[0];
+                const parentList = subchapterLink.closest('.subchapter-list');
+
+                if (parentList) {
+                    const parentChapter = parentList.previousElementSibling;
+                    if (parentChapter && parentChapter.classList.contains('nav-chapter')) {
+                        parentChapter.classList.add('parent-active');
+                        VistaKine.utils.log(`Set parent-active on ${parentChapter.getAttribute('href')}`);
+
+                        // For desktop, ensure the parent is visible in the sidebar
+                        if (!isMobile && !isTablet && sidebarNav) {
+                            const parentRect = parentChapter.getBoundingClientRect();
+                            const sidebarRect = sidebarNav.getBoundingClientRect();
+
+                            // Check if parent is not visible in the sidebar
+                            if (parentRect.top < sidebarRect.top || parentRect.bottom > sidebarRect.bottom) {
+                                // Scroll to make it visible with some context above
+                                parentChapter.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }
                         }
                     }
                 }
-            });
+            }
         }
+
+        // Update current section state
+        VistaKine.navigation.state.currentSection = sectionId;
     },
 
     /**
@@ -402,21 +342,10 @@ VistaKine.navigation = {
             const link = chapterLinks[i];
             const chapterNum = i - 2; // Adjust numbering to start after special sections
 
-            // Check if page number already exists
-            if (!link.querySelector('.page-num')) {
-                const pageNum = document.createElement('span');
-                pageNum.className = 'page-num';
+            // Page numbers are no longer needed
+            // We've removed this functionality
 
-                // Create icon element
-                const icon = document.createElement('i');
-                icon.className = 'ph ph-hash';
-
-                // Add icon and number to the page number element
-                pageNum.appendChild(icon);
-                pageNum.appendChild(document.createTextNode(chapterNum));
-
-                link.appendChild(pageNum);
-            }
+            // Create icon element
         }
     },
 

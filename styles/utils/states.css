@@ -1,0 +1,215 @@
+/**
+ * VistaKine UI States
+ *
+ * Common UI states and helpers for:
+ * - Fullscreen elements
+ * - Expanded/collapsed states
+ * - Expanded text on mobile
+ * - Page dividers and transitions
+ *
+ * This is extracted from book.css as part of the CSS migration
+ */
+
+/* Fullscreen states for visualizations or other elements */
+.fullscreen {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	z-index: 9999 !important;
+	margin: 0 !important;
+	border-radius: 0 !important;
+	background-color: white !important;
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Ensure content fills the container in fullscreen mode */
+.fullscreen canvas,
+.fullscreen .content-container {
+	width: 100% !important;
+	height: 100% !important;
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+}
+
+/* Close button for fullscreen mode */
+.fullscreen-close-button {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	background-color: rgba(255, 255, 255, 0.8);
+	border: none;
+	border-radius: 4px;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 20;
+	transition: var(--transition-fast);
+	box-shadow: var(--shadow-sm);
+}
+
+.fullscreen-close-button:hover {
+	background-color: rgba(255, 255, 255, 1);
+	box-shadow: var(--shadow-md);
+}
+
+.fullscreen-close-button i {
+	font-size: 24px;
+	color: var(--text-color);
+}
+
+/* Page dividers with numbers */
+.page-divider {
+	position: relative;
+	text-align: center;
+	margin: var(--spacing-xl) 0;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.page-divider::before,
+.page-divider::after {
+	content: '';
+	flex-grow: 1;
+	height: 1px;
+	background: var(--border-color);
+	margin: 0 var(--spacing-md);
+}
+
+.page-number {
+	font-family: var(--heading-font);
+	color: var(--text-light);
+	font-size: 1rem;
+	background: #fff;
+	height: 36px;
+	width: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid var(--border-color);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	transition: all 0.3s ease;
+}
+
+.section-inner:hover .page-number {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	border-color: var(--accent-color);
+	color: var(--accent-color);
+}
+
+/* Mobile text expansion system */
+@media (max-width: 991px) {
+	.desktop-only {
+		display: none;
+		margin-top: 1rem;
+		overflow: hidden;
+		transition: max-height 0.3s ease-out;
+	}
+
+	.desktop-only.expanded {
+		display: block;
+		animation: fadeIn 0.3s ease-out;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(-5px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.expand-text-btn {
+		display: inline-flex;
+		align-items: center;
+		background: transparent;
+		border: none;
+		border-radius: 0;
+		padding: 0.5rem 0;
+		margin: 0.8rem 0 0.5rem;
+		font-size: 1rem;
+		color: var(--primary-color);
+		cursor: pointer;
+		font-weight: 500;
+		transition: all 0.2s ease;
+		text-decoration: none;
+	}
+
+	.expand-text-btn:hover,
+	.expand-text-btn:focus {
+		color: var(--primary-color-dark);
+		transform: translateX(3px);
+		outline: none;
+	}
+
+	.expand-text-btn:active {
+		transform: translateX(5px);
+	}
+
+	.expand-arrow {
+		display: inline-block;
+		margin-left: 8px;
+		font-style: normal;
+		transition: transform 0.2s ease;
+		font-weight: bold;
+	}
+
+	.expand-text-btn[aria-expanded="true"] .expand-arrow {
+		transform: rotate(90deg);
+	}
+}
+
+@media (min-width: 992px) {
+	.expand-text-btn {
+		display: none;
+	}
+}
+
+/* State: active */
+.active {
+	background-color: var(--active-bg);
+}
+
+/* State: focused */
+.focused {
+	outline: 2px solid var(--primary-color);
+	outline-offset: 2px;
+}
+
+/* State: dragging */
+.dragging {
+	opacity: 0.7;
+	cursor: grabbing !important;
+}
+
+/* State: disabled */
+.disabled {
+	opacity: 0.5;
+	pointer-events: none;
+	cursor: not-allowed !important;
+}
+
+/* State: hidden but accessible */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}

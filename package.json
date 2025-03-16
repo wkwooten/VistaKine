@@ -1,0 +1,25 @@
+{
+  "name": "vistakine",
+  "version": "1.0.0",
+  "description": "3d engineering textbook",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^6.2.2"
+  },
+  "dependencies": {
+    "@phosphor-icons/web": "^2.1.1",
+    "cannon-es": "^0.20.0",
+    "three": "^0.174.0"
+  }
+}

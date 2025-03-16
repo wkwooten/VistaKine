@@ -62,14 +62,16 @@
 /* Main app layout grid */
 .app-layout {
 	display: grid;
-	grid-template-columns: var(--sidebar-width) 1fr;
+	grid-template-columns: fit-content(var(--sidebar-width-full)) 1fr;
 	min-height: 100vh;
 	position: relative;
+	overflow: visible;
 }
 
 /* When sidebar is mini-collapsed, update the grid */
 .app-layout.sidebar-mini-collapsed {
-	grid-template-columns: var(--sidebar-mini-collapsed-width) 1fr;
+	grid-template-columns: var(--sidebar-width-mini) 1fr;
+	overflow: visible;
 }
 
 @media (max-width: 991px) {

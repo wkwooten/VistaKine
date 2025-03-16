@@ -10,9 +10,6 @@ window.VistaKine = window.VistaKine || {};
 VistaKine.sidebar = {
     // State
     state: {
-        isResizing: false,
-        startX: 0,
-        startWidth: 0,
         sidebarInitialized: false
     },
 
@@ -119,13 +116,13 @@ VistaKine.sidebar = {
         // Clear any mobile/tablet classes
         sidebar.classList.remove('collapsed', 'active');
 
-        // Add resize functionality
+        // Add simple toggle for resize handle
         if (resizeHandle) {
-            resizeHandle.addEventListener('mousedown', this.startResize.bind(this));
-            resizeHandle.addEventListener('touchstart', this.startTouchResize.bind(this));
-
             // Double-click to toggle between expanded and minified
             resizeHandle.addEventListener('dblclick', this.toggleMinified.bind(this));
+
+            // Single click also toggles
+            resizeHandle.addEventListener('click', this.toggleMinified.bind(this));
         }
     },
 
@@ -133,9 +130,6 @@ VistaKine.sidebar = {
      * Handle window resize event
      */
     handleWindowResize: function() {
-        // Don't respond during active resize
-        if (this.state.isResizing) return;
-
         const windowWidth = window.innerWidth;
         const sidebar = document.querySelector('.sidebar');
         const navToggle = document.querySelector('.show-nav-toggle');
@@ -177,149 +171,6 @@ VistaKine.sidebar = {
             appLayout.classList.add('sidebar-mini-collapsed');
             console.log('Sidebar mini-collapsed');
         }
-    },
-
-    /**
-     * Start resizing the sidebar
-     */
-    startResize: function(e) {
-        e.preventDefault();
-
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
-
-        this.state.isResizing = true;
-        document.body.classList.add('resizing');
-
-        // Capture start position and width
-        this.state.startX = e.clientX;
-        this.state.startWidth = parseInt(getComputedStyle(sidebar).width, 10);
-
-        // Add document-level event handlers
-        document.addEventListener('mousemove', this.handleResize.bind(this));
-        document.addEventListener('mouseup', this.stopResize.bind(this));
-    },
-
-    /**
-     * Start resizing for touch devices
-     */
-    startTouchResize: function(e) {
-        if (e.touches.length !== 1) return;
-
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
-
-        this.state.isResizing = true;
-        document.body.classList.add('resizing');
-
-        // Capture start position and width
-        this.state.startX = e.touches[0].clientX;
-        this.state.startWidth = parseInt(getComputedStyle(sidebar).width, 10);
-
-        // Add document-level event handlers
-        document.addEventListener('touchmove', this.handleTouchResize.bind(this), { passive: false });
-        document.addEventListener('touchend', this.stopResize.bind(this));
-    },
-
-    /**
-     * Handle resizing during mouse move
-     */
-    handleResize: function(e) {
-        if (!this.state.isResizing) return;
-
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
-
-        // Calculate delta movement
-        const deltaX = e.clientX - this.state.startX;
-        const newWidth = this.state.startWidth + deltaX;
-
-        // Apply limits
-        const minWidth = 100; // Minified width
-        const maxWidth = 400; // Maximum width
-        const limitedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-        // Apply width directly for immediate feedback
-        sidebar.style.width = `${limitedWidth}px`;
-    },
-
-    /**
-     * Handle touch resizing
-     */
-    handleTouchResize: function(e) {
-        if (!this.state.isResizing) return;
-
-        // Prevent scrolling while resizing
-        e.preventDefault();
-
-        const touch = e.touches[0];
-        if (!touch) return;
-
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
-
-        // Calculate delta movement
-        const deltaX = touch.clientX - this.state.startX;
-        const newWidth = this.state.startWidth + deltaX;
-
-        // Apply limits
-        const minWidth = 100; // Minified width
-        const maxWidth = 400; // Maximum width
-        const limitedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-        // Apply width directly for immediate feedback
-        sidebar.style.width = `${limitedWidth}px`;
-    },
-
-    /**
-     * End resize operation
-     */
-    stopResize: function() {
-        if (!this.state.isResizing) return;
-
-        // Remove event listeners
-        document.removeEventListener('mousemove', this.handleResize.bind(this));
-        document.removeEventListener('mouseup', this.stopResize.bind(this));
-        document.removeEventListener('touchmove', this.handleTouchResize.bind(this));
-        document.removeEventListener('touchend', this.stopResize.bind(this));
-
-        const sidebar = document.querySelector('.sidebar');
-        const appLayout = document.querySelector('.app-layout');
-
-        if (!sidebar || !appLayout) {
-            this.state.isResizing = false;
-            document.body.classList.remove('resizing');
-            return;
-        }
-
-        // Get current width
-        const currentWidth = parseInt(getComputedStyle(sidebar).width, 10);
-
-        // Threshold for snapping
-        const threshold = 200; // Threshold between mini and full
-
-        // Reset resizing state
-        this.state.isResizing = false;
-        document.body.classList.remove('resizing');
-
-        // Remove inline styles
-        sidebar.style.width = '';
-
-        // Small delay to ensure transitions work
-        setTimeout(() => {
-            // Snap to appropriate width
-            if (currentWidth < threshold) {
-                // Snap to mini
-                sidebar.classList.add('mini-collapsed');
-                appLayout.classList.add('sidebar-mini-collapsed');
-                console.log('Snapped to mini-collapsed state');
-            } else {
-                // Snap to expanded
-                sidebar.classList.remove('mini-collapsed');
-                appLayout.classList.remove('sidebar-mini-collapsed');
-                console.log('Snapped to expanded state');
-            }
-        }, 10);
     }
 };
 

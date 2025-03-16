@@ -27,7 +27,6 @@ VistaKine.content = {
 
         VistaKine.utils.log('Initializing content module');
 
-        // DISABLED FOR TESTING - Start
         // Setup the Intersection Observer for lazy loading
         VistaKine.content.setupLazyLoading();
 
@@ -38,16 +37,15 @@ VistaKine.content = {
         VistaKine.content.setupScrollObserver();
 
         // Setup progress indicator if enabled
-        // if (VistaKine.config.features.progressIndicator) {
-        //     VistaKine.content.setupProgressIndicator();
-        // }
-        // DISABLED FOR TESTING - End
+        if (VistaKine.config.features.progressIndicator) {
+            VistaKine.content.setupProgressIndicator();
+        }
 
         // Mark as initialized
         VistaKine.content.state.contentInitialized = true;
         VistaKine.state.initialized.content = true;
 
-        VistaKine.utils.log('Content module initialized successfully (TESTING MODE - scroll features disabled)', 'success');
+        VistaKine.utils.log('Content module initialized successfully', 'success');
     },
 
     /**

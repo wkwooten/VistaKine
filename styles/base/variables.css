@@ -38,9 +38,9 @@
 	--step-0: clamp(1rem, 0.9202rem + 0.4255vw, 1.25rem);
 	--step-1: clamp(1.2rem, 1.0844rem + 0.6149vw, 1.5625rem);
 	--step-2: clamp(1.44rem, 1.2736rem + 0.8837vw, 1.9531rem);
-	--step-3: clamp(1.728rem, 1.4936rem + 1.2465vw, 2.4414rem);
-	--step-4: clamp(2.0736rem, 1.7461rem + 1.7402vw, 3.0518rem);
-	--step-5: clamp(2.4883rem, 2.0373rem + 2.4052vw, 3.8147rem);
+	--step-3: clamp(1.7281rem, 1.4975rem + 1.2273vw, 2.4414rem);
+	--step-4: clamp(2.0738rem, 1.7517rem + 1.7111vw, 3.0518rem);
+	--step-5: clamp(2.4881rem, 2.0424rem + 2.3836vw, 3.8147rem);
 
 	/* Colors */
 	--primary-color: #2563eb;
@@ -52,9 +52,11 @@
 	--border-color: #e5e7eb;
 	--hover-bg: rgba(0, 0, 0, 0.04);
 	--hover-color: #d1d5db;
-	--active-bg: rgba(0, 124, 255, 0.1);
-	--active-bg-light: rgba(0, 124, 255, 0.05);
-	--color-mid: #777;
+	--active-bg: rgba(37, 99, 235, 0.08);
+	--text-on-dark: #333;
+	--text-error: #d32f2f;
+	--bg-error: rgba(211, 47, 47, 0.1);
+	--border-error: rgba(211, 47, 47, 0.3);
 
 	/* Section color scheme - grayscale progression */
 	--section-cover-bg: #ffffff;
@@ -66,31 +68,112 @@
 	--section-chapter4-bg: #dedede;
 	--section-chapter5-bg: #d7d7d7;
 
-	/* Text color for darker backgrounds */
-	--text-on-dark: #333;
+	/* Chapter colors - for consistent chapter theming across the site */
+	--chapter1-color: #3b82f6;
+	/* Blue */
+	--chapter1-color-light: #93c5fd;
+	--chapter1-color-dark: #1d4ed8;
+
+	--chapter2-color: #10b981;
+	/* Green */
+	--chapter2-color-light: #6ee7b7;
+	--chapter2-color-dark: #047857;
+
+	--chapter3-color: #f59e0b;
+	/* Amber */
+	--chapter3-color-light: #fcd34d;
+	--chapter3-color-dark: #b45309;
+
+	--chapter4-color: #ef4444;
+	/* Red */
+	--chapter4-color-light: #fca5a5;
+	--chapter4-color-dark: #b91c1c;
+
+	--chapter5-color: #8b5cf6;
+	/* Purple */
+	--chapter5-color-light: #c4b5fd;
+	--chapter5-color-dark: #6d28d9;
 
 	/* Other */
 	--transition-fast: 0.15s ease;
 	--transition-normal: 0.3s ease;
 	--max-content-width: 1000px;
 	--wide-content-width: 1200px;
-
-	/* Sidebar widths - desktop default */
-	--sidebar-width: 350px;
-	/* Increased from 300px */
-	--sidebar-mini-collapsed-width: 100px;
-	/* We're no longer using the fully collapsed state on desktop */
-	--sidebar-collapsed-width: 0px;
-	/* Only used on mobile */
-
-	/* Font families */
+	--sidebar-width: 300px;
+	--sidebar-collapsed-width: 10px;
 	--heading-font: 'Instrument Sans', 'Inter', system-ui, sans-serif;
 
 	/* Shadows */
 	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-	--shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
-	--shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+	--shadow-md: 0 2px 10px rgba(0, 0, 0, 0.05);
+	--shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.1);
 
 	/* UI States */
 	--selected-color: #007bff;
+
+	/* Sidebar dimensions */
+	--sidebar-width-full: 300px;
+	--sidebar-width-mini: 100px;
+	--sidebar-transition-duration: 300ms;
+	--sidebar-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* Breakpoints for responsive design */
+	--breakpoint-mobile: 480px;
+	/* Max width for mobile styles */
+	--breakpoint-tablet: 768px;
+	/* Max width for tablet styles */
+	--breakpoint-desktop: 769px;
+	/* Min width for desktop styles */
+}
+
+/* Dark theme variables (for future implementation) */
+:root.dark-theme {
+	--primary-color: #3b82f6;
+	--primary-color-rgb: 59, 130, 246;
+	--accent-color: #60a5fa;
+	--accent-color-dark: #2563eb;
+	--text-color: #e5e7eb;
+	--text-light: #9ca3af;
+	--border-color: #4b5563;
+	--hover-bg: rgba(255, 255, 255, 0.05);
+	--hover-color: #6b7280;
+	--active-bg: rgba(59, 130, 246, 0.15);
+
+	/* Section colors for dark theme */
+	--section-cover-bg: #111827;
+	--section-about-bg: #1f2937;
+	--section-chapters-bg: #374151;
+	--section-chapter1-bg: #4b5563;
+	--section-chapter2-bg: #6b7280;
+	--section-chapter3-bg: #9ca3af;
+	--section-chapter4-bg: #d1d5db;
+	--section-chapter5-bg: #e5e7eb;
+
+	/* Shadows for dark theme */
+	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+	--shadow-md: 0 2px 10px rgba(0, 0, 0, 0.4);
+	--shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Device variables */
+:root {
+	/* Media query breakpoints */
+	--mobile-max: 479px;
+	--tablet-min: 480px;
+	--tablet-max: 991px;
+	--desktop-min: 992px;
+}
+
+/* High contrast theme (for accessibility) */
+:root.high-contrast {
+	--primary-color: #0000ff;
+	--primary-color-rgb: 0, 0, 255;
+	--accent-color: #6666ff;
+	--accent-color-dark: #0000cc;
+	--text-color: #000000;
+	--text-light: #333333;
+	--border-color: #000000;
+	--hover-bg: rgba(0, 0, 0, 0.1);
+	--hover-color: #000000;
+	--active-bg: rgba(0, 0, 255, 0.2);
 }

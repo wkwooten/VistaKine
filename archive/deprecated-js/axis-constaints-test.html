@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transform Controls Demo</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #controls-info {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7); color: white; padding: 10px;
+            border-radius: 5px; font-size: 14px; text-align: center;
+        }
+        #debug-panel {
+            position: absolute; bottom: 10px; right: 10px; width: 300px;
+            background: rgba(0, 0, 0, 0.7); color: white; padding: 10px;
+            border-radius: 5px; font-size: 12px; font-family: monospace;
+            overflow: auto; max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls-info">
+        <div><b>W</b>: Translate | <b>E</b>: Rotate | <b>R</b>: Scale</div>
+        <div><b>+/-</b>: Adjust size | <b>Q</b>: Toggle world/local space</div>
+        <div><b>X/Y/Z</b>: Toggle axis | <b>Spacebar</b>: Toggle controls</div>
+    </div>
+    <div id="debug-panel"></div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/TransformControls.js"></script>
+    <script>
+        class TransformControlsDemo {
+            constructor() {
+                // Scene setup
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(5, 5, 5);
+                this.camera.lookAt(0, 0, 0);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                document.body.appendChild(this.renderer.domElement);
+
+                // Add grid and axes helpers
+                const gridHelper = new THREE.GridHelper(10, 10);
+                this.scene.add(gridHelper);
+                const axesHelper = new THREE.AxesHelper(5);
+                this.scene.add(axesHelper);
+
+                // Create a cube
+                this.cube = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+                );
+                this.cube.position.set(0, 0.5, 0);
+                this.scene.add(this.cube);
+
+                // Initialize TransformControls
+                this.transformControls = new THREE.TransformControls(this.camera, this.renderer.domElement);
+                this.transformControls.size = 0.75; // Adjust size as needed
+                this.transformControls.attach(this.cube);
+                this.scene.add(this.transformControls);
+
+                // Create debug panel
+                this.debugPanel = document.getElementById('debug-panel');
+
+                // Handle keyboard shortcuts for transform modes
+                window.addEventListener('keydown', (event) => {
+                    switch(event.key.toLowerCase()) {
+                        case 'w': // Translate mode
+                            this.transformControls.setMode('translate');
+                            break;
+                        case 'e': // Rotate mode
+                            this.transformControls.setMode('rotate');
+                            break;
+                        case 'r': // Scale mode
+                            this.transformControls.setMode('scale');
+                            break;
+                        case 'q': // Toggle local/world space
+                            this.transformControls.setSpace(
+                                this.transformControls.space === 'local' ? 'world' : 'local'
+                            );
+                            break;
+                        case '+': // Increase size
+                            this.transformControls.size += 0.1;
+                            break;
+                        case '-': // Decrease size
+                            this.transformControls.size = Math.max(0.1, this.transformControls.size - 0.1);
+                            break;
+                        case 'x': // Toggle X axis
+                            this.transformControls.showX = !this.transformControls.showX;
+                            break;
+                        case 'y': // Toggle Y axis
+                            this.transformControls.showY = !this.transformControls.showY;
+                            break;
+                        case 'z': // Toggle Z axis
+                            this.transformControls.showZ = !this.transformControls.showZ;
+                            break;
+                        case ' ': // Toggle controls visibility
+                            this.transformControls.enabled = !this.transformControls.enabled;
+                            break;
+                    }
+                });
+
+                // Listen for changes to update debug panel
+                this.transformControls.addEventListener('change', () => {
+                    this.updateDebugPanel();
+                });
+
+                this.transformControls.addEventListener('dragging-changed', (event) => {
+                    // You can use this to disable other controls like OrbitControls when dragging
+                    this.isDragging = event.value;
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+
+                // Initial debug panel update
+                this.updateDebugPanel();
+
+                // Start animation loop
+                this.animate();
+            }
+
+            updateDebugPanel() {
+                if (!this.debugPanel) return;
+
+                // Format the cube's position with 2 decimal places
+                const position = this.cube.position;
+                const rotation = this.cube.rotation;
+                const scale = this.cube.scale;
+
+                let html = `
+                    <div><b>Position:</b> ${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}</div>
+                    <div><b>Rotation:</b> ${rotation.x.toFixed(2)}, ${rotation.y.toFixed(2)}, ${rotation.z.toFixed(2)}</div>
+                    <div><b>Scale:</b> ${scale.x.toFixed(2)}, ${scale.y.toFixed(2)}, ${scale.z.toFixed(2)}</div>
+                    <div><b>Mode:</b> ${this.transformControls.getMode()}</div>
+                    <div><b>Space:</b> ${this.transformControls.space}</div>
+                    <div><b>Size:</b> ${this.transformControls.size.toFixed(2)}</div>
+                    <div><b>Enabled:</b> ${this.transformControls.enabled ? 'Yes' : 'No'}</div>
+                    <div><b>Visible Axes:</b> ${this.getVisibleAxes()}</div>
+                `;
+                this.debugPanel.innerHTML = html;
+            }
+
+            getVisibleAxes() {
+                const axes = [];
+                if (this.transformControls.showX) axes.push('X');
+                if (this.transformControls.showY) axes.push('Y');
+                if (this.transformControls.showZ) axes.push('Z');
+                return axes.join(', ') || 'None';
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Initialize the demo
+        new TransformControlsDemo();
+    </script>
+</body>
+</html>

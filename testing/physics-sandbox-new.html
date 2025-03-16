@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Sandbox</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .transform-mode-btn {
+            display: inline-block;
+            width: calc(50% - 10px);
+            margin: 2px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .active {
+            background-color: #ff9800;
+        }
+        .status-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .mode-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .mode-button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            font-size: 13px;
+            text-align: center;
+        }
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            max-width: 200px;
+        }
+        #ui-container button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="mode-panel" id="mode-panel">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Interaction Modes</h3>
+        <button id="tactile-mode" class="mode-button active">Tactile Mode (D)</button>
+        <button id="transform-mode" class="mode-button">Transform Mode (T)</button>
+
+        <div id="transform-options" style="margin-top: 10px; display: none;">
+            <h4 style="margin: 5px 0;">Transform Options</h4>
+            <button id="translate-btn" class="transform-mode-btn">Translate (G)</button>
+            <button id="rotate-btn" class="transform-mode-btn">Rotate (R)</button>
+        </div>
+    </div>
+
+    <div class="status-indicator" id="status">
+        <div id="fps">FPS: 0</div>
+        <div id="interaction-mode">Mode: Tactile</div>
+    </div>
+
+    <!-- Import libraries -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+            "@dimforge/rapier3d-compat": "https://cdn.skypack.dev/@dimforge/rapier3d-compat"
+        }
+    }
+    </script>
+
+    <!-- Main Script -->
+    <script type="module">
+        // Import libraries
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+        import RAPIER from '@dimforge/rapier3d-compat';
+
+        // Main Application Class
+        class PhysicsSandbox {
+            constructor() {
+                // Basic properties
+                this.objects = [];
+                this.animating = false;
+                this.lastTime = 0;
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+
+                // Physics is always enabled
+                this.physicsEnabled = true;
+
+                // Physics debug visualization
+                this.physicsDebugEnabled = false;
+                this.physicsDebugHelpers = [];
+
+                // Ghost mode and collision state
+                this.isGhostColliding = false;
+                this.originalMaterials = new Map();
+
+                // Position marker properties
+                this.positionMarker = null;
+                this.positionMarkerVisible = true;
+                this.groundY = 0; // Ground level
+
+                // Transition effect properties
+                this.transitionEffects = [];
+
+                // Interaction mode (drag, transform)
+                this.interactionMode = 'drag'; // Default to drag mode
+
+                // Drag state
+                this.isDragging = false;
+                this.draggedObject = null;
+                this.dragPlane = new THREE.Plane();
+                this.dragOffset = new THREE.Vector3();
+                this.dragIntersection = new THREE.Vector3();
+                this.initialDragPosition = new THREE.Vector3();
+                this.lastDragPosition = new THREE.Vector3();
+                this.dragVelocity = new THREE.Vector3();
+                this.dragStartTime = 0;
+
+                // Transform controls state
+                this.isTransformControlsActive = false;
+                this.transformControlsDragging = false;
+
+                // Initialize and start the application
+                this.init();
+                this.createDebugVisuals();
+            }
+
+            // Initialize application
+            async init() {
+                // Initialize Three.js
+                this.initThree();
+
+                // Create UI
+                this.createUI();
+
+                // Initialize physics
+                await this.initPhysics();
+
+                // Set up event listeners
+                this.setupEvents();
+
+                // Start animation loop
+                this.startAnimation();
+            }
+
+            // Create UI
+            createUI() {
+                // Create UI container
+                const uiContainer = document.createElement('div');
+                uiContainer.id = 'ui-container';
+                uiContainer.style.position = 'absolute';
+                uiContainer.style.top = '10px';
+                uiContainer.style.right = '10px';
+                uiContainer.style.left = 'auto';
+                uiContainer.style.width = '200px';
+                document.body.appendChild(uiContainer);
+
+                // Add title
+                const title = document.createElement('h3');
+                title.textContent = 'Physics Sandbox';
+                title.style.margin = '0 0 10px 0';
+                uiContainer.appendChild(title);
+
+                // Create FPS counter
+                const fpsCounter = document.createElement('div');
+                fpsCounter.id = 'fps-counter';
+                fpsCounter.style.color = 'white';
+                fpsCounter.style.padding = '5px';
+                fpsCounter.style.marginBottom = '5px';
+                fpsCounter.style.fontFamily = 'monospace';
+                fpsCounter.style.borderRadius = '4px';
+                fpsCounter.textContent = 'FPS: --';
+                uiContainer.appendChild(fpsCounter);
+
+                // Create object count display
+                const objectCount = document.createElement('div');
+                objectCount.id = 'object-count';
+                objectCount.style.color = 'white';
+                objectCount.style.padding = '5px';
+                objectCount.style.marginBottom = '10px';
+                objectCount.style.fontFamily = 'monospace';
+                objectCount.style.borderRadius = '4px';
+                objectCount.textContent = 'Objects: 0';
+                uiContainer.appendChild(objectCount);
+
+                // Create button group
+                const buttonGroup = document.createElement('div');
+                buttonGroup.style.display = 'flex';
+                buttonGroup.style.flexDirection = 'column';
+                buttonGroup.style.gap = '5px';
+                uiContainer.appendChild(buttonGroup);
+
+                // Create add box button
+                this.createButton(buttonGroup, 'Add Box', () => this.addBox());
+
+                // Create add sphere button
+                this.createButton(buttonGroup, 'Add Sphere', () => this.addSphere());
+
+                // Create add cylinder button
+                this.createButton(buttonGroup, 'Add Cylinder', () => this.addCylinder());
+
+                // Create add cone button
+                this.createButton(buttonGroup, 'Add Cone', () => this.addCone());
+
+                // Create toggle transform controls button
+                this.transformButton = this.createButton(
+                    buttonGroup,
+                    'Transform Mode: OFF',
+                    () => this.toggleTransformControls()
+                );
+
+                // Create toggle physics debug button
+                this.physicsDebugButton = this.createButton(
+                    buttonGroup,
+                    'Physics Debug: OFF',
+                    () => this.togglePhysicsDebug()
+                );
+
+                // Create clear all button
+                this.createButton(buttonGroup, 'Clear All', () => this.clearAllObjects());
+            }
+
+            // Create button helper
+            createButton(parent, text, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.style.padding = '8px 12px';
+                button.style.backgroundColor = '#444';
+                button.style.color = 'white';
+                button.style.border = 'none';
+                button.style.borderRadius = '4px';
+                button.style.cursor = 'pointer';
+                button.style.fontFamily = 'Arial, sans-serif';
+                button.style.transition = 'background-color 0.2s';
+
+                button.addEventListener('mouseover', () => {
+                    button.style.backgroundColor = '#666';
+                });
+
+                button.addEventListener('mouseout', () => {
+                    button.style.backgroundColor = '#444';
+                });
+
+                button.addEventListener('click', onClick);
+
+                parent.appendChild(button);
+                return button;
+            }
+
+            // Initialize Three.js scene, camera, renderer, and post-processing
+            initThree() {
+                // Create scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x282c34);
+
+                // Create camera
+                this.camera = new THREE.PerspectiveCamera(
+                    45, window.innerWidth / window.innerHeight, 0.1, 1000
+                );
+                this.camera.position.set(0, 10, 20);
+
+                // Create renderer
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('canvas'),
+                    antialias: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+
+                // Set up post-processing
+                this.composer = new EffectComposer(this.renderer);
+
+                // Add render pass
+                const renderPass = new RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+
+                // Add outline pass for object highlighting
+                this.outlinePass = new OutlinePass(
+                    new THREE.Vector2(window.innerWidth, window.innerHeight),
+                    this.scene,
+                    this.camera
+                );
+                this.outlinePass.edgeStrength = 3.0;
+                this.outlinePass.edgeGlow = 0.5;
+                this.outlinePass.edgeThickness = 1.0;
+                this.outlinePass.visibleEdgeColor.set(0xffff00);
+                this.outlinePass.hiddenEdgeColor.set(0x555555);
+                this.composer.addPass(this.outlinePass);
+
+                // Create position marker for showing where objects will land
+                this.createPositionMarker();
+
+                // Add transform controls
+                this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+                this.transformControls.size = 0.75;
+                this.transformControls.visible = false;
+                this.transformControls.enabled = false;
+                this.scene.add(this.transformControls);
+
+                // Add orbit controls
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Add basic lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                directionalLight.shadow.camera.left = -20;
+                directionalLight.shadow.camera.right = 20;
+                directionalLight.shadow.camera.top = 20;
+                directionalLight.shadow.camera.bottom = -20;
+                this.scene.add(directionalLight);
+
+                // Add ground
+                const groundGeometry = new THREE.BoxGeometry(40, 40);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x333333,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Add grid helper
+                const gridHelper = new THREE.GridHelper(40, 40);
+                this.scene.add(gridHelper);
+            }
+
+            // Initialize Rapier physics engine
+            async initPhysics() {
+                // Initialize Rapier physics
+                await RAPIER.init();
+                this.RAPIER = RAPIER;
+
+                // Create physics world
+                this.world = new RAPIER.World({
+                    x: 0.0,
+                    y: -9.81,
+                    z: 0.0
+                });
+
+                // Ground dimensions
+                const groundSize = 40;
+                const halfGroundSize = groundSize / 2;
+                const groundThickness = 1;  // Increased thickness for reliable collisions
+
+                // Create ground collider with material properties
+                const groundColliderDesc = this.RAPIER.ColliderDesc.cuboid(halfGroundSize, groundThickness, halfGroundSize);
+
+                // Set floor physics properties
+                groundColliderDesc.setFriction(0.8);
+                groundColliderDesc.setRestitution(0.2);
+
+                // Create the ground collider
+                this.groundCollider = this.world.createCollider(groundColliderDesc);
+
+                // Position the ground collider slightly below the visual ground
+                this.groundCollider.setTranslation({
+                    x: 0.0,
+                    y: -0.1, // Match original positioning exactly
+                    z: 0.0
+                });
+
+                // Now modify the visual ground to match exactly
+                // First remove the existing ground
+                this.scene.remove(this.groundMesh);
+
+                // Create a proper 3D ground mesh instead of a plane
+                const groundGeometry = new THREE.BoxGeometry(groundSize, groundThickness * 2, groundSize);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x333333,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+
+                this.groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+                // Position exactly at y=0, which is the center of the collider
+                this.groundMesh.position.set(0, 0, 0);
+                this.groundMesh.receiveShadow = true;
+                this.scene.add(this.groundMesh);
+
+                // Update the groundY property to match
+                this.groundY = 0;
+
+                // Add boundary walls to keep objects from falling off the edge
+                const wallHeight = 2.0;
+                const wallThickness = 0.3;  // Slightly thicker walls for better collision
+
+                // Create walls - one for each side of the square ground
+                const walls = [
+                    // North wall (+Z)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(halfGroundSize, wallHeight/2, wallThickness/2),
+                        position: { x: 0, y: wallHeight/2, z: halfGroundSize + wallThickness/4 }  // Slightly outside the visible area
+                    },
+                    // South wall (-Z)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(halfGroundSize, wallHeight/2, wallThickness/2),
+                        position: { x: 0, y: wallHeight/2, z: -halfGroundSize - wallThickness/4 }
+                    },
+                    // East wall (+X)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(wallThickness/2, wallHeight/2, halfGroundSize),
+                        position: { x: halfGroundSize + wallThickness/4, y: wallHeight/2, z: 0 }
+                    },
+                    // West wall (-X)
+                    {
+                        desc: this.RAPIER.ColliderDesc.cuboid(wallThickness/2, wallHeight/2, halfGroundSize),
+                        position: { x: -halfGroundSize - wallThickness/4, y: wallHeight/2, z: 0 }
+                    }
+                ];
+
+                // Create the wall colliders
+                this.wallColliders = [];
+                walls.forEach(wall => {
+                    // Apply physics properties to walls
+                    wall.desc.setFriction(0.3);      // Medium friction for walls
+                    wall.desc.setRestitution(0.4);   // Medium bounce for walls
+
+                    // Create collider
+                    const collider = this.world.createCollider(wall.desc);
+
+                    // Set position
+                    collider.setTranslation(wall.position);
+
+                    // Store reference
+                    this.wallColliders.push(collider);
+                });
+
+                // Create visual walls (semi-transparent) to show boundaries
+                this.createVisualBoundaries(groundSize, wallHeight, wallThickness);
+            }
+
+            // Create visual boundaries to represent the physics walls
+            createVisualBoundaries(groundSize, wallHeight, wallThickness) {
+                const halfGroundSize = groundSize / 2;
+                const wallMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3366ff,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+
+                // Store walls for potential cleanup later
+                this.boundaryWalls = [];
+
+                // Create four walls - one for each side of the square ground
+                const walls = [
+                    // North wall (+Z)
+                    {
+                        geometry: new THREE.BoxGeometry(groundSize, wallHeight, wallThickness),
+                        position: new THREE.Vector3(0, wallHeight/2, halfGroundSize)
+                    },
+                    // South wall (-Z)
+                    {
+                        geometry: new THREE.BoxGeometry(groundSize, wallHeight, wallThickness),
+                        position: new THREE.Vector3(0, wallHeight/2, -halfGroundSize)
+                    },
+                    // East wall (+X)
+                    {
+                        geometry: new THREE.BoxGeometry(wallThickness, wallHeight, groundSize),
+                        position: new THREE.Vector3(halfGroundSize, wallHeight/2, 0)
+                    },
+                    // West wall (-X)
+                    {
+                        geometry: new THREE.BoxGeometry(wallThickness, wallHeight, groundSize),
+                        position: new THREE.Vector3(-halfGroundSize, wallHeight/2, 0)
+                    }
+                ];
+
+                // Create and add wall meshes
+                walls.forEach(wall => {
+                    const mesh = new THREE.Mesh(wall.geometry, wallMaterial);
+                    mesh.position.copy(wall.position);
+                    mesh.receiveShadow = true;
+                    this.scene.add(mesh);
+                    this.boundaryWalls.push(mesh);
+                });
+
+                // Add ground outline to better visualize the boundaries
+                const groundOutlineGeometry = new THREE.EdgesGeometry(
+                    new THREE.BoxGeometry(groundSize, 0.1, groundSize)
+                );
+                const groundOutlineMaterial = new THREE.LineBasicMaterial({ color: 0x3399ff });
+                const groundOutline = new THREE.LineSegments(groundOutlineGeometry, groundOutlineMaterial);
+                groundOutline.position.set(0, 0, 0);
+                this.scene.add(groundOutline);
+                this.boundaryWalls.push(groundOutline);
+            }
+
+            // Set up event listeners
+            setupEvents() {
+                // Handle window resize
+                window.addEventListener('resize', this.handleResize.bind(this));
+
+                // Setup mouse events
+                this.mouse = new THREE.Vector2();
+                this.raycaster = new THREE.Raycaster();
+
+                window.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                window.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                window.addEventListener('mouseup', this.handleMouseUp.bind(this));
+
+                // Setup keyboard events
+                window.addEventListener('keydown', this.handleKeyDown.bind(this));
+
+                // Setup interaction mode buttons
+                document.getElementById('tactile-mode').addEventListener('click', () => this.setInteractionMode('drag'));
+                document.getElementById('transform-mode').addEventListener('click', () => this.setInteractionMode('transform'));
+
+                // Setup transform mode buttons
+                document.getElementById('translate-btn').addEventListener('click', () => {
+                    this.transformControls.setMode('translate');
+                    this.updateTransformMode('Translate');
+                    this.updateTransformModeButtons('translate');
+                });
+
+                document.getElementById('rotate-btn').addEventListener('click', () => {
+                    this.transformControls.setMode('rotate');
+                    this.updateTransformMode('Rotate');
+                    this.updateTransformModeButtons('rotate');
+                });
+
+                // Handle transform control events
+                this.transformControls.addEventListener('dragging-changed', (event) => {
+                    this.controls.enabled = !event.value;
+                    this.transformControlsDragging = event.value;
+
+                    // When transform control finishes dragging, ensure physics body is awake
+                    if (!event.value && this.selectedObject && this.selectedObject.body) {
+                        this.selectedObject.body.wakeUp();
+                    }
+                });
+
+                this.transformControls.addEventListener('mouseDown', () => {
+                    this.isTransformControlsActive = true;
+                });
+
+                this.transformControls.addEventListener('mouseUp', () => {
+                    this.isTransformControlsActive = false;
+                });
+
+                this.transformControls.addEventListener('objectChange', () => {
+                    if (this.selectedObject && this.selectedObject.body) {
+                        // Update physics body position when object is transformed
+                        const position = this.selectedObject.position;
+                        this.selectedObject.body.setTranslation({
+                            x: position.x,
+                            y: position.y,
+                            z: position.z
+                        }, true);
+
+                        // Update rotation if in rotate mode
+                        if (this.transformControls.mode === 'rotate') {
+                            const quaternion = this.selectedObject.quaternion;
+                            this.selectedObject.body.setRotation({
+                                x: quaternion.x,
+                                y: quaternion.y,
+                                z: quaternion.z,
+                                w: quaternion.w
+                            }, true);
+                        }
+
+                        // Set gravity scale to 0 to prevent falling during transform
+                        this.selectedObject.body.setGravityScale(0.0, true);
+
+                        // Wake up the physics body to ensure it's active
+                        this.selectedObject.body.wakeUp();
+                    }
+                });
+            }
+
+            // Set the interaction mode
+            setInteractionMode(mode) {
+                // Don't do anything if already in this mode
+                if (this.interactionMode === mode) return;
+
+                const previousMode = this.interactionMode;
+
+                // Finish any active drag operation
+                this.finishDrag();
+
+                // Disable previous mode
+                if (previousMode === 'transform') {
+                    // Check if we can exit transform mode (no collisions)
+                    if (this.selectedObject && this.isGhostColliding) {
+                        // Cannot exit transform mode due to collision
+                        this.showPlacementWarning();
+                        return; // Stay in transform mode
+                    }
+
+                    this.transformControls.visible = false;
+                    this.transformControls.enabled = false;
+
+                    // Exit ghost mode if we have a selected object
+                    if (this.selectedObject && this.selectedObject.body) {
+                        this.exitGhostMode(this.selectedObject);
+                    }
+
+                    this.transformControls.detach();
+                    document.getElementById('transform-options').style.display = 'none';
+                }
+
+                // Update mode
+                this.interactionMode = mode;
+
+                // Enable new mode
+                switch (mode) {
+                    case 'drag':
+                        if (this.selectedObject && this.selectedObject.body) {
+                            // Physics is already enabled via exitGhostMode
+                        }
+                        this.updateInteractionModeUI('Tactile');
+                        break;
+                    case 'transform':
+                        this.transformControls.visible = true;
+                        this.transformControls.enabled = true;
+                        if (this.selectedObject) {
+                            this.transformControls.attach(this.selectedObject);
+                            this.transformControls.setMode('translate'); // Default mode
+
+                            // Enter ghost mode for the selected object
+                            if (this.selectedObject.body) {
+                                this.enterGhostMode(this.selectedObject);
+                            }
+                        }
+                        document.getElementById('transform-options').style.display = 'block';
+                        this.updateTransformMode('Translate');
+                        this.updateTransformModeButtons('translate');
+                        this.updateInteractionModeUI('Transform');
+                        break;
+                }
+
+                // Update outline color based on mode
+                if (this.selectedObject) {
+                    const outlineColor = this.interactionMode === 'transform' ? 0x00aaff : 0xff00ff; // Blue for transform, purple for drag
+                    this.outlinePass.visibleEdgeColor.set(outlineColor);
+                }
+
+                // Update UI buttons
+                document.getElementById('tactile-mode').classList.toggle('active', mode === 'drag');
+                document.getElementById('transform-mode').classList.toggle('active', mode === 'transform');
+            }
+
+            // Create transition effect when switching from transform to tactile mode
+            createTransitionEffect(object) {
+                if (!object) return;
+
+                // Get landing position
+                const bottomOffset = this.getObjectBottomOffset(object);
+                const currentPos = object.position.clone();
+
+                // Create ripple effect at landing position
+                const rippleGeometry = new THREE.RingGeometry(0.1, 0.2, 32);
+                const rippleMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x88ff88,
+                    transparent: true,
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
+                });
+
+                const ripple = new THREE.Mesh(rippleGeometry, rippleMaterial);
+                ripple.position.set(currentPos.x, this.groundY + 0.01, currentPos.z); // Slightly above ground to avoid z-fighting
+                ripple.rotation.x = -Math.PI / 2; // Lay flat on the ground
+                this.scene.add(ripple);
+
+                // Add to transition effects array with animation data
+                this.transitionEffects.push({
+                    mesh: ripple,
+                    startTime: performance.now(),
+                    duration: 1000, // 1 second animation
+                    startScale: 0.2,
+                    endScale: 5,
+                    startOpacity: 0.7,
+                    endOpacity: 0
+                });
+
+                // Also create dust particles effect if object is high above ground
+                const distanceToGround = currentPos.y - bottomOffset - this.groundY;
+                if (distanceToGround > 3) {
+                    // Create a small dust cloud that will appear when the object lands
+                    this.createDustParticles(object, distanceToGround);
+                }
+            }
+
+            // Create dust particle effect when object falls from height
+            createDustParticles(object, height) {
+                // Track this object to create dust when it hits the ground
+                const objectData = {
+                    object: object,
+                    height: height,
+                    hasHitGround: false,
+                    dustCreated: false
+                };
+
+                // Store in transition effects for monitoring
+                this.transitionEffects.push(objectData);
+            }
+
+            // Create actual dust particles at the position where object landed
+            createDustCloud(position) {
+                const particleCount = 15 + Math.floor(Math.random() * 10);
+
+                for (let i = 0; i < particleCount; i++) {
+                    // Create a small sphere for each particle
+                    const radius = 0.05 + Math.random() * 0.1;
+                    const geometry = new THREE.SphereGeometry(radius, 8, 8);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0xdddddd,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+
+                    const particle = new THREE.Mesh(geometry, material);
+
+                    // Random position around the landing spot
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 0.3 + Math.random() * 1.2;
+                    particle.position.set(
+                        position.x + Math.cos(angle) * distance,
+                        this.groundY + 0.05,
+                        position.z + Math.sin(angle) * distance
+                    );
+
+                    // Add velocity and other animation properties
+                    const velocityY = 1 + Math.random() * 2;
+                    const velocityX = (Math.random() - 0.5) * 1.5;
+                    const velocityZ = (Math.random() - 0.5) * 1.5;
+
+                    this.scene.add(particle);
+
+                    // Add to transition effects array with animation data
+                    this.transitionEffects.push({
+                        mesh: particle,
+                        startTime: performance.now(),
+                        duration: 600 + Math.random() * 400,
+                        velocity: new THREE.Vector3(velocityX, velocityY, velocityZ),
+                        gravity: -4.8,
+                        startOpacity: 0.7,
+                        endOpacity: 0
+                    });
+                }
+            }
+
+            // Update transition effects in animation loop
+            updateTransitionEffects(dt) {
+                if (!this.transitionEffects || !this.transitionEffects.length) return;
+
+                const now = performance.now();
+                const toRemove = [];
+
+                for (let i = 0; i < this.transitionEffects.length; i++) {
+                    const effect = this.transitionEffects[i];
+
+                    // Handle ripple/fade effects
+                    if (effect.mesh && effect.startTime) {
+                        // Calculate progress (0 to 1)
+                        const elapsed = now - effect.startTime;
+                        const progress = Math.min(elapsed / effect.duration, 1);
+
+                        if (progress < 1) {
+                            // Update scale for ripple effect
+                            if (effect.startScale !== undefined && effect.endScale !== undefined) {
+                                const scale = effect.startScale + (effect.endScale - effect.startScale) * progress;
+                                effect.mesh.scale.set(scale, scale, 1);
+                            }
+
+                            // Update opacity
+                            if (effect.startOpacity !== undefined && effect.endOpacity !== undefined) {
+                                effect.mesh.material.opacity = effect.startOpacity +
+                                    (effect.endOpacity - effect.startOpacity) * progress;
+                            }
+
+                            // Update position for dust particles
+                            if (effect.velocity) {
+                                // Apply gravity to velocity
+                                effect.velocity.y += effect.gravity * dt;
+
+                                // Update position
+                                effect.mesh.position.x += effect.velocity.x * dt;
+                                effect.mesh.position.y += effect.velocity.y * dt;
+                                effect.mesh.position.z += effect.velocity.z * dt;
+
+                                // Bounce off ground
+                                if (effect.mesh.position.y <= this.groundY) {
+                                    effect.mesh.position.y = this.groundY;
+                                    effect.velocity.y = -effect.velocity.y * 0.4; // Bounce with damping
+
+                                    // If velocity is very low, just stop at ground
+                                    if (Math.abs(effect.velocity.y) < 0.5) {
+                                        effect.velocity.y = 0;
+                                    }
+                                }
+                            }
+                        } else {
+                            // Effect is complete, mark for removal
+                            this.scene.remove(effect.mesh);
+                            toRemove.push(i);
+                        }
+                    }
+                    // Handle object ground hit detection for dust creation
+                    else if (effect.object && !effect.dustCreated) {
+                        const object = effect.object;
+                        const bottomOffset = this.getObjectBottomOffset(object);
+                        const distanceToGround = object.position.y - bottomOffset - this.groundY;
+
+                        // Check if object has hit the ground
+                        if (distanceToGround <= 0.1 && object.body && !object.body.isSleeping()) {
+                            // Create dust cloud at impact position
+                            this.createDustCloud(object.position);
+                            effect.dustCreated = true;
+                            toRemove.push(i);
+                        }
+                    }
+                }
+
+                // Remove completed effects (in reverse order to avoid index issues)
+                for (let i = toRemove.length - 1; i >= 0; i--) {
+                    this.transitionEffects.splice(toRemove[i], 1);
+                }
+            }
+
+            // Update the interaction mode UI indicator
+            updateInteractionModeUI(modeName) {
+                const indicator = document.getElementById('interaction-mode');
+                indicator.textContent = `Mode: ${modeName}`;
+            }
+
+            // Handle window resize
+            handleResize() {
+                // Update camera
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+
+                // Update renderer and composer
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.composer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            // Handle mouse move
+            handleMouseMove(event) {
+                // Update mouse coordinates
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                if (this.isDragging && this.draggedObject) {
+                    // Calculate new position based on drag plane intersection
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
+                        // Store previous position for velocity calculation
+                        this.lastDragPosition.copy(this.draggedObject.position);
+
+                        // Update object position
+                        const newPosition = this.dragIntersection.clone().add(this.dragOffset);
+                        this.draggedObject.position.copy(newPosition);
+
+                        // IMPORTANT: Directly update the physics body position
+                        // and disable gravity temporarily during drag
+                        if (this.draggedObject.body) {
+                            // Set physics body position to match visual mesh
+                            this.draggedObject.body.setTranslation({
+                                x: newPosition.x,
+                                y: newPosition.y,
+                                z: newPosition.z
+                            }, true); // Wake up the body
+
+                            // Set velocity to zero to prevent momentum
+                            this.draggedObject.body.setLinvel({x: 0, y: 0, z: 0}, true);
+
+                            // Temporarily disable gravity while dragging
+                            this.draggedObject.body.setGravityScale(0.0, true);
+                        }
+
+                        // Update position marker if visible
+                        if (this.positionMarker && this.positionMarkerVisible) {
+                            this.updatePositionMarker(newPosition);
+                        }
+                    }
+                } else if (!this.isDragging && !this.transformControlsDragging) {
+                    // Only check for hover if not dragging with either mechanism
+                    this.checkHover();
+                }
+            }
+
+            // Create drag plane and start dragging an object
+            startDrag(object) {
+                if (!object || this.interactionMode !== 'drag') return;
+
+                this.isDragging = true;
+                this.draggedObject = object;
+                this.dragStartTime = performance.now();
+
+                // Store initial position for physics calculations
+                this.initialDragPosition.copy(object.position);
+                this.lastDragPosition.copy(object.position);
+
+                // Create a drag plane perpendicular to the camera
+                const cameraDirection = new THREE.Vector3();
+                this.camera.getWorldDirection(cameraDirection);
+                this.dragPlane.setFromNormalAndCoplanarPoint(
+                    cameraDirection,
+                    object.position
+                );
+
+                // Calculate intersection with drag plane
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection);
+
+                // Calculate offset from object to intersection
+                this.dragOffset.copy(object.position).sub(this.dragIntersection);
+
+                // Disable orbit controls while dragging
+                this.controls.enabled = false;
+
+                // Set cursor style
+                document.body.style.cursor = 'grabbing';
+            }
+
+            // Finish dragging and apply velocity
+            finishDrag() {
+                if (this.draggedObject && this.draggedObject.body) {
+                    // Restore gravity when drag ends
+                    this.draggedObject.body.setGravityScale(1.0, true);
+
+                    // Apply the calculated velocity
+                    if (this.dragVelocity.length() > 0) {
+                        this.draggedObject.body.setLinvel({
+                            x: this.dragVelocity.x,
+                            y: this.dragVelocity.y,
+                            z: this.dragVelocity.z
+                        }, true);
+                    }
+                }
+
+                this.isDragging = false;
+                this.draggedObject = null;
+                this.dragVelocity.set(0, 0, 0);
+
+                // Re-enable orbit controls
+                this.controls.enabled = true;
+
+                // Reset cursor
+                document.body.style.cursor = 'auto';
+            }
+
+            // Handle mouse down
+            handleMouseDown(event) {
+                if (event.button === 0) { // Left mouse button
+                    // First check if the click is directly on the transform controls
+                    if (this.isTransformControlsActive) {
+                        // If we're clicking on the transform controls, let them handle the event
+                        return;
+                    }
+
+                    // Check if we're clicking on an object
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const intersects = this.raycaster.intersectObjects(this.objects);
+
+                    if (intersects.length > 0) {
+                        const object = intersects[0].object;
+
+                        // Select the clicked object
+                        this.selectObject(object);
+
+                        // Start dragging if in drag mode
+                        if (this.interactionMode === 'drag') {
+                            this.startDrag(object);
+                        }
+                    } else {
+                        // Deselect when clicking on nothing
+                        this.deselectObject();
+                    }
+                }
+            }
+
+            // Handle mouse up
+            handleMouseUp(event) {
+                if (event.button === 0) { // Left mouse button
+                    // Finish any active drag
+                    this.finishDrag();
+                }
+            }
+
+            // Handle key down
+            handleKeyDown(event) {
+                switch (event.key) {
+                    case 'T':
+                    case 't':
+                        this.setInteractionMode('transform');
+                        break;
+                    case 'D':
+                    case 'd':
+                        this.setInteractionMode('drag');
+                        break;
+                    case 'G':
+                    case 'g':
+                        if (this.interactionMode === 'transform') {
+                            this.transformControls.setMode('translate');
+                            this.updateTransformMode('Translate');
+                            this.updateTransformModeButtons('translate');
+                        }
+                        break;
+                    case 'R':
+                    case 'r':
+                        if (this.interactionMode === 'transform') {
+                            this.transformControls.setMode('rotate');
+                            this.updateTransformMode('Rotate');
+                            this.updateTransformModeButtons('rotate');
+                        }
+                        break;
+                    case 'Escape':
+                        // Deselect the current object without changing the interaction mode
+                        // This allows quick cancellation of the current selection
+                        this.deselectObject();
+                        break;
+                }
+            }
+
+            // Check if mouse is hovering over an object
+            checkHover() {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects(this.objects);
+
+                // Clear previous hover
+                if (this.hoveredObject &&
+                    (!intersects.length || this.hoveredObject !== intersects[0].object)) {
+                    this.hideHoverFeedback(this.hoveredObject);
+                    this.hoveredObject = null;
+                }
+
+                // Set new hover
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+                    if (this.hoveredObject !== object) {
+                        this.hoveredObject = object;
+                        this.showHoverFeedback(object);
+                    }
+                }
+            }
+
+            // Show hover feedback
+            showHoverFeedback(object) {
+                if (!object) return;
+
+                this.outlinePass.selectedObjects = [object];
+                document.body.style.cursor = this.interactionMode === 'drag' ? 'grab' : 'pointer';
+            }
+
+            // Hide hover feedback
+            hideHoverFeedback(object) {
+                if (!object) return;
+
+                if (this.selectedObject !== object) {
+                    this.outlinePass.selectedObjects = [];
+                    this.outlinePass.visibleEdgeColor.set(0xffff00); // Reset to yellow for hover
+                }
+
+                document.body.style.cursor = 'auto';
+            }
+
+            // Select an object
+            selectObject(object) {
+                if (!object) return;
+
+                // If we're in transform mode and already have a selected object,
+                // apply gravity to the previous object before selecting the new one
+                if (this.interactionMode === 'transform' &&
+                    this.selectedObject &&
+                    this.selectedObject !== object &&
+                    this.selectedObject.body) {
+                    this.exitGhostMode(this.selectedObject);
+                }
+
+                this.selectedObject = object;
+
+                // Highlight the selected object
+                this.outlinePass.selectedObjects = [object];
+
+                // Use color to indicate current interaction mode
+                const outlineColor = this.interactionMode === 'transform' ? 0x00aaff : 0xff00ff;
+                this.outlinePass.visibleEdgeColor.set(outlineColor);
+
+                // Update the position marker
+                const bottomOffset = this.getObjectBottomOffset(object);
+                this.updatePositionMarker(object.position, bottomOffset);
+
+                // Attach transform controls if in transform mode
+                if (this.interactionMode === 'transform' && object.body) {
+                    this.transformControls.attach(object);
+                    // Enter ghost mode for the object
+                    this.enterGhostMode(object);
+                }
+            }
+
+            // Deselect current object
+            deselectObject() {
+                if (!this.selectedObject) return;
+
+                // Finish any active drag
+                this.finishDrag();
+
+                // If in transform mode, exit ghost mode
+                if (this.interactionMode === 'transform' && this.selectedObject.body) {
+                    // Check for collisions before placing
+                    const canPlace = !this.isGhostColliding;
+
+                    if (canPlace) {
+                        this.exitGhostMode(this.selectedObject);
+                    } else {
+                        // Cannot place object due to collision
+                        // Display warning message
+                        this.showPlacementWarning();
+                        return; // Prevent deselection if we can't place the object
+                    }
+                }
+
+                // Remove highlight
+                this.outlinePass.selectedObjects = [];
+                this.outlinePass.visibleEdgeColor.set(0xffff00); // Reset to yellow for hover
+
+                // Hide position marker
+                if (this.positionMarker) {
+                    this.positionMarker.visible = false;
+                }
+
+                // Detach transform controls if in transform mode
+                if (this.interactionMode === 'transform') {
+                    this.transformControls.detach();
+                }
+
+                this.selectedObject = null;
+            }
+
+            // Show placement warning
+            showPlacementWarning() {
+                // Create a warning message element
+                const warningEl = document.createElement('div');
+                warningEl.textContent = 'Cannot place object: Collision detected';
+                warningEl.style.position = 'absolute';
+                warningEl.style.top = '50%';
+                warningEl.style.left = '50%';
+                warningEl.style.transform = 'translate(-50%, -50%)';
+                warningEl.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                warningEl.style.color = 'white';
+                warningEl.style.padding = '10px 20px';
+                warningEl.style.borderRadius = '5px';
+                warningEl.style.fontFamily = 'Arial, sans-serif';
+                warningEl.style.zIndex = '2000';
+                document.body.appendChild(warningEl);
+
+                // Remove after 2 seconds
+                setTimeout(() => {
+                    document.body.removeChild(warningEl);
+                }, 2000);
+            }
+
+            // Enter ghost mode for an object
+            enterGhostMode(object) {
+                if (!object || !object.body) return;
+
+                // Store original materials for later restoration
+                if (!this.originalMaterials.has(object.uuid)) {
+                    // For objects with single material
+                    if (!Array.isArray(object.material)) {
+                        const originalMaterial = object.material.clone();
+                        this.originalMaterials.set(object.uuid, originalMaterial);
+
+                        // Create semi-transparent material
+                        object.material = object.material.clone();
+                        object.material.transparent = true;
+                        object.material.opacity = 0.6;
+                    }
+                    // For objects with multiple materials
+                    else {
+                        const originalMaterials = object.material.map(mat => mat.clone());
+                        this.originalMaterials.set(object.uuid, originalMaterials);
+
+                        // Create semi-transparent materials
+                        object.material = object.material.map(mat => {
+                            const ghostMat = mat.clone();
+                            ghostMat.transparent = true;
+                            ghostMat.opacity = 0.6;
+                            return ghostMat;
+                        });
+                    }
+                }
+
+                // Disable gravity for the object when in transform mode
+                object.body.setGravityScale(0.0, true);
+
+                // Mark the initial state as not colliding
+                this.isGhostColliding = false;
+            }
+
+            // Exit ghost mode for an object
+            exitGhostMode(object) {
+                if (!object || !object.body) return;
+
+                // Restore original material
+                if (this.originalMaterials.has(object.uuid)) {
+                    const originalMaterial = this.originalMaterials.get(object.uuid);
+
+                    // For single material objects
+                    if (!Array.isArray(originalMaterial)) {
+                        object.material.dispose();
+                        object.material = originalMaterial;
+                    }
+                    // For multi-material objects
+                    else {
+                        object.material.forEach(mat => mat.dispose());
+                        object.material = originalMaterial;
+                    }
+
+                    this.originalMaterials.delete(object.uuid);
+                }
+
+                // Re-enable physics and update position
+                object.body.setTranslation({
+                    x: object.position.x,
+                    y: object.position.y,
+                    z: object.position.z
+                }, true);
+
+                object.body.setRotation({
+                    x: object.quaternion.x,
+                    y: object.quaternion.y,
+                    z: object.quaternion.z,
+                    w: object.quaternion.w
+                }, true);
+
+                // Reset gravity scale to normal
+                object.body.setGravityScale(1.0, true);
+
+                // Apply a small initial velocity to ensure physics engine registers the change
+                object.body.setLinvel({ x: 0, y: -0.01, z: 0 }, true);
+
+                // Wake up the physics body
+                object.body.wakeUp();
+            }
+
+            // Check if the ghost object collides with other objects
+            checkGhostCollisions() {
+                if (!this.selectedObject || this.interactionMode !== 'transform') return false;
+
+                const object = this.selectedObject;
+                if (!object.body) return false;
+
+                let isColliding = false;
+
+                // Create a temporary position for collision testing
+                const position = new THREE.Vector3().copy(object.position);
+                const quaternion = new THREE.Quaternion().copy(object.quaternion);
+
+                // Check for collisions with other objects
+                this.objects.forEach(otherObject => {
+                    if (otherObject === object || !otherObject.body) return;
+
+                    // Simplified collision check based on bounding boxes and distance
+                    const boundingBox = new THREE.Box3().setFromObject(object);
+                    const otherBoundingBox = new THREE.Box3().setFromObject(otherObject);
+
+                    if (boundingBox.intersectsBox(otherBoundingBox)) {
+                        isColliding = true;
+                    }
+                });
+
+                // Check for collision with ground (y position below ground level)
+                const bottomOffset = this.getObjectBottomOffset(object);
+                if (object.position.y - bottomOffset < this.groundY) {
+                    isColliding = true;
+                }
+
+                return isColliding;
+            }
+
+            // Update ghost object appearance based on collision state
+            updateGhostObject() {
+                if (!this.selectedObject || this.interactionMode !== 'transform') return;
+
+                const object = this.selectedObject;
+                if (!object) return;
+
+                // Check for collisions
+                const isColliding = this.checkGhostCollisions();
+
+                // Only update if collision state has changed
+                if (isColliding !== this.isGhostColliding) {
+                    this.isGhostColliding = isColliding;
+
+                    // Update material based on collision state
+                    if (!Array.isArray(object.material)) {
+                        // For single material objects
+                        if (isColliding) {
+                            object.material.color.setHex(0xff0000); // Red for collision
+                        } else {
+                            // Restore original color with transparency
+                            const originalMaterial = this.originalMaterials.get(object.uuid);
+                            if (originalMaterial) {
+                                object.material.color.copy(originalMaterial.color);
+                            }
+                        }
+                    } else {
+                        // For multi-material objects
+                        const originalMaterials = this.originalMaterials.get(object.uuid);
+                        if (originalMaterials) {
+                            object.material.forEach((mat, index) => {
+                                if (isColliding) {
+                                    mat.color.setHex(0xff0000); // Red for collision
+                                } else {
+                                    // Restore original color with transparency
+                                    mat.color.copy(originalMaterials[index].color);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Update transform mode buttons to highlight active mode
+            updateTransformModeButtons(activeMode) {
+                const translateBtn = document.getElementById('translate-btn');
+                const rotateBtn = document.getElementById('rotate-btn');
+
+                translateBtn.classList.toggle('active', activeMode === 'translate');
+                rotateBtn.classList.toggle('active', activeMode === 'rotate');
+
+                translateBtn.style.backgroundColor = activeMode === 'translate' ? '#ff9800' : '#4CAF50';
+                rotateBtn.style.backgroundColor = activeMode === 'rotate' ? '#ff9800' : '#4CAF50';
+            }
+
+            // Update transform mode indicator
+            updateTransformMode(mode) {
+                // Transform mode is now shown in the main interaction mode indicator
+                if (mode) {
+                    this.updateInteractionModeUI(`Transform (${mode})`);
+                }
+            }
+
+            // Clear all objects
+            clearAllObjects() {
+                // Remove all objects except ground and boundaries
+                while (this.objects.length > 0) {
+                    const object = this.objects.pop();
+
+                    // Remove from scene
+                    this.scene.remove(object);
+
+                    // Remove physics body
+                    if (object.body) {
+                        this.world.removeRigidBody(object.body);
+                    }
+
+                    // Remove from outline pass
+                    if (this.outlinePass && this.outlinePass.selectedObjects.includes(object)) {
+                        this.outlinePass.selectedObjects = this.outlinePass.selectedObjects.filter(obj => obj !== object);
+                    }
+
+                    // Deselect if selected
+                    if (this.selectedObject === object) {
+                        this.selectedObject = null;
+
+                        // Detach transform controls if active
+                        if (this.transformControls) {
+                            this.transformControls.detach();
+                        }
+                    }
+                }
+
+                // Update object count in UI
+                const objectCountElement = document.getElementById('object-count');
+                if (objectCountElement) {
+                    objectCountElement.textContent = 'Objects: 0';
+                }
+
+                // Clear physics debug visualization
+                this.hidePhysicsDebug();
+            }
+
+            // Add a box to the scene (same as addCube but with a consistent name)
+            addBox() {
+                return this.addCube();
+            }
+
+            // Update addCube method to create more reliable physics bodies
+            addCube() {
+                const size = 1 + Math.random() * 0.5;
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                const material = new THREE.MeshStandardMaterial({
+                    color: Math.random() * 0xffffff,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+
+                // Make sure starting position is not inside the ground
+                const y = 10 + Math.random() * 5;
+
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(
+                    (Math.random() - 0.5) * 10,
+                    y, // Ensure it's high enough
+                    (Math.random() - 0.5) * 10
+                );
+                cube.castShadow = true;
+                cube.receiveShadow = true;
+                this.scene.add(cube);
+
+                // Create physics body with appropriate mass (density * volume)
+                const density = 1.0;  // Standard density (1.0 = density of water)
+                const volume = size * size * size;
+                const mass = density * volume;
+
+                // Add a slight rotation to prevent perfectly flat surfaces
+                cube.rotation.x = Math.random() * 0.1;
+                cube.rotation.z = Math.random() * 0.1;
+
+                const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(cube.position.x, cube.position.y, cube.position.z)
+                    .setRotation({
+                        x: cube.quaternion.x,
+                        y: cube.quaternion.y,
+                        z: cube.quaternion.z,
+                        w: cube.quaternion.w
+                    })
+                    .setAdditionalMass(mass);
+
+                const body = this.world.createRigidBody(bodyDesc);
+
+                // Create collider with margin to prevent falling through surfaces
+                // Add a slight margin (1.05x) to create a buffer around the visual mesh
+                const colliderSize = size * 1.02; // 2% margin
+                const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                    colliderSize/2, colliderSize/2, colliderSize/2
+                )
+                    .setFriction(0.7)          // Good friction for most objects
+                    .setRestitution(0.3);      // Moderate bounce
+
+                this.world.createCollider(colliderDesc, body);
+
+                // Store reference to the body and shape type
+                cube.body = body;
+                cube.shapeType = 'box';
+                cube.physicsShape = { halfExtents: { x: size/2, y: size/2, z: size/2 } };
+
+                // Apply a small initial impulse for better physics behavior
+                const impulse = 0.1;
+                body.applyImpulse(
+                    { x: (Math.random() - 0.5) * impulse, y: 0, z: (Math.random() - 0.5) * impulse },
+                    true
+                );
+
+                // Add to objects array
+                this.objects.push(cube);
+
+                // Refresh physics debug if enabled
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                }
+
+                return cube;
+            }
+
+            // Update addSphere method to create more reliable physics bodies
+            addSphere() {
+                const radius = 0.5 + Math.random() * 0.5;
+                const geometry = new THREE.SphereGeometry(radius, 32, 32);
+                const material = new THREE.MeshStandardMaterial({
+                    color: Math.random() * 0xffffff,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+
+                // Make sure starting position is not inside the ground
+                const y = 10 + Math.random() * 5;
+
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(
+                    (Math.random() - 0.5) * 10,
+                    y, // Ensure it's high enough
+                    (Math.random() - 0.5) * 10
+                );
+                sphere.castShadow = true;
+                sphere.receiveShadow = true;
+                this.scene.add(sphere);
+
+                // Create physics body with appropriate mass (density * volume)
+                const density = 1.0;  // Standard density
+                const volume = (4/3) * Math.PI * radius * radius * radius;
+                const mass = density * volume;
+
+                const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(sphere.position.x, sphere.position.y, sphere.position.z)
+                    .setAdditionalMass(mass);
+
+                const body = this.world.createRigidBody(bodyDesc);
+
+                // Create collider with slightly larger radius to prevent falling through surfaces
+                // Add a margin (1.05x) to create a buffer around the visual mesh
+                const colliderRadius = radius * 1.05; // 5% margin
+                const colliderDesc = this.RAPIER.ColliderDesc.ball(colliderRadius)
+                    .setFriction(0.5)          // Less friction for spheres to allow rolling
+                    .setRestitution(0.6);      // Higher bounce for spheres
+
+                this.world.createCollider(colliderDesc, body);
+
+                // Store reference to the body and shape type
+                sphere.body = body;
+                sphere.shapeType = 'sphere';
+                sphere.physicsShape = { radius: radius };
+
+                // Apply a small initial impulse for better physics behavior
+                const impulse = 0.05;
+                body.applyImpulse(
+                    { x: (Math.random() - 0.5) * impulse, y: 0, z: (Math.random() - 0.5) * impulse },
+                    true
+                );
+
+                // Add to objects array
+                this.objects.push(sphere);
+
+                // Refresh physics debug if enabled
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                }
+
+                return sphere;
+            }
+
+            // Update addCylinder method to create more reliable physics bodies
+            addCylinder() {
+                const radius = 0.5 + Math.random() * 0.3;
+                const height = 1 + Math.random() * 0.5;
+                const geometry = new THREE.CylinderGeometry(radius, radius, height, 32);
+                const material = new THREE.MeshStandardMaterial({
+                    color: Math.random() * 0xffffff,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+
+                // Make sure starting position is not inside the ground
+                const y = 10 + Math.random() * 5;
+
+                const cylinder = new THREE.Mesh(geometry, material);
+                cylinder.position.set(
+                    (Math.random() - 0.5) * 10,
+                    y, // Ensure it's high enough
+                    (Math.random() - 0.5) * 10
+                );
+
+                // Add a slight rotation to prevent perfect vertical alignment
+                cylinder.rotation.x = Math.random() * 0.1;
+                cylinder.rotation.z = Math.random() * 0.1;
+
+                cylinder.castShadow = true;
+                cylinder.receiveShadow = true;
+                this.scene.add(cylinder);
+
+                // Create physics body with appropriate mass (density * volume)
+                const density = 0.8;  // Slightly lighter than default
+                const volume = Math.PI * radius * radius * height;
+                const mass = density * volume;
+
+                const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(cylinder.position.x, cylinder.position.y, cylinder.position.z)
+                    .setRotation({
+                        x: cylinder.quaternion.x,
+                        y: cylinder.quaternion.y,
+                        z: cylinder.quaternion.z,
+                        w: cylinder.quaternion.w
+                    })
+                    .setAdditionalMass(mass);
+
+                const body = this.world.createRigidBody(bodyDesc);
+
+                // Create collider with slight adjustments to prevent falling through surfaces
+                // Add a margin to both height and radius
+                const colliderRadius = radius * 1.05; // 5% margin
+                const colliderHeight = height * 1.02; // 2% margin
+                const colliderDesc = this.RAPIER.ColliderDesc.cylinder(colliderHeight/2, colliderRadius)
+                    .setFriction(0.6)          // Medium friction
+                    .setRestitution(0.4);      // Medium bounce
+
+                this.world.createCollider(colliderDesc, body);
+
+                // Store reference to the body and shape type
+                cylinder.body = body;
+                cylinder.shapeType = 'cylinder';
+                cylinder.physicsShape = { radius: radius, height: height };
+
+                // Apply a small initial impulse for better physics behavior
+                const impulse = 0.05;
+                body.applyImpulse(
+                    { x: (Math.random() - 0.5) * impulse, y: 0, z: (Math.random() - 0.5) * impulse },
+                    true
+                );
+
+                // Add to objects array
+                this.objects.push(cylinder);
+
+                // Refresh physics debug if enabled
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                }
+
+                return cylinder;
+            }
+
+            // Update addCone method to create more reliable physics bodies
+            addCone() {
+                const radius = 0.5 + Math.random() * 0.3;
+                const height = 1 + Math.random() * 0.5;
+                const geometry = new THREE.ConeGeometry(radius, height, 32);
+                const material = new THREE.MeshStandardMaterial({
+                    color: Math.random() * 0xffffff,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+
+                // Make sure starting position is not inside the ground
+                const y = 10 + Math.random() * 5;
+
+                const cone = new THREE.Mesh(geometry, material);
+                cone.position.set(
+                    (Math.random() - 0.5) * 10,
+                    y, // Ensure it's high enough
+                    (Math.random() - 0.5) * 10
+                );
+
+                // Add a slight rotation to prevent perfect vertical alignment
+                cone.rotation.x = Math.random() * 0.1;
+                cone.rotation.z = Math.random() * 0.1;
+
+                cone.castShadow = true;
+                cone.receiveShadow = true;
+                this.scene.add(cone);
+
+                // Create physics body with appropriate mass (density * volume)
+                const density = 0.8;  // Slightly lighter than default
+                const volume = (1/3) * Math.PI * radius * radius * height;
+                const mass = density * volume;
+
+                const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
+                    .setTranslation(cone.position.x, cone.position.y, cone.position.z)
+                    .setRotation({
+                        x: cone.quaternion.x,
+                        y: cone.quaternion.y,
+                        z: cone.quaternion.z,
+                        w: cone.quaternion.w
+                    })
+                    .setAdditionalMass(mass);
+
+                const body = this.world.createRigidBody(bodyDesc);
+
+                // Create collider - use cylinder with different radii
+                // Rapier doesn't have a native cone, so we approximate it with a cylinder
+                // We use a slightly larger radius for better stability
+                const colliderRadius = radius * 1.1; // 10% margin for better stability
+                const colliderHeight = height * 1.02; // 2% margin
+                const colliderDesc = this.RAPIER.ColliderDesc.cylinder(colliderHeight/2, colliderRadius)
+                    .setFriction(0.6)          // Medium friction
+                    .setRestitution(0.4);      // Medium bounce
+
+                this.world.createCollider(colliderDesc, body);
+
+                // Store reference to the body and shape type
+                cone.body = body;
+                cone.shapeType = 'cone';
+                cone.physicsShape = { radius: radius, height: height };
+
+                // Apply a small initial impulse for better physics behavior
+                const impulse = 0.05;
+                body.applyImpulse(
+                    { x: (Math.random() - 0.5) * impulse, y: 0, z: (Math.random() - 0.5) * impulse },
+                    true
+                );
+
+                // Add to objects array
+                this.objects.push(cone);
+
+                // Refresh physics debug if enabled
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                }
+
+                return cone;
+            }
+
+            // Reset the scene
+            resetScene() {
+                this.clearAllObjects();
+            }
+
+            // Start animation loop
+            startAnimation() {
+                this.animating = true;
+                this.lastTime = performance.now();
+                this.lastFpsUpdate = this.lastTime;
+                this.frameCount = 0;
+                requestAnimationFrame(this.animate.bind(this));
+            }
+
+            // Keep visual meshes in sync with physics bodies
+            synchronizeVisuals() {
+                // Only synchronize objects that are not being manipulated
+                this.objects.forEach(object => {
+                    // Skip if the object is being manipulated or doesn't have a physics body
+                    if (this.selectedObject === object && this.interactionMode === 'transform') {
+                        return;
+                    }
+
+                    if (object.body) {
+                        // Get physics body position and rotation
+                        const translation = object.body.translation();
+                        const rotation = object.body.rotation();
+
+                        // Update visual mesh position and rotation
+                        object.position.set(translation.x, translation.y, translation.z);
+                        object.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+                    }
+                });
+            }
+
+            // Animation loop
+            animate(time) {
+                if (!this.animating) return;
+
+                // Calculate delta time
+                const dt = (time - this.lastTime) / 1000; // Convert to seconds
+                this.lastTime = time;
+
+                // Update FPS counter
+                this.frameCount++;
+                if (time - this.lastFpsUpdate > 1000) {
+                    const fps = Math.round(this.frameCount * 1000 / (time - this.lastFpsUpdate));
+                    document.getElementById('fps').textContent = `FPS: ${fps}`;
+                    document.getElementById('fps-counter').textContent = `FPS: ${fps}`;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = time;
+                }
+
+                // Update physics
+                this.updatePhysics();
+
+                // Synchronize visual meshes with physics bodies
+                this.synchronizeVisuals();
+
+                // Update ghost object and check for collisions
+                this.updateGhostObject();
+
+                // Update gravity transitions
+                this.updateGravityTransitions(dt);
+
+                // Update transition effects
+                this.updateTransitionEffects(dt);
+
+                // Update physics debug visualization
+                this.updatePhysicsDebug();
+
+                // Update controls
+                this.controls.update();
+
+                // Render with post-processing
+                if (this.composer) {
+                    this.composer.render();
+                } else {
+                    this.renderer.render(this.scene, this.camera);
+                }
+
+                // Continue animation loop
+                requestAnimationFrame(this.animate.bind(this));
+            }
+
+            // Update physics simulation with sub-stepping
+            updatePhysics() {
+                if (!this.physicsEnabled || !this.world) return;
+
+                // Configure solver for better constraint resolution if not already done
+                if (!this.solverConfigured) {
+                    // Increase solver iterations for better constraint handling
+                    if (this.world.maxVelocityIterations !== undefined) { // Check if property exists
+                        this.world.maxVelocityIterations = 8; // Default is 4
+                        this.world.maxPositionIterations = 3; // Default is 1
+                    }
+                    this.solverConfigured = true;
+                }
+
+                // Use sub-stepping to prevent fast objects from tunneling through surfaces
+                const subSteps = 3; // Use 3 substeps for better accuracy
+
+                // Step the physics world multiple times with smaller steps
+                for (let i = 0; i < subSteps; i++) {
+                    this.world.step();
+                }
+
+                // We don't need to update object positions here anymore
+                // since the synchronizeVisuals method will handle it
+            }
+
+            // Create position marker to show where objects will land
+            createPositionMarker() {
+                // Create a circular marker
+                const geometry = new THREE.RingGeometry(0.5, 0.7, 32);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x00ffff, // Cyan color for better visibility
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.DoubleSide
+                });
+
+                this.positionMarker = new THREE.Mesh(geometry, material);
+                this.positionMarker.rotation.x = -Math.PI / 2; // Lay flat on the ground
+                this.positionMarker.visible = false;
+                this.scene.add(this.positionMarker);
+            }
+
+            // Update position marker to show where an object will land
+            updatePositionMarker(position, bottomOffset) {
+                if (!this.positionMarker || !this.positionMarkerVisible) return;
+
+                // Cast a ray downward from the object's position
+                const raycaster = new THREE.Raycaster();
+                const rayOrigin = new THREE.Vector3(position.x, position.y - bottomOffset, position.z);
+                const rayDirection = new THREE.Vector3(0, -1, 0);
+                raycaster.set(rayOrigin, rayDirection);
+
+                // Find intersections with the ground (y = 0)
+                const groundY = this.groundY;
+                const distance = rayOrigin.y - groundY;
+
+                if (distance > 0) {
+                    // Place marker at the intersection point
+                    this.positionMarker.position.set(position.x, groundY, position.z);
+
+                    // Scale marker based on height (larger when higher)
+                    const scaleFactor = 1 + Math.min(distance * 0.1, 2);
+                    this.positionMarker.scale.set(scaleFactor, scaleFactor, 1);
+
+                    // Set color based on height (green near ground, yellow/red when higher)
+                    let markerColor;
+                    if (distance < 5) {
+                        markerColor = new THREE.Color(0x00ff00); // Green
+                    } else if (distance < 15) {
+                        // Gradient from green to yellow
+                        const t = (distance - 5) / 10;
+                        markerColor = new THREE.Color(0x00ff00).lerp(new THREE.Color(0xffff00), t);
+                    } else {
+                        // Gradient from yellow to red
+                        const t = Math.min((distance - 15) / 10, 1);
+                        markerColor = new THREE.Color(0xffff00).lerp(new THREE.Color(0xff0000), t);
+                    }
+
+                    this.positionMarker.material.color = markerColor;
+                    this.positionMarker.visible = true;
+                } else {
+                    // Hide marker if object is below ground
+                    this.positionMarker.visible = false;
+                }
+            }
+
+            // Get the bottom offset of an object (distance from center to bottom)
+            getObjectBottomOffset(object) {
+                if (!object) return 0;
+
+                let bottomOffset = 0;
+
+                // Calculate based on geometry type
+                if (object.geometry instanceof THREE.BoxGeometry) {
+                    // For cubes, half the height
+                    const parameters = object.geometry.parameters;
+                    bottomOffset = parameters.height / 2;
+                } else if (object.geometry instanceof THREE.SphereGeometry) {
+                    // For spheres, the radius
+                    bottomOffset = object.geometry.parameters.radius;
+                } else {
+                    // For other objects, approximate using bounding box
+                    const bbox = new THREE.Box3().setFromObject(object);
+                    const size = new THREE.Vector3();
+                    bbox.getSize(size);
+
+                    // Get offset from center to bottom
+                    const center = new THREE.Vector3();
+                    bbox.getCenter(center);
+                    bottomOffset = Math.abs(center.y - bbox.min.y);
+                }
+
+                return bottomOffset;
+            }
+
+            // Simplified method to sync physics body state when exiting transform mode
+            updateGravityTransitions(dt) {
+                // This method is now a no-op since we're not using transitions
+                // We keep it to avoid changing the animation loop
+                if (this.debugElement) {
+                    this.debugElement.innerHTML = '';
+                }
+            }
+
+            // Create debug visuals
+            createDebugVisuals() {
+                // Create debug text display for physics transitions
+                this.debugElement = document.createElement('div');
+                this.debugElement.style.position = 'absolute';
+                this.debugElement.style.bottom = '50px';
+                this.debugElement.style.left = '10px';
+                this.debugElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                this.debugElement.style.color = 'white';
+                this.debugElement.style.padding = '5px 10px';
+                this.debugElement.style.borderRadius = '5px';
+                this.debugElement.style.fontFamily = 'monospace';
+                this.debugElement.style.fontSize = '12px';
+                this.debugElement.style.zIndex = '1000';
+                document.body.appendChild(this.debugElement);
+            }
+
+            // Toggle physics debug visualization
+            togglePhysicsDebug() {
+                this.physicsDebugEnabled = !this.physicsDebugEnabled;
+
+                // Update button text
+                this.physicsDebugButton.textContent = `Physics Debug: ${this.physicsDebugEnabled ? 'ON' : 'OFF'}`;
+
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                } else {
+                    this.hidePhysicsDebug();
+                }
+            }
+
+            // Show physics debug visualization for all objects
+            showPhysicsDebug() {
+                // Clear any existing helpers
+                this.hidePhysicsDebug();
+
+                // Create debug visualization for each object
+                this.objects.forEach(object => {
+                    if (!object.body) return;
+
+                    // Get physics shape type
+                    const bodyType = object.body.bodyType();
+
+                    // Get physics body position
+                    const translation = object.body.translation();
+                    const rotation = object.body.rotation();
+
+                    // Create wireframe geometry based on shape
+                    let helper;
+
+                    if (object.shapeType === 'box') {
+                        // Get box half-extents
+                        const halfExtents = object.physicsShape.halfExtents;
+                        const geometry = new THREE.BoxGeometry(
+                            halfExtents.x * 2,
+                            halfExtents.y * 2,
+                            halfExtents.z * 2
+                        );
+                        const material = new THREE.MeshBasicMaterial({
+                            color: 0xff0000,
+                            wireframe: true,
+                            opacity: 0.5,
+                            transparent: true
+                        });
+                        helper = new THREE.Mesh(geometry, material);
+
+                    } else if (object.shapeType === 'sphere') {
+                        // Get sphere radius
+                        const radius = object.physicsShape.radius;
+                        const geometry = new THREE.SphereGeometry(radius, 16, 16);
+                        const material = new THREE.MeshBasicMaterial({
+                            color: 0xff0000,
+                            wireframe: true,
+                            opacity: 0.5,
+                            transparent: true
+                        });
+                        helper = new THREE.Mesh(geometry, material);
+
+                    } else if (object.shapeType === 'cylinder' || object.shapeType === 'cone') {
+                        // Get cylinder/cone dimensions
+                        const radius = object.physicsShape.radius;
+                        const height = object.physicsShape.height;
+
+                        // Use cylinder geometry for both
+                        const geometry = new THREE.CylinderGeometry(
+                            object.shapeType === 'cylinder' ? radius : 0,
+                            radius,
+                            height,
+                            16
+                        );
+                        const material = new THREE.MeshBasicMaterial({
+                            color: 0xff0000,
+                            wireframe: true,
+                            opacity: 0.5,
+                            transparent: true
+                        });
+                        helper = new THREE.Mesh(geometry, material);
+                    }
+
+                    if (helper) {
+                        // Position the helper at the physics body position
+                        helper.position.set(translation.x, translation.y, translation.z);
+                        helper.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+
+                        // Add to scene and store for later removal
+                        this.scene.add(helper);
+                        this.physicsDebugHelpers.push({
+                            mesh: helper,
+                            object: object
+                        });
+                    }
+                });
+            }
+
+            // Hide physics debug visualization
+            hidePhysicsDebug() {
+                this.physicsDebugHelpers.forEach(helper => {
+                    this.scene.remove(helper.mesh);
+                });
+                this.physicsDebugHelpers = [];
+            }
+
+            // Update physics debug visualization in animation loop
+            updatePhysicsDebug() {
+                if (!this.physicsDebugEnabled) return;
+
+                this.physicsDebugHelpers.forEach(helper => {
+                    if (!helper.object.body) return;
+
+                    // Get updated physics body position and rotation
+                    const translation = helper.object.body.translation();
+                    const rotation = helper.object.body.rotation();
+
+                    // Update helper position and rotation
+                    helper.mesh.position.set(translation.x, translation.y, translation.z);
+                    helper.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+                });
+            }
+
+            // Add an object to the scene
+            addObject(object) {
+                this.objects.push(object);
+                this.scene.add(object);
+
+                // Update object count in UI
+                const objectCountElement = document.getElementById('object-count');
+                if (objectCountElement) {
+                    objectCountElement.textContent = `Objects: ${this.objects.length}`;
+                }
+
+                // Refresh physics debug if enabled
+                if (this.physicsDebugEnabled) {
+                    this.showPhysicsDebug();
+                }
+            }
+        }
+
+        // Initialize app when loaded
+        window.addEventListener('load', () => {
+            window.app = new PhysicsSandbox();
+        });
+    </script>
+</body>
+</html>
