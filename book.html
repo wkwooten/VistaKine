@@ -8,6 +8,9 @@
     <!-- CSS Files -->
     <link rel="stylesheet" href="styles/main.css">
 
+    <!-- Phosphor Icons -->
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css" />
+
     <!-- Import local modules first -->
     <script type="module" src="./js/three-setup.js"></script>
 
@@ -89,6 +92,14 @@
                     <a href="#chapter3-geometric" class="nav-subchapter">3.2 Geometric Interpretation</a>
                     <a href="#chapter3-applications" class="nav-subchapter">3.3 Applications: Torque and Angular Momentum</a>
                     <a href="#chapter3-triple" class="nav-subchapter">3.4 Triple Products and Volume</a>
+                </div>
+
+                <a href="#physics-playground" class="nav-chapter">
+                    <div class="chapter-number"><i class="ph ph-atom"></i></div>
+                    <span>Experimental Features</span>
+                </a>
+                <div class="subchapter-list">
+                    <a href="#physics-playground" class="nav-subchapter">Physics Playground</a>
                 </div>
             </nav>
 
@@ -193,21 +204,13 @@
                     <div class="loading-placeholder">Loading section 3.4...</div>
                 </div>
             </section>
-        </main>
-    </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav-trigger"></div>
-    <div class="bottom-nav">
-        <button class="bottom-nav-button prev-nav" aria-label="Previous Section">
-            <i class="ph ph-caret-left"></i> Previous
-        </button>
-        <div class="bottom-nav-section">
-            <span class="current-section-name">Current Section</span>
-        </div>
-        <button class="bottom-nav-button next-nav" aria-label="Next Section">
-            Next <i class="ph ph-caret-right"></i>
-        </button>
+            <section id="physics-playground" class="section-container">
+                <div class="section-content" data-src="sections/physics-playground.html">
+                    <div class="loading-placeholder">Loading Physics Playground...</div>
+                </div>
+            </section>
+        </main>
     </div>
 </body>
 </html>

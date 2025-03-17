@@ -1,6 +1,19 @@
 /**
  * VistaKine Navigation Module
- * Handles all navigation-related functionality in a centralized way
+ *
+ * This module manages all navigation-related functionality in the application, including:
+ *
+ * 1. USER NAVIGATION: Handles link clicks, hash changes, and direct URL navigation
+ * 2. SECTION TRACKING: Uses IntersectionObserver to efficiently track visible sections
+ * 3. STATE MANAGEMENT: Updates the central state with current section information
+ * 4. RESPONSIVE BEHAVIOR: Provides device-specific navigation optimizations
+ * 5. BOTTOM NAVIGATION: Implements prev/next navigation functionality
+ *
+ * Key architectural features:
+ * - Uses efficient IntersectionObserver for scroll detection instead of scroll events
+ * - Provides a scroll observer as backup for the IntersectionObserver
+ * - Works with the centralized state system for reactive UI updates
+ * - Handles both automatic (scroll) and manual (click) navigation
  */
 
 // Ensure VistaKine namespace exists
@@ -8,46 +21,56 @@ window.VistaKine = window.VistaKine || {};
 
 // Navigation module
 VistaKine.navigation = {
-    // State
+    // Module state (only internal properties not duplicated in central state)
     state: {
-        currentSection: null,
         navInitialized: false,
         visibleSections: [],
+        observer: null,
+        pendingUpdate: null,
         isDirectNavigation: false,
-        scrollTimeout: null
+        updateDebounceTime: 150,
+        navigationLock: false,          // Add navigation lock flag
+        navigationLockDuration: 1200    // Lock duration in milliseconds (1.2 seconds)
     },
 
     /**
      * Initialize navigation
      */
     init: function() {
-        if (VistaKine.navigation.state.navInitialized) {
-            VistaKine.utils.log('Navigation already initialized', 'warn');
+        // Only initialize once
+        if (this.state.navInitialized) {
+            VistaKine.utils.log('Navigation already initialized');
             return;
         }
 
         VistaKine.utils.log('Initializing navigation module');
 
-        // Setup navigation links
-        VistaKine.navigation.setupLinks();
+        // Set up the primary navigation system - IntersectionObserver only
+        this.setupIntersectionObserver();
 
-        // Setup bottom navigation
-        VistaKine.navigation.setupBottomNav();
+        // Set up event handlers for direct navigation
+        this.setupHashChangeHandler();
+        this.setupLinkClickHandler();
 
-        // Set up the Intersection Observer for efficient section visibility detection
-        VistaKine.navigation.setupIntersectionObserver();
+        // Initialize bottom navigation
+        this.setupBottomNav();
 
-        // Handle initial hash
-        VistaKine.navigation.handleInitialHash();
+        // Get initial section from the URL hash
+        const hash = window.location.hash.substring(1);
+        const initialSection = hash || 'cover';
 
-        // Listen for hash changes
-        window.addEventListener('hashchange', VistaKine.navigation.handleHashChange);
+        // Set initial navigation state
+        if (initialSection) {
+            this.setActiveSection(initialSection);
 
-        // Mark as initialized
-        VistaKine.navigation.state.navInitialized = true;
-        VistaKine.state.initialized.navigation = true;
+            // If the hash doesn't match the initial section, update it
+            if (hash !== initialSection) {
+                window.location.hash = '#' + initialSection;
+            }
+        }
 
-        VistaKine.utils.log('Navigation initialized successfully', 'success');
+        this.state.navInitialized = true;
+        VistaKine.utils.log('Navigation module initialized');
     },
 
     /**
@@ -144,139 +167,67 @@ VistaKine.navigation = {
     },
 
     /**
-     * Set the active section and update UI
+     * Set the active section and update the UI accordingly
+     * @param {string} sectionId - The ID of the section to activate
      */
     setActiveSection: function(sectionId) {
-        // Skip if the section is already active
-        if (VistaKine.navigation.state.currentSection === sectionId) return;
-
-        // Handle null or empty section ID
         if (!sectionId) {
-            VistaKine.utils.log('Cannot set active section: Invalid section ID', 'warn');
+            VistaKine.utils.log('Cannot set active section: No section ID provided', 'error');
             return;
         }
 
-        VistaKine.utils.log(`Setting active section: ${sectionId}`);
+        const previousSection = VistaKine.state.getCurrentSection();
 
-        // Store the previous section for debugging
-        const previousSection = VistaKine.navigation.state.currentSection;
-
-        // Check if we're transitioning between chapters
-        const isChapterTransition = isBetweenChapters(previousSection, sectionId);
-        if (isChapterTransition) {
-            VistaKine.utils.log(`Chapter transition detected: ${previousSection} → ${sectionId}`, 'debug');
+        // Don't update if it's the same section
+        if (sectionId === previousSection) {
+            return;
         }
 
-        // Update state immediately
-        VistaKine.navigation.state.currentSection = sectionId;
-        VistaKine.state.activeSection = sectionId;
+        VistaKine.utils.log(`Setting active section: ${sectionId} (was: ${previousSection})`, 'debug');
 
-        // Update active class on sections
-        document.querySelectorAll('.section-container').forEach(section => {
-            section.classList.remove('active');
-        });
+        // Update the state system first (single source of truth)
+        VistaKine.state.setCurrentSection(sectionId);
 
-        const activeSection = VistaKine.dom.getSection(sectionId);
-        if (activeSection) {
-            activeSection.classList.add('active');
-        }
+        // Update the UI
+        this.updateActiveLink(sectionId);
 
-        // Update active links in navigation with enhanced chapter handling
-        VistaKine.navigation.updateActiveNavLinks(sectionId);
-
-        // Update bottom navigation text
-        VistaKine.navigation.updateBottomNavigation(sectionId);
-
-        // Helper function to check if transition is between chapters
-        function isBetweenChapters(prev, current) {
-            if (!prev || !current) return false;
-
-            // Parse chapter numbers from section IDs
-            const prevChapter = getChapterNumber(prev);
-            const currChapter = getChapterNumber(current);
-
-            // If different chapter numbers, it's a chapter transition
-            return prevChapter !== currChapter;
-        }
-
-        // Helper to extract chapter number from section ID
-        function getChapterNumber(sectionId) {
-            // Handle common chapter ID patterns
-            if (sectionId.includes('chapter')) {
-                const match = sectionId.match(/chapter(\d+)/i);
-                return match ? parseInt(match[1]) : null;
+        // Trigger section change event for other modules
+        document.dispatchEvent(new CustomEvent('sectionChanged', {
+            detail: {
+                newSection: sectionId,
+                previousSection: previousSection
             }
-            return null;
-        }
+        }));
     },
 
     /**
-     * Update the active links in the navigation
+     * Update the active link in the navigation menu
+     * @param {string} sectionId - The ID of the section to mark as active
      */
-    updateActiveNavLinks: function(sectionId) {
-        // Skip if invalid sectionId
-        if (!sectionId) return;
+    updateActiveLink: function(sectionId) {
+        if (!sectionId) {
+            return;
+        }
 
-        VistaKine.utils.log(`Updating active nav links for section: ${sectionId}`);
+        VistaKine.utils.log(`Updating navigation for section: ${sectionId}`);
 
-        // Check device type
-        const isMobile = window.matchMedia('(max-width: 479px)').matches;
-        const isTablet = window.matchMedia('(min-width: 480px) and (max-width: 991px)').matches;
-
-        // Store current scroll position of sidebar to restore it later if needed
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        const currentScrollTop = sidebarNav ? sidebarNav.scrollTop : 0;
-
-        // Remove active class from all nav links but keep track of previously active ones
-        const previouslyActive = [];
+        // Remove active class from all nav links
         document.querySelectorAll('.nav-chapter.active, .nav-subchapter.active, .nav-chapter.parent-active').forEach(link => {
-            previouslyActive.push(link.getAttribute('href'));
             link.classList.remove('active');
             link.classList.remove('parent-active');
         });
-
-        // Check if we're dealing with a chapter or sub-chapter
-        const isChapter = sectionId.includes('chapter') && !sectionId.includes('-');
 
         // Set active class on matching links
         const selector = `.nav-chapter[href="#${sectionId}"], .nav-subchapter[href="#${sectionId}"]`;
         const activeLinks = document.querySelectorAll(selector);
 
-        if (activeLinks.length === 0) {
-            VistaKine.utils.log(`No navigation links found for section: ${sectionId}`, 'warn');
-
-            // If we're between chapters, try to find the nearest chapter
-            if (sectionId.includes('chapter')) {
-                // Extract chapter number or prefix
-                const chapterMatch = sectionId.match(/chapter(\d+)/i);
-                if (chapterMatch) {
-                    const chapterNum = parseInt(chapterMatch[1]);
-                    // Try to find a parent chapter (for subchapters)
-                    const parentSelector = `.nav-chapter[href="#chapter${chapterNum}-intro"], .nav-chapter[href="#chapter${chapterNum}"]`;
-                    const parentLinks = document.querySelectorAll(parentSelector);
-
-                    if (parentLinks.length > 0) {
-                        parentLinks.forEach(link => {
-                            link.classList.add('active');
-                            VistaKine.utils.log(`Found parent chapter link for ${sectionId}: ${link.getAttribute('href')}`);
-                        });
-                    } else {
-                        VistaKine.utils.log(`No parent chapter found for ${sectionId}`, 'warn');
-                    }
-                }
-            }
-        } else {
+        if (activeLinks.length > 0) {
             activeLinks.forEach(link => {
                 link.classList.add('active');
-
-                // Force a reflow to ensure the transition happens
-                link.offsetWidth;
-
-                VistaKine.utils.log(`Set active class on ${link.getAttribute('href')}`);
             });
 
-            // For subchapters, also mark the parent chapter as parent-active
-            if (!isChapter && activeLinks.length > 0) {
+            // For subchapters, also mark the parent chapter
+            if (sectionId.includes('-') && activeLinks[0]) {
                 const subchapterLink = activeLinks[0];
                 const parentList = subchapterLink.closest('.subchapter-list');
 
@@ -284,26 +235,32 @@ VistaKine.navigation = {
                     const parentChapter = parentList.previousElementSibling;
                     if (parentChapter && parentChapter.classList.contains('nav-chapter')) {
                         parentChapter.classList.add('parent-active');
-                        VistaKine.utils.log(`Set parent-active on ${parentChapter.getAttribute('href')}`);
-
-                        // For desktop, ensure the parent is visible in the sidebar
-                        if (!isMobile && !isTablet && sidebarNav) {
-                            const parentRect = parentChapter.getBoundingClientRect();
-                            const sidebarRect = sidebarNav.getBoundingClientRect();
-
-                            // Check if parent is not visible in the sidebar
-                            if (parentRect.top < sidebarRect.top || parentRect.bottom > sidebarRect.bottom) {
-                                // Scroll to make it visible with some context above
-                                parentChapter.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }
                     }
                 }
             }
+        } else if (sectionId.includes('chapter')) {
+            // Extract chapter number for subchapters
+            const chapterMatch = sectionId.match(/chapter(\d+)/i);
+            if (chapterMatch) {
+                const chapterNum = parseInt(chapterMatch[1]);
+                const parentSelector = `.nav-chapter[href="#chapter${chapterNum}"], .nav-chapter[href="#chapter${chapterNum}-intro"]`;
+                document.querySelectorAll(parentSelector).forEach(link => {
+                    link.classList.add('active');
+                });
+            }
         }
 
-        // Update current section state
-        VistaKine.navigation.state.currentSection = sectionId;
+        // Trigger any other UI updates from one central place
+        this.updateBottomNav(sectionId);
+        this.updateDocumentTitle(sectionId);
+
+        // Trigger section management if content module is initialized
+        if (VistaKine.state.isInitialized('content') &&
+            typeof VistaKine.content.manageLoadedSections === 'function') {
+            setTimeout(() => {
+                VistaKine.content.manageLoadedSections(sectionId);
+            }, 300);
+        }
     },
 
     /**
@@ -434,7 +391,7 @@ VistaKine.navigation = {
     /**
      * Update bottom navigation text and state
      */
-    updateBottomNavigation: function(sectionId) {
+    updateBottomNav: function(sectionId) {
         const currentSectionSpan = document.querySelector('.current-section-name');
         if (!currentSectionSpan) return;
 
@@ -451,214 +408,363 @@ VistaKine.navigation = {
     },
 
     /**
-     * Find the currently visible section in the viewport
+     * Find the most visible section based on current visibility data
+     * This is used by external callers who need to check visibility
+     * @returns {Element|null} The most visible section or null
      */
     findVisibleSection: function() {
-        const sections = VistaKine.dom.getSections();
-        if (!sections || sections.length === 0) return null;
-
-        // Check if we have cached information from IntersectionObserver
-        if (VistaKine.navigation.state.visibleSections &&
-            VistaKine.navigation.state.visibleSections.length > 0) {
-            // Return the section with the highest intersection ratio
-            return VistaKine.navigation.state.visibleSections[0].element;
+        // If we don't have any visible sections, return null
+        if (!this.state.visibleSections || this.state.visibleSections.length === 0) {
+            return null;
         }
 
-        // Fallback to the old method if observer isn't working
-        let bestSection = null;
-        let bestVisibleArea = 0;
+        // Get current active section
+        const currentSection = VistaKine.state.getCurrentSection();
 
-        sections.forEach(section => {
-            const rect = section.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
+        // Find the best section to return
+        let bestSection = this.state.visibleSections[0]; // Most visible by default
 
-            // Calculate visible area
-            const top = Math.max(0, rect.top);
-            const bottom = Math.min(viewportHeight, rect.bottom);
-            const visibleHeight = Math.max(0, bottom - top);
+        // Special handling for the cover section - prioritize it if very visible
+        const coverSection = this.state.visibleSections.find(s => s.id === 'cover');
+        if (coverSection && coverSection.ratio > 0.5) {
+            bestSection = coverSection;
+        }
 
-            if (visibleHeight > bestVisibleArea) {
-                bestVisibleArea = visibleHeight;
-                bestSection = section;
-            }
-        });
+        // Add slight preference for the current section to prevent flickering
+        const currentSectionInView = this.state.visibleSections.find(s => s.id === currentSection);
+        if (currentSectionInView &&
+            currentSectionInView.ratio > 0.4 &&
+            bestSection.ratio - currentSectionInView.ratio < 0.2) {
+            bestSection = currentSectionInView;
+        }
 
-        return bestSection;
+        return bestSection ? bestSection.element : null;
     },
 
     /**
-     * Set up Intersection Observer for more efficient section detection
+     * Set up IntersectionObserver for section visibility detection
      */
     setupIntersectionObserver: function() {
-        // Keep track of visible sections
-        VistaKine.navigation.state.visibleSections = [];
+        // Clear any existing observer
+        if (this.state.observer) {
+            this.state.observer.disconnect();
+        }
 
-        // Determine device type for optimized settings
-        const isMobile = window.matchMedia('(max-width: 479px)').matches;
-        const isTablet = window.matchMedia('(min-width: 480px) and (max-width: 991px)').matches;
+        // Initialize state
+        this.state.visibleSections = [];
+        this.state.pendingUpdate = null;
+        this.state.isDirectNavigation = false;
 
-        // Create the observer with settings optimized for device type
         const options = {
-            root: null, // viewport
-            // Different margins based on device type
-            rootMargin: isMobile ?
-                '50px 0px -5% 0px' : // Mobile has smaller margins (smaller screen)
-                isTablet ?
-                '100px 0px -5% 0px' : // Tablet margins
-                '150px 0px -10% 0px', // Desktop margins
-            // More granular thresholds for better detection
-            threshold: isMobile || isTablet ?
-                [0, 0.05, 0.1, 0.2, 0.3, 0.5] : // Fewer thresholds for mobile/tablet (better performance)
-                [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5] // Desktop thresholds
+            root: null, // Use viewport
+            rootMargin: '0px',
+            threshold: [0.1, 0.5, 0.9] // Just enough thresholds to determine visibility levels
         };
 
-        // Track last section update time to prevent too frequent updates
-        let lastUpdateTime = 0;
-        const updateThrottleMs = isMobile ? 400 : isTablet ? 300 : 150; // More throttling on smaller devices
-
-        VistaKine.navigation.observer = new IntersectionObserver((entries) => {
-            // Flag to determine if we need to update the UI
-            let hasChanges = false;
-
-            // Current time to check for throttling
-            const now = Date.now();
-
-            // Skip processing if we've updated too recently (throttle)
-            if (now - lastUpdateTime < updateThrottleMs) {
+        this.state.observer = new IntersectionObserver((entries) => {
+            // Skip updates during navigation lock or direct navigation
+            if (this.state.navigationLock || this.state.isDirectNavigation) {
+                VistaKine.utils.log('Skipping intersection updates due to active navigation lock', 'debug');
                 return;
             }
 
-            // Update our list of visible sections
+            // Process entries and update visibleSections
             entries.forEach(entry => {
-                // Only log significant intersection changes
+                const sectionId = entry.target.id;
+                const index = this.state.visibleSections.findIndex(s => s.id === sectionId);
+
                 if (entry.isIntersecting) {
-                    VistaKine.utils.log(`Section ${entry.target.id} is visible with ratio: ${entry.intersectionRatio.toFixed(3)}`, 'debug');
-                }
+                    // Add or update section in the visible list
+                    const visibilityScore = entry.intersectionRatio;
 
-                // Threshold is lower on mobile/tablet to ensure we catch sections
-                const visibilityThreshold = isMobile ? 0.03 : isTablet ? 0.02 : 0.005;
-
-                // Add to visible sections if intersecting with sufficient visibility
-                if (entry.isIntersecting && entry.intersectionRatio > visibilityThreshold) {
-                    // Check if this section is already in our visibleSections array
-                    const existingIndex = VistaKine.navigation.state.visibleSections.findIndex(
-                        item => item.element === entry.target
-                    );
-
-                    if (existingIndex >= 0) {
-                        // Update the ratio
-                        const oldRatio = VistaKine.navigation.state.visibleSections[existingIndex].ratio;
-                        const newRatio = entry.intersectionRatio;
-
-                        // Only mark as changed if the ratio changed significantly
-                        // Use a higher threshold for tablets to prevent flickering
-                        const changeThreshold = isTablet ? 0.05 : 0.02;
-
-                        if (Math.abs(oldRatio - newRatio) > changeThreshold) {
-                            VistaKine.navigation.state.visibleSections[existingIndex].ratio = newRatio;
-                            hasChanges = true;
-                        }
-                    } else {
-                        // Add to array
-                        VistaKine.navigation.state.visibleSections.push({
-                            element: entry.target,
-                            ratio: entry.intersectionRatio,
-                            id: entry.target.id
+                    if (index === -1) {
+                        this.state.visibleSections.push({
+                            id: sectionId,
+                            ratio: visibilityScore,
+                            element: entry.target
                         });
-                        hasChanges = true;
+                    } else {
+                        this.state.visibleSections[index].ratio = visibilityScore;
                     }
-                } else if (!entry.isIntersecting) {
-                    // Remove from visible sections if not intersecting
-                    const initialLength = VistaKine.navigation.state.visibleSections.length;
-                    VistaKine.navigation.state.visibleSections = VistaKine.navigation.state.visibleSections.filter(
-                        item => item.element !== entry.target
-                    );
-                    // If we removed something, mark as changed
-                    if (initialLength !== VistaKine.navigation.state.visibleSections.length) {
-                        hasChanges = true;
+
+                    // If section content isn't loaded yet, load it
+                    if (VistaKine.state.isInitialized('content') &&
+                        !VistaKine.state.isSectionLoaded(sectionId)) {
+                        VistaKine.content.loadSection(entry.target);
                     }
+                } else if (index !== -1) {
+                    // Remove from visible list if no longer intersecting
+                    this.state.visibleSections.splice(index, 1);
                 }
             });
 
-            // Only update UI if we have visible sections
-            if (hasChanges) {
-                // If no sections are visible enough, keep the current active section
-                // This prevents losing the active state during transitions
-                if (VistaKine.navigation.state.visibleSections.length === 0) {
-                    VistaKine.utils.log("No sections visible enough, maintaining current active section", "debug");
-                    // Do nothing - keep current active section
-                } else {
-                    // Sort sections by their intersection ratio (highest first)
-                    VistaKine.navigation.state.visibleSections.sort((a, b) => b.ratio - a.ratio);
+            // Sort visible sections by visibility ratio
+            this.state.visibleSections.sort((a, b) => b.ratio - a.ratio);
 
-                    // Select the highest visible section
-                    const topSection = VistaKine.navigation.state.visibleSections[0];
-
-                    // Only update if we have a viable candidate and it's different from current
-                    if (topSection.id && topSection.id !== VistaKine.navigation.state.currentSection) {
-                        VistaKine.utils.log(`Observer detected new section: ${topSection.id} with ratio: ${topSection.ratio.toFixed(3)}`);
-
-                        // Update navigation directly here for immediate feedback
-                        VistaKine.navigation.setActiveSection(topSection.id);
-
-                        // Update last update time
-                        lastUpdateTime = now;
-                    }
-                }
+            // Debounce the section update to prevent rapid changes
+            if (this.state.pendingUpdate) {
+                clearTimeout(this.state.pendingUpdate);
             }
+
+            this.state.pendingUpdate = setTimeout(() => {
+                this.updateActiveFromVisibleSections();
+                this.state.pendingUpdate = null;
+            }, this.state.updateDebounceTime);
         }, options);
 
         // Observe all sections
         const sections = VistaKine.dom.getSections();
         sections.forEach(section => {
-            if (section.id) { // Only observe sections with IDs
-                VistaKine.navigation.observer.observe(section);
-            }
+            this.state.observer.observe(section);
         });
 
-        VistaKine.utils.log(`IntersectionObserver set up, tracking ${sections.length} sections`);
+        VistaKine.utils.log(`IntersectionObserver set up with ${sections.length} sections`);
     },
 
     /**
-     * Helper method to ensure a section becomes visible to the Observer
-     * when navigating to it directly via links
+     * Update active section based on visible sections
+     */
+    updateActiveFromVisibleSections: function() {
+        // Skip updates if navigation is locked or if there's a direct navigation in progress
+        if (this.state.navigationLock || this.state.isDirectNavigation) {
+            VistaKine.utils.log('Skipping automatic section update due to navigation lock', 'debug');
+            return;
+        }
+
+        // Get current active section from state
+        const currentSection = VistaKine.state.getCurrentSection();
+
+        // Find most visible section
+        if (!this.state.visibleSections || this.state.visibleSections.length === 0) {
+            return; // No visible sections to update from
+        }
+
+        // Find the best section to make active
+        const bestSection = this.findBestVisibleSection();
+
+        // Update if we have a valid section that's different from current
+        if (bestSection && bestSection.id !== currentSection) {
+            VistaKine.utils.log(`Auto-updating to section: ${bestSection.id} (visibility: ${bestSection.ratio.toFixed(2)})`, 'debug');
+            this.setActiveSection(bestSection.id);
+        }
+    },
+
+    /**
+     * Find the best section to make active based on visibility
+     * @returns {Object|null} Best section object or null if none found
+     */
+    findBestVisibleSection: function() {
+        if (!this.state.visibleSections || this.state.visibleSections.length === 0) {
+            return null;
+        }
+
+        // Get current active section
+        const currentSection = VistaKine.state.getCurrentSection();
+
+        // Start with the most visible section as default
+        let bestSection = this.state.visibleSections[0];
+
+        // Special handling for the cover section - prioritize it if very visible
+        const coverSection = this.state.visibleSections.find(s => s.id === 'cover');
+        if (coverSection && coverSection.ratio > 0.5) {
+            bestSection = coverSection;
+        }
+
+        // Add slight preference for the current section to prevent flickering
+        // This creates stability by requiring a significant change to switch sections
+        const currentSectionInView = this.state.visibleSections.find(s => s.id === currentSection);
+        if (currentSectionInView &&
+            currentSectionInView.ratio > 0.4 &&
+            bestSection.ratio - currentSectionInView.ratio < 0.2) {
+            bestSection = currentSectionInView;
+        }
+
+        return bestSection;
+    },
+
+    /**
+     * Ensure a section is visible to the user
+     * Used for direct navigation (links, hash changes)
+     * @param {string} sectionId - ID of the section to display
      */
     ensureSectionVisible: function(sectionId) {
-        // Find the section element
+        if (!sectionId) {
+            VistaKine.utils.log('Cannot navigate: No section ID provided', 'error');
+            return;
+        }
+
         const section = document.getElementById(sectionId);
-        if (!section) return;
+        if (!section) {
+            VistaKine.utils.log(`Cannot navigate: Section "${sectionId}" not found`, 'error');
+            return;
+        }
 
-        // First, scroll to it to make it visible
-        section.scrollIntoView({ behavior: 'smooth' });
+        VistaKine.utils.log(`Direct navigation to section: ${sectionId}`);
 
-        // Wait a short time for the scroll to complete
-        setTimeout(() => {
-            // Directly update the active section immediately
-            VistaKine.navigation.setActiveSection(sectionId);
+        // Set navigation lock to prioritize user intent
+        this.state.navigationLock = true;
+        VistaKine.utils.log(`Navigation lock activated for ${this.state.navigationLockDuration}ms - user intent prioritized`, 'info');
 
-            // Ensure content is loaded
+        // Set direct navigation flag to temporarily pause automatic updates
+        this.state.isDirectNavigation = true;
+
+        // Ensure the section is loaded
+        if (VistaKine.state.isInitialized('content') && !VistaKine.state.isSectionLoaded(sectionId)) {
             VistaKine.content.loadSection(section);
+        }
 
-            // Manually add to visibleSections with high ratio to ensure it's selected
-            const existingIndex = VistaKine.navigation.state.visibleSections.findIndex(
-                item => item.element === section
-            );
+        // Update active section immediately
+        this.setActiveSection(sectionId);
 
-            if (existingIndex >= 0) {
-                VistaKine.navigation.state.visibleSections[existingIndex].ratio = 1.0;
-            } else {
-                VistaKine.navigation.state.visibleSections.push({
-                    element: section,
-                    ratio: 1.0,
-                    id: sectionId
-                });
+        // Scroll to the section
+        section.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+
+        // After navigation completes, re-enable automatic updates
+        setTimeout(() => {
+            this.state.isDirectNavigation = false;
+
+            // Load adjacent sections for smoother experience
+            if (VistaKine.state.isInitialized('content')) {
+                this.loadAdjacentSections(sectionId);
             }
 
-            // Sort to ensure this section is at the top
-            VistaKine.navigation.state.visibleSections.sort((a, b) => b.ratio - a.ratio);
+            // Release the navigation lock after the specified duration
+            setTimeout(() => {
+                VistaKine.utils.log('Navigation lock released - resuming normal operation', 'info');
+                this.state.navigationLock = false;
+            }, this.state.navigationLockDuration - 800); // Subtract the time already waited
 
-            VistaKine.utils.log(`Manually ensured section ${sectionId} is visible to Observer`);
-        }, 300);
+        }, 800); // Allow time for smooth scroll to complete
+    },
+
+    /**
+     * Load content for sections adjacent to the current one
+     * @param {string} sectionId - ID of the current section
+     */
+    loadAdjacentSections: function(sectionId) {
+        const allSections = Array.from(VistaKine.dom.getSections());
+        const currentIndex = allSections.findIndex(section => section.id === sectionId);
+
+        if (currentIndex === -1) return;
+
+        // Preload previous and next sections if they exist
+        [-1, 1].forEach(offset => {
+            const adjacentIndex = currentIndex + offset;
+            if (adjacentIndex >= 0 && adjacentIndex < allSections.length) {
+                const adjacentSection = allSections[adjacentIndex];
+                if (!VistaKine.state.isSectionLoaded(adjacentSection.id)) {
+                    VistaKine.utils.log(`Preloading adjacent section: ${adjacentSection.id}`, 'debug');
+                    VistaKine.content.loadSection(adjacentSection);
+                }
+            }
+        });
+    },
+
+    /**
+     * Update the document title
+     */
+    updateDocumentTitle: function(sectionId) {
+        if (!sectionId) return;
+
+        // Find the active link to get its text
+        const activeLink = document.querySelector(`.nav-chapter[href="#${sectionId}"], .nav-subchapter[href="#${sectionId}"]`);
+        if (activeLink) {
+            // Get text but remove any numbers at the end (section numbers)
+            let linkText = activeLink.textContent.trim();
+            linkText = linkText.replace(/\d+$/, '').trim();
+
+            // Update document title
+            document.title = linkText;
+        }
+    },
+
+    /**
+     * Set up the hash change handler
+     * This handles direct URL navigation and the browser back/forward buttons
+     */
+    setupHashChangeHandler: function() {
+        window.addEventListener('hashchange', function(e) {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                VistaKine.utils.log(`Hash changed to: ${hash}`);
+                VistaKine.navigation.ensureSectionVisible(hash);
+            }
+        });
+
+        VistaKine.utils.log('Hash change handler set up');
+    },
+
+    /**
+     * Set up handler for navigation link clicks
+     */
+    setupLinkClickHandler: function() {
+        // Store reference to this for use in event handlers
+        const self = this;
+
+        // Select all navigation links
+        const navLinks = document.querySelectorAll('.nav-chapter, .nav-subchapter');
+
+        // Add click event handler to each link
+        navLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                // Get target section ID from link href
+                const href = link.getAttribute('href');
+                if (!href || !href.startsWith('#')) return;
+
+                const targetId = href.substring(1);
+
+                // Prevent default behavior to handle navigation in JS
+                event.preventDefault();
+
+                // Update URL hash (this will trigger hashchange)
+                window.location.hash = targetId;
+
+                // Set navigation lock to prioritize user intent
+                self.state.navigationLock = true;
+
+                // Use the helper method to handle navigation
+                self.ensureSectionVisible(targetId);
+            });
+        });
+
+        // Also handle the bottom navigation buttons
+        const prevButton = document.querySelector('.prev-nav');
+        const nextButton = document.querySelector('.next-nav');
+
+        if (prevButton) {
+            prevButton.addEventListener('click', () => {
+                // Set navigation lock to prioritize user intent
+                self.state.navigationLock = true;
+                self.goToPrevious();
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener('click', () => {
+                // Set navigation lock to prioritize user intent
+                self.state.navigationLock = true;
+                self.goToNext();
+            });
+        }
+
+        VistaKine.utils.log('Navigation link handlers set up');
+    },
+
+    /**
+     * Reset the navigation state
+     * For backward compatibility - recenter's the current section
+     */
+    resetNavigationState: function() {
+        VistaKine.utils.log('Navigation reset requested');
+
+        // Simply re-focus on the current section
+        const currentSection = VistaKine.state.getCurrentSection();
+        if (currentSection) {
+            this.ensureSectionVisible(currentSection);
+        }
     },
 };
 
@@ -666,7 +772,7 @@ VistaKine.navigation = {
 document.addEventListener('DOMContentLoaded', function() {
     // Check if core is initialized before proceeding
     const initInterval = setInterval(function() {
-        if (window.VistaKine && VistaKine.state && VistaKine.state.initialized.core) {
+        if (window.VistaKine && VistaKine.state && VistaKine.state.isInitialized('core')) {
             clearInterval(initInterval);
             VistaKine.navigation.init();
         }

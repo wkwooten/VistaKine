@@ -23,13 +23,15 @@ VistaKine.loader = {
         'navigation': 'js/core/navigation-module.js',
         'sidebar': 'js/core/sidebar-module.js',
         'content': 'js/core/content-module.js',
+        'settings': 'js/core/settings-module.js',
         'visualization': 'js/visualization/visualization-engine.js'
     },
 
     // Module dependencies
     dependencies: {
         'navigation': ['core'],
-        'sidebar': ['core', 'navigation'],
+        'sidebar': ['core'],
+        'settings': ['core', 'sidebar'],
         'content': ['core', 'navigation'],
         'visualization': ['core', 'content']
     },
@@ -47,9 +49,10 @@ VistaKine.loader = {
             this.loadModule('core', function() {
                 this.debugMode && console.log('Core module loaded, proceeding with remaining modules');
 
-                // Load the rest of the modules
-                this.loadModule('navigation');
+                // Load the rest of the modules with sidebar first
                 this.loadModule('sidebar');
+                this.loadModule('settings');
+                this.loadModule('navigation');
                 this.loadModule('content');
                 this.loadModule('visualization', () => {
                     // After visualization is loaded, check if it initialized properly
@@ -187,15 +190,7 @@ VistaKine.loader = {
             console.log('Fallback initialization triggered');
 
             // Check if we need to initialize any core components
-            if (typeof VistaKine.content === 'object' && typeof VistaKine.content.init === 'function' && !VistaKine.content.initialized) {
-                console.log('Initializing content module from fallback');
-                try {
-                    VistaKine.content.init();
-                } catch (e) {
-                    console.error('Error during content fallback initialization', e);
-                }
-            }
-
+            // Start with sidebar first
             if (typeof VistaKine.sidebar === 'object' && typeof VistaKine.sidebar.init === 'function' && !VistaKine.sidebar.initialized) {
                 console.log('Initializing sidebar module from fallback');
                 try {
@@ -205,12 +200,31 @@ VistaKine.loader = {
                 }
             }
 
+            // Initialize settings module
+            if (typeof VistaKine.settings === 'object' && typeof VistaKine.settings.init === 'function' && !VistaKine.settings.initialized) {
+                console.log('Initializing settings module from fallback');
+                try {
+                    VistaKine.settings.init();
+                } catch (e) {
+                    console.error('Error during settings fallback initialization', e);
+                }
+            }
+
             if (typeof VistaKine.navigation === 'object' && typeof VistaKine.navigation.init === 'function' && !VistaKine.navigation.initialized) {
                 console.log('Initializing navigation module from fallback');
                 try {
                     VistaKine.navigation.init();
                 } catch (e) {
                     console.error('Error during navigation fallback initialization', e);
+                }
+            }
+
+            if (typeof VistaKine.content === 'object' && typeof VistaKine.content.init === 'function' && !VistaKine.content.initialized) {
+                console.log('Initializing content module from fallback');
+                try {
+                    VistaKine.content.init();
+                } catch (e) {
+                    console.error('Error during content fallback initialization', e);
                 }
             }
 
@@ -339,4 +353,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Starting loader initialization');
         VistaKine.loader.init();
     }, 50);
+
+    // Initialize the main VistaKine object
+    VistaKine.init();
+
+    // Mark sections as unloaded immediately
+    const sections = document.querySelectorAll('.section-container');
+    sections.forEach(section => {
+        section.classList.add('unloaded');
+    });
 });

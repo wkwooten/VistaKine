@@ -20,8 +20,8 @@
 .sidebar {
 	height: 100vh;
 	width: var(--sidebar-width-full);
-	background-color: rgba(255, 255, 255, 0.75);
-	border-right: 1px solid rgba(255, 255, 255, 0.8);
+	background-color: var(--section-cover-bg);
+	border-right: 1px solid var(--border-color);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
@@ -71,12 +71,12 @@
 }
 
 .sidebar-header:hover {
-	background-color: rgba(0, 0, 0, 0.02);
+	background-color: var(--hover-bg);
 	/* Subtle highlight on hover */
 }
 
 .sidebar-header:active {
-	background-color: rgba(0, 0, 0, 0.05);
+	background-color: var(--active-bg);
 	/* Subtle feedback on click */
 }
 
@@ -117,7 +117,7 @@
 .sidebar .search-container input {
 	width: 100%;
 	padding: var(--spacing-sm) 0.75rem;
-	border: 1px solid #ddd;
+	border: 1px solid var(--border-color);
 	border-radius: 4px;
 	font-size: 0.9rem;
 }
@@ -127,9 +127,13 @@
 	right: 2rem;
 	top: 50%;
 	transform: translateY(-50%);
-	color: #999;
+	color: var(--text-light);
 	opacity: 1;
 	z-index: 5;
+}
+
+.search-container {
+	margin-block: var(--spacing-sm);
 }
 
 /* ========== ACTION BUTTONS ========== */
@@ -168,7 +172,7 @@
 }
 
 .show-nav-toggle:hover {
-	background-color: #f8f8f8;
+	background-color: var(--hover-bg);
 	transform: translateY(-2px);
 	box-shadow: var(--shadow-lg);
 }
@@ -189,6 +193,25 @@
 	/* Add mask for content to prevent overlap with toggle button */
 	mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
 	-webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+	scrollbar-width: thin;
+}
+
+/* Customize scrollbar for webkit browsers */
+.sidebar-nav::-webkit-scrollbar {
+	width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+	background: var(--hover-bg);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+	background: var(--hover-color);
+	border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+	background: var(--active-bg);
 }
 
 /* ========== NAVIGATION ELEMENTS ========== */
@@ -206,16 +229,18 @@
 	font-weight: 500;
 	gap: var(--spacing-sm);
 	margin-bottom: 2px;
+	padding-right: 32px;
+	/* Make room for expand indicator */
 }
 
 .nav-chapter:hover {
 	background-color: var(--hover-bg);
-	color: var(--text-color);
+	color: var(--link-color);
 }
 
 .nav-chapter.active {
 	background-color: var(--active-bg);
-	color: var(--primary-color);
+	color: var(--link-color);
 	font-weight: 500;
 }
 
@@ -233,7 +258,7 @@
 	justify-content: center;
 	width: 24px;
 	height: 24px;
-	background-color: #f0f0f0;
+	background-color: var(--section-about-bg);
 	color: var(--text-light);
 	border-radius: 50%;
 	font-size: var(--text-sm);
@@ -244,7 +269,7 @@
 
 /* Hover feedback for chapter numbers */
 .nav-chapter:hover .chapter-number {
-	background-color: #e8e8e8;
+	background-color: var(--hover-color);
 }
 
 /* Active chapter styling */
@@ -294,9 +319,19 @@
 	padding-left: var(--spacing-sm);
 	gap: 2px;
 	transition: all 0.2s ease-in-out;
-	max-height: 1000px;
-	/* Default max height that should accommodate most lists */
+	max-height: 0;
+	/* Default collapsed state */
 	overflow: hidden;
+	opacity: 0.8;
+	visibility: hidden;
+}
+
+.subchapter-list.expanded {
+	max-height: 1000px;
+	/* Large enough for any number of subchapters */
+	opacity: 1;
+	visibility: visible;
+	margin-bottom: var(--spacing-sm);
 }
 
 .nav-subchapter {
@@ -313,11 +348,11 @@
 
 .nav-subchapter:hover {
 	background-color: var(--hover-bg);
-	color: var(--text-color);
+	color: var(--link-color);
 }
 
 .nav-subchapter.active {
-	color: var(--primary-color);
+	color: var(--link-color);
 	background-color: var(--active-bg);
 	font-weight: 500;
 	position: relative;
@@ -334,6 +369,22 @@
 	background-color: var(--primary-color);
 }
 
+/* Add expand/collapse indicator to chapter links */
+.nav-chapter::after {
+	content: "⌵";
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	transition: transform 0.2s ease;
+	font-size: 1rem;
+	opacity: 0.6;
+}
+
+.nav-chapter.collapsed::after {
+	transform: translateY(-50%) rotate(-90deg);
+}
+
 /* ========== TOGGLE BUTTON (former resize handle) ========== */
 .sidebar-resize-handle {
 	position: absolute;
@@ -345,7 +396,7 @@
 	cursor: pointer;
 	z-index: 101;
 	/* Increased to ensure it's above other elements */
-	background-color: white;
+	background-color: var(--section-cover-bg);
 	border-radius: 0 6px 6px 0;
 	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 	display: flex;
@@ -375,13 +426,13 @@
 
 /* Make it more visible on hover */
 .sidebar-resize-handle:hover::before {
-	color: var(--primary-color);
+	color: var(--link-color);
 	transform: scale(1.2);
 }
 
 /* Show highlighted area when hovering */
 .sidebar-resize-handle:hover {
-	background-color: white;
+	background-color: var(--section-cover-bg);
 	box-shadow: 3px 0 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -395,7 +446,7 @@
 /* 1. Mini-collapsed state */
 .sidebar.mini-collapsed {
 	width: var(--sidebar-width-mini);
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: var(--section-cover-bg);
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
 }
@@ -463,8 +514,8 @@
 	height: var(--chapter-icon-size-mini);
 	font-size: 1.1rem;
 	margin: 0;
-	background-color: white;
-	border: 1px solid #e0e0e0;
+	background-color: var(--section-cover-bg);
+	border: 1px solid var(--border-color);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -500,7 +551,7 @@
 .sidebar.collapsed.active,
 .sidebar.active {
 	transform: translateX(0);
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: var(--section-cover-bg);
 	box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 	left: 0 !important;
 	/* Force left position */
@@ -606,7 +657,7 @@
 
 	/* Improved styling for parent-active - remove background color override */
 	.sidebar.active .nav-chapter.parent-active {
-		color: var(--primary-color) !important;
+		color: var(--link-color) !important;
 		font-weight: 500 !important;
 	}
 
@@ -785,7 +836,7 @@
 	}
 
 	.sidebar-close:hover {
-		color: var(--primary-color);
+		color: var(--link-color);
 	}
 
 	/* Toggle button styling */
@@ -806,4 +857,113 @@
 		visibility: hidden !important;
 		/* Extra hiding for older browsers */
 	}
+
+	.sidebar.active .sidebar-footer {
+		padding: 12px;
+		width: 100% !important;
+	}
+
+	.sidebar.active .settings-button span {
+		display: block !important;
+	}
+
+	.sidebar.active .settings-button i {
+		margin-right: 8px !important;
+	}
+}
+
+/* Add settings button container at the bottom */
+.sidebar-footer {
+	flex-shrink: 0;
+	padding: 12px;
+	border-top: 1px solid rgba(0, 0, 0, 0.06);
+	margin-top: auto;
+	background-color: transparent;
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+}
+
+.settings-button {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	padding: 10px 12px;
+	background-color: transparent !important;
+	border: none;
+	border-radius: 6px;
+	color: var(--text-light) !important;
+	cursor: pointer;
+	transition: background-color 0.2s;
+	font-family: var(--heading-font);
+	font-weight: 500;
+}
+
+.settings-button:hover {
+	background-color: rgba(0, 0, 0, 0.05) !important;
+	color: var(--link-color) !important;
+}
+
+.settings-button i {
+	margin-right: 8px;
+	font-size: 1.2em;
+	opacity: 0.7;
+}
+
+/* Mini collapsed state adjustments for settings button */
+.sidebar.mini-collapsed .sidebar-footer {
+	padding: 8px;
+}
+
+.sidebar.mini-collapsed .settings-button span {
+	display: none;
+}
+
+.sidebar.mini-collapsed .settings-button i {
+	margin-right: 0;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: 1.4em;
+}
+
+/* Add this rule to hide chevrons for special sections */
+.nav-chapter:has(.ph) {
+	padding-right: var(--spacing-sm);
+	/* Reduce padding since no chevron */
+}
+
+.nav-chapter:has(.ph)::after {
+	display: none;
+	/* Hide chevron for sections with icons */
+}
+
+/* Hide chevrons when sidebar is mini-collapsed */
+.sidebar.mini-collapsed .nav-chapter::after {
+	display: none;
+}
+
+.sidebar .settings-button {
+	display: flex;
+	align-items: center;
+	padding: 10px;
+	background-color: transparent !important;
+	color: var(--text-light) !important;
+	border: none;
+	cursor: pointer;
+	width: 100%;
+	font-size: 0.9rem;
+	transition: all 0.3s ease;
+	border-radius: 0;
+	text-align: left;
+	opacity: 0.7;
+}
+
+.sidebar .settings-button:hover {
+	background-color: rgba(0, 0, 0, 0.05) !important;
+	color: var(--link-color) !important;
+}
+
+.sidebar .settings-button i {
+	font-size: 1.2rem;
+	margin-right: 10px;
+	opacity: 0.7;
 }

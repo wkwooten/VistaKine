@@ -350,6 +350,7 @@
 /* Search container */
 .sidebar .search-container {
 	padding: var(--spacing-md) var(--spacing-lg);
+	margin-block: var(--spacing-lg);
 	border-bottom: 1px solid var(--border-color);
 	position: relative;
 	transition: all 0.3s ease;

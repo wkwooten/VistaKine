@@ -344,6 +344,9 @@ class VisualizationEngine {
                 case 'coordinate-intro':
                     this.createCoordinateSystem(container, vizId);
                     break;
+                case 'physics-playground':
+                    this.createPhysicsPlayground(container, vizId);
+                    break;
                 // Add more visualization types here
                 default:
                     console.warn(`Unknown visualization type: ${vizId}, using default scene`);
@@ -554,6 +557,32 @@ class VisualizationEngine {
             container.dataset.prevBodyOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden'; // Prevent scrolling while in fullscreen
 
+            // Store original z-index if it exists
+            if (container.style.zIndex) {
+                container.dataset.originalZIndex = container.style.zIndex;
+            }
+
+            // Store more information about the original position
+            if (container.parentNode) {
+                // Store parent ID if available
+                container.dataset.originalParent = container.parentNode.id || 'unknown';
+
+                // Store parent selector path for more accurate restoration
+                const path = this.getElementPath(container.parentNode);
+                container.dataset.originalParentPath = path;
+
+                // Store position among siblings for insertion order
+                const siblings = Array.from(container.parentNode.children);
+                const index = siblings.indexOf(container);
+                container.dataset.originalIndex = index;
+
+                // Store section ID if available
+                const sectionEl = container.closest('[data-section-id]');
+                if (sectionEl) {
+                    container.dataset.originalSection = sectionEl.getAttribute('data-section-id');
+                }
+            }
+
             // Add a close button if it doesn't exist yet
             if (!container.querySelector('.viz-close-button')) {
                 const closeButton = document.createElement('button');
@@ -581,8 +610,6 @@ class VisualizationEngine {
 
             // Move to body to avoid layout issues
             if (container.parentNode !== document.body) {
-                // Save original parent for restoration
-                container.dataset.originalParent = container.parentNode.id || 'unknown';
                 document.body.appendChild(container);
             }
         } else {
@@ -595,33 +622,19 @@ class VisualizationEngine {
                 this.escKeyListener = null;
             }
 
-            // Restore to original parent
-            if (container.dataset.originalParent && container.dataset.originalParent !== 'unknown') {
-                const originalParent = document.getElementById(container.dataset.originalParent);
-                if (originalParent) {
-                    // Find the section-text element that originally contained this
-                    const originalContainer = originalParent.querySelector(`.section-content[data-src*="chapter1-intro.html"]`);
-                    if (originalContainer) {
-                        // Find the specific content-section that should contain this visualization
-                        const contentSections = originalContainer.querySelectorAll('.content-section');
-                        if (contentSections.length > 0) {
-                            // Typically the first content section with a visualization container
-                            for (const section of contentSections) {
-                                if (section.querySelector('.visualization-container') === null) {
-                                    section.querySelector('.section-text:nth-of-type(1)').after(container);
-                                    break;
-                                }
-                            }
-                        } else {
-                            originalContainer.appendChild(container);
-                        }
-                    } else {
-                        originalParent.appendChild(container);
-                    }
-                } else {
-                    // Fallback if original parent not found
-                    document.getElementById('book-content').appendChild(container);
-                }
+            // Restore to original parent using multiple fallback methods
+            this.restoreContainerToOriginalPosition(container);
+
+            // Force a reflow to ensure proper positioning
+            container.style.display = 'none';
+            void container.offsetHeight; // Trigger reflow
+            container.style.display = '';
+
+            // Restore original z-index if it was saved
+            if (container.dataset.originalZIndex) {
+                container.style.zIndex = container.dataset.originalZIndex;
+            } else {
+                container.style.zIndex = ''; // Reset to default
             }
         }
 
@@ -640,19 +653,8 @@ class VisualizationEngine {
                     sceneData.camera.aspect = width / height;
                     sceneData.camera.updateProjectionMatrix();
                 }
-
-                // Ensure canvas is properly positioned
-                if (sceneData.renderer.domElement) {
-                    const canvas = sceneData.renderer.domElement;
-                    canvas.style.position = 'absolute';
-                    canvas.style.left = '0';
-                    canvas.style.top = '0';
-                }
             }
-
-            // Trigger a general resize
-            this.handleResize();
-        }, 100); // Small delay to ensure transition has started
+        }, 300); // Wait for transitions to complete
 
         // Update button icon
         const expandButton = container.querySelector('.viz-expand-button i');
@@ -662,6 +664,127 @@ class VisualizationEngine {
             } else {
                 expandButton.className = 'ph ph-arrows-out';
             }
+        }
+    }
+
+    /**
+     * Get a CSS selector path for an element
+     */
+    getElementPath(element) {
+        if (!element || element === document.body) return '';
+
+        let current = element;
+        let path = '';
+
+        while (current && current !== document.body) {
+            let selector = current.tagName.toLowerCase();
+
+            // Add id if available (most specific)
+            if (current.id) {
+                selector += '#' + current.id;
+            }
+            // Add classes
+            else if (current.className) {
+                const classes = current.className.split(/\s+/).filter(c => c);
+                selector += '.' + classes.join('.');
+            }
+
+            // Add position among siblings of same type
+            const siblings = Array.from(current.parentNode.children).filter(
+                node => node.tagName === current.tagName
+            );
+            if (siblings.length > 1) {
+                const index = siblings.indexOf(current) + 1;
+                selector += `:nth-of-type(${index})`;
+            }
+
+            path = selector + (path ? ' > ' + path : '');
+            current = current.parentNode;
+        }
+
+        return path;
+    }
+
+    /**
+     * Restore container to its original position using multiple fallback methods
+     */
+    restoreContainerToOriginalPosition(container) {
+        // Method 1: Try to find by original parent ID
+        if (container.dataset.originalParent && container.dataset.originalParent !== 'unknown') {
+            const originalParent = document.getElementById(container.dataset.originalParent);
+            if (originalParent) {
+                console.log('Restoring container to original parent by ID');
+
+                // If we know the original index, try to insert at that position
+                const index = parseInt(container.dataset.originalIndex);
+                if (!isNaN(index) && index >= 0 && index < originalParent.children.length) {
+                    const referenceNode = originalParent.children[index];
+                    originalParent.insertBefore(container, referenceNode);
+                } else {
+                    originalParent.appendChild(container);
+                }
+                return;
+            }
+        }
+
+        // Method 2: Try to find by original parent path
+        if (container.dataset.originalParentPath) {
+            try {
+                const originalParent = document.querySelector(container.dataset.originalParentPath);
+                if (originalParent) {
+                    console.log('Restoring container to original parent by selector path');
+                    originalParent.appendChild(container);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Error restoring by path:', e);
+            }
+        }
+
+        // Method 3: Try to find by section ID
+        if (container.dataset.originalSection) {
+            const sectionEl = document.querySelector(`[data-section-id="${container.dataset.originalSection}"]`);
+            if (sectionEl) {
+                // Look for visualization container placeholders
+                const placeholders = sectionEl.querySelectorAll('.visualization-placeholder, .content-section');
+                for (const placeholder of placeholders) {
+                    // Check if this placeholder doesn't already have a visualization
+                    if (!placeholder.querySelector('.visualization-container')) {
+                        console.log('Restoring container to section placeholder');
+                        placeholder.appendChild(container);
+                        return;
+                    }
+                }
+
+                // If no placeholder found, just append to the section
+                console.log('Restoring container to section');
+                sectionEl.appendChild(container);
+                return;
+            }
+        }
+
+        // Method 4: Look for empty visualization placeholders in the currently active section
+        const activeSection = document.querySelector('.section-content.active');
+        if (activeSection) {
+            const placeholders = activeSection.querySelectorAll('.visualization-placeholder, .content-section');
+            for (const placeholder of placeholders) {
+                // Check if this placeholder doesn't already have a visualization
+                if (!placeholder.querySelector('.visualization-container')) {
+                    console.log('Restoring container to active section placeholder');
+                    placeholder.appendChild(container);
+                    return;
+                }
+            }
+        }
+
+        // Final fallback: Append to main content container
+        console.log('Using fallback: restoring to book-content');
+        const bookContent = document.getElementById('book-content');
+        if (bookContent) {
+            bookContent.appendChild(container);
+        } else {
+            // Absolute last resort
+            document.body.appendChild(container);
         }
     }
 
@@ -861,7 +984,7 @@ class VisualizationEngine {
         canvas.height = 64;
 
         // Draw text on canvas
-        context.fillStyle = '#ffffff';
+        context.fillStyle = 'var(--text-color)';
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.font = 'bold 48px Arial';
         context.fillStyle = '#' + color.toString(16).padStart(6, '0');
@@ -1017,6 +1140,68 @@ class VisualizationEngine {
             renderer,
             container
         });
+    }
+
+    /**
+     * Create a physics playground visualization
+     */
+    createPhysicsPlayground(container, id) {
+        console.log('Creating physics playground visualization');
+
+        // Dynamically import the physics playground module
+        import('./physics-playground.js')
+            .then(module => {
+                // Create a new physics playground instance
+                console.log('Physics playground module loaded');
+                const PhysicsPlayground = module.default;
+                const playground = new PhysicsPlayground(container, this);
+
+                // Initialize the playground
+                playground.init()
+                    .then(success => {
+                        if (success) {
+                            console.log('Physics playground initialized successfully');
+                            // Store in scenes map for management
+                            this.scenes.set(id, {
+                                container,
+                                playground,
+                                type: 'physics'
+                            });
+
+                            // Mark container as initialized
+                            container.removeAttribute('data-viz-processing');
+                            container.setAttribute('data-viz-initialized', 'true');
+                        } else {
+                            console.error('Failed to initialize physics playground');
+                            this.createDefaultScene(container, id);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error initializing physics playground:', error);
+                        this.createDefaultScene(container, id);
+                    });
+            })
+            .catch(error => {
+                console.error('Error loading physics playground module:', error);
+                this.createDefaultScene(container, id);
+            });
+    }
+
+    /**
+     * Get the active physics playground instance if any
+     */
+    getActivePlayground() {
+        // Loop through all initialized containers
+        for (const containerId in this.scenes) {
+            const container = this.scenes[containerId];
+
+            // Check if this container has a physics playground
+            if (container && container.playground) {
+                return container.playground;
+            }
+        }
+
+        return null;
     }
 }
 

@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# VistaKine Project Rules
+
+- Please refer to the [STYLE_GUIDE.md](mdc:STYLE_GUIDE.md) for reference when making any changes to the css.
+- Don't be a yes man. If you feel that an idea is illogical or has serious flaws, I want to know. I dont mind a bit of pushback when it comes to making the best product possible.
+- Ask questions if my prompt isn't clear. I'm human and I make human mistakes all the time. Sometimes I dont communicate my ideas in the best way so I please ask questions if you need to.
+- Avoid writing comments every line, instead focus on the why instead of the what. I would much prefer an impactful comment that explains the function of the component it belongs to.
+

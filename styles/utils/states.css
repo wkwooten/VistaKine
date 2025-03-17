@@ -87,7 +87,7 @@
 	font-family: var(--heading-font);
 	color: var(--text-light);
 	font-size: 1rem;
-	background: #fff;
+	background: var(--section-cover-bg);
 	height: 36px;
 	width: 36px;
 	display: flex;
@@ -95,15 +95,14 @@
 	justify-content: center;
 	border-radius: 50%;
 	border: 1px solid var(--border-color);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	box-shadow: var(--shadow-sm);
 	transition: all 0.3s ease;
 }
 
 .section-inner:hover .page-number {
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--shadow-md);
 	border-color: var(--accent-color);
-	color: var(--accent-color);
 }
 
 /* Mobile text expansion system */

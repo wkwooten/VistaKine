@@ -49,16 +49,89 @@
 
 /* Components */
 @import 'components/sidebar.css';
-/* Combined sidebar and navigation styles */
-/* @import 'components/sidebar.css'; */
-/* @import 'components/navigation.css'; */
-@import 'components/cover.css';
-@import 'components/visualization.css';
-@import 'components/content.css';
-@import 'components/interactive.css';
-@import 'components/features.css';
 @import 'components/section-loader.css';
+@import 'components/settings-panel.css';
+@import 'components/visualization.css';
+@import 'components/cover.css';
 
 /* Utilities */
 @import 'utils/breakpoints.css';
 @import 'utils/states.css';
+
+/* Theme support - Additional variables not defined in variables.css */
+:root {
+	/* Common structural variables */
+	--bg-color: var(--section-cover-bg);
+	--body-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Map theme-light/dark to our root.light-theme/dark-theme for backward compatibility */
+body.theme-light {
+	/* No special styling needed - this is the default */
+}
+
+body.theme-dark {
+	/* This ensures components using the theme-dark class will still work */
+	background-color: var(--section-cover-bg);
+	color: var(--text-color);
+}
+
+/* High contrast theme adjustments */
+.high-contrast {
+	--border-color: var(--primary-color);
+	--hover-bg: rgba(0, 0, 0, 0.1);
+	--active-bg: rgba(0, 0, 255, 0.2);
+}
+
+/* Font size variations */
+.font-small {
+	--text-base-size: 0.9rem;
+	--text-scale-ratio: 1.2;
+}
+
+.font-medium {
+	/* Default is already set in variables.css */
+}
+
+.font-large {
+	--text-base-size: 1.1rem;
+	--text-scale-ratio: 1.25;
+}
+
+/* Accessibility styles */
+.reduced-motion,
+.reduced-motion * {
+	transition-duration: 0.001s !important;
+	animation-duration: 0.001s !important;
+}
+
+.disable-animations,
+.disable-animations * {
+	transition: none !important;
+	animation: none !important;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+.reduced-motion html {
+	scroll-behavior: auto;
+}
+
+body {
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	font-family: var(--body-font);
+	line-height: 1.6;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	font-size: var(--text-base-size);
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+}

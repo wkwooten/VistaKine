@@ -94,6 +94,75 @@
             margin: 5px 0;
             padding: 8px 0;
         }
+        /* Add performance debug panel styles */
+        #performance-panel {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-family: monospace;
+            z-index: 1000;
+            width: 220px;
+            user-select: none;
+        }
+
+        #performance-panel h3 {
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        .perf-section {
+            margin-bottom: 10px;
+        }
+
+        .perf-section h4 {
+            margin: 5px 0;
+            color: #88ccff;
+            font-size: 13px;
+        }
+
+        .perf-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+
+        .metric-value {
+            font-weight: bold;
+        }
+
+        .low {
+            color: #88ff88;
+        }
+
+        .medium {
+            color: #ffff88;
+        }
+
+        .high {
+            color: #ff8888;
+        }
+
+        .memory-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+
+        .memory-used {
+            height: 100%;
+            background: linear-gradient(to right, #88ff88, #ffff88, #ff8888);
+            width: 0%;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +176,82 @@
             <h4 style="margin: 5px 0;">Transform Options</h4>
             <button id="translate-btn" class="transform-mode-btn">Translate (G)</button>
             <button id="rotate-btn" class="transform-mode-btn">Rotate (R)</button>
+        </div>
+    </div>
+
+    <!-- Add Performance Debug Panel -->
+    <div id="performance-panel">
+        <h3>Performance Metrics</h3>
+
+        <div class="perf-section">
+            <h4>Rendering</h4>
+            <div class="perf-metric">
+                <span>FPS:</span>
+                <span id="perf-fps" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Frame Time:</span>
+                <span id="perf-frame-time" class="metric-value">0 ms</span>
+            </div>
+            <div class="perf-metric">
+                <span>Draw Calls:</span>
+                <span id="perf-draw-calls" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Triangles:</span>
+                <span id="perf-triangles" class="metric-value">0</span>
+            </div>
+        </div>
+
+        <div class="perf-section">
+            <h4>Physics</h4>
+            <div class="perf-metric">
+                <span>Physics Time:</span>
+                <span id="perf-physics-time" class="metric-value">0 ms</span>
+            </div>
+            <div class="perf-metric">
+                <span>Active Bodies:</span>
+                <span id="perf-active-bodies" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Sleeping Bodies:</span>
+                <span id="perf-sleeping-bodies" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Collisions:</span>
+                <span id="perf-collisions" class="metric-value">0</span>
+            </div>
+        </div>
+
+        <div class="perf-section">
+            <h4>Memory</h4>
+            <div class="perf-metric">
+                <span>JS Heap:</span>
+                <span id="perf-memory-used" class="metric-value">0 MB</span>
+            </div>
+            <div class="memory-bar">
+                <div id="memory-bar-used" class="memory-used"></div>
+            </div>
+            <div class="perf-metric">
+                <span>Heap Limit:</span>
+                <span id="perf-memory-limit" class="metric-value">0 MB</span>
+            </div>
+        </div>
+
+        <div class="perf-section">
+            <h4>Scene</h4>
+            <div class="perf-metric">
+                <span>Objects:</span>
+                <span id="perf-object-count" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Textures:</span>
+                <span id="perf-texture-count" class="metric-value">0</span>
+            </div>
+            <div class="perf-metric">
+                <span>Geometries:</span>
+                <span id="perf-geometry-count" class="metric-value">0</span>
+            </div>
         </div>
     </div>
 
@@ -137,6 +282,41 @@
         import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
         import RAPIER from '@dimforge/rapier3d-compat';
 
+        // Add memory estimation function for Firefox and other browsers without performance.memory
+        window.VistaKineMemoryEstimate = function() {
+            // Default values
+            let memoryInfo = {
+                used: 0,
+                limit: 2048 // Default estimate of 2GB limit
+            };
+
+            // If Chrome's performance.memory is available, use it
+            if (window.performance && window.performance.memory) {
+                memoryInfo.used = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                memoryInfo.limit = Math.round(window.performance.memory.jsHeapSizeLimit / (1024 * 1024));
+                return memoryInfo;
+            }
+
+            // For Firefox and other browsers, use a rough estimation based on objects in the scene
+            try {
+                // Estimate based on app.objects if available
+                if (window.app && window.app.objects) {
+                    const objectCount = window.app.objects.length;
+                    // Rough estimate: each physics object is ~1MB of memory
+                    const objectMemory = objectCount * 1;
+
+                    // Base memory for the engine and scene
+                    const baseMemory = 50; // Rough estimate for engine, scene, renderer
+
+                    memoryInfo.used = baseMemory + objectMemory;
+                }
+            } catch (e) {
+                console.warn("Error estimating memory usage:", e);
+            }
+
+            return memoryInfo;
+        };
+
         // Main Application Class
         class PhysicsSandbox {
             constructor() {
@@ -146,6 +326,24 @@
                 this.lastTime = 0;
                 this.frameCount = 0;
                 this.lastFpsUpdate = 0;
+
+                // Performance monitoring properties
+                this.perfStats = {
+                    fps: 0,
+                    frameTime: 0,
+                    physicsTime: 0,
+                    drawCalls: 0,
+                    triangles: 0,
+                    activeBodies: 0,
+                    sleepingBodies: 0,
+                    collisions: 0,
+                    objectCount: 0,
+                    textureCount: 0,
+                    geometryCount: 0,
+                    memoryUsed: 0,
+                    memoryLimit: 0,
+                    lastPhysicsStart: 0
+                };
 
                 // Physics is always enabled
                 this.physicsEnabled = true;
@@ -282,6 +480,9 @@
 
                 // Create clear all button
                 this.createButton(buttonGroup, 'Clear All', () => this.clearAllObjects());
+
+                // Add stress test button for performance testing
+                this.createButton(buttonGroup, 'Run Stress Test', () => this.runStressTest());
             }
 
             // Create button helper
@@ -407,12 +608,9 @@
                 await RAPIER.init();
                 this.RAPIER = RAPIER;
 
-                // Create physics world
-                this.world = new RAPIER.World({
-                    x: 0.0,
-                    y: -9.81,
-                    z: 0.0
-                });
+                // Create physics world with modern format
+                const gravity = { x: 0.0, y: -9.81, z: 0.0 };
+                this.world = new RAPIER.World(gravity);
 
                 // Ground dimensions
                 const groundSize = 40;
@@ -1815,6 +2013,9 @@
                 // Update physics
                 this.updatePhysics();
 
+                // Update performance metrics
+                this.updatePerformanceMetrics(time);
+
                 // Synchronize visual meshes with physics bodies
                 this.synchronizeVisuals();
 
@@ -1848,6 +2049,10 @@
             updatePhysics() {
                 if (!this.physicsEnabled || !this.world) return;
 
+                // Start timing physics update
+                const physicsStartTime = performance.now();
+                this.perfStats.lastPhysicsStart = physicsStartTime;
+
                 // Configure solver for better constraint resolution if not already done
                 if (!this.solverConfigured) {
                     // Increase solver iterations for better constraint handling
@@ -1866,8 +2071,8 @@
                     this.world.step();
                 }
 
-                // We don't need to update object positions here anymore
-                // since the synchronizeVisuals method will handle it
+                // Calculate physics update time
+                this.perfStats.physicsTime = performance.now() - physicsStartTime;
             }
 
             // Create position marker to show where objects will land
@@ -2123,6 +2328,195 @@
                 if (this.physicsDebugEnabled) {
                     this.showPhysicsDebug();
                 }
+            }
+
+            // Add new method to update performance metrics
+            updatePerformanceMetrics(time) {
+                // Calculate frame time
+                const frameTime = time - this.lastTime;
+                this.perfStats.frameTime = frameTime;
+
+                // Update FPS (already calculated elsewhere)
+                this.perfStats.fps = Math.round(this.frameCount * 1000 / (time - this.lastFpsUpdate));
+
+                // Get renderer stats
+                if (this.renderer && this.renderer.info) {
+                    const info = this.renderer.info;
+                    this.perfStats.drawCalls = info.render ? info.render.calls : 0;
+                    this.perfStats.triangles = info.render ? info.render.triangles : 0;
+                    this.perfStats.textureCount = info.memory ? info.memory.textures : 0;
+                    this.perfStats.geometryCount = info.memory ? info.memory.geometries : 0;
+                }
+
+                // Get physics stats
+                if (this.world) {
+                    // Count active and sleeping bodies
+                    let activeBodies = 0;
+                    let sleepingBodies = 0;
+
+                    this.objects.forEach(obj => {
+                        if (obj.body) {
+                            if (obj.body.isSleeping()) {
+                                sleepingBodies++;
+                            } else {
+                                activeBodies++;
+                            }
+                        }
+                    });
+
+                    this.perfStats.activeBodies = activeBodies;
+                    this.perfStats.sleepingBodies = sleepingBodies;
+
+                    // Handle collision counting safely
+                    try {
+                        // Try different methods based on Rapier version
+                        if (typeof this.world.contactPairs === 'function') {
+                            // Modern Rapier version
+                            const contactPairs = this.world.contactPairs(true);
+                            this.perfStats.collisions = contactPairs.length;
+                        } else if (typeof this.world.getContactPairs === 'function') {
+                            // Older Rapier version
+                            const contactPairs = this.world.getContactPairs();
+                            this.perfStats.collisions = contactPairs.length;
+                        } else if (typeof this.world.getContacts === 'function') {
+                            // Another possible method name
+                            const contacts = this.world.getContacts();
+                            this.perfStats.collisions = contacts.length;
+                        } else {
+                            // Fallback: estimate from number of objects
+                            this.perfStats.collisions = Math.floor(activeBodies * 0.5);
+                        }
+                    } catch (e) {
+                        // If all else fails, just show a safe value
+                        this.perfStats.collisions = 0;
+                    }
+                }
+
+                // Get memory usage
+                if (window.performance && window.performance.memory) {
+                    this.perfStats.memoryUsed = Math.round(window.performance.memory.usedJSHeapSize / (1024 * 1024));
+                    this.perfStats.memoryLimit = Math.round(window.performance.memory.jsHeapSizeLimit / (1024 * 1024));
+                } else if (typeof window.VistaKineMemoryEstimate === 'function') {
+                    // Fallback to any custom memory estimation function that might be defined
+                    const memoryInfo = window.VistaKineMemoryEstimate();
+                    this.perfStats.memoryUsed = memoryInfo.used;
+                    this.perfStats.memoryLimit = memoryInfo.limit;
+                }
+
+                // Update object count
+                this.perfStats.objectCount = this.objects.length;
+
+                // Update the UI with these metrics
+                this.updatePerformanceUI();
+            }
+
+            // Add method to update the performance UI
+            updatePerformanceUI() {
+                // Update rendering metrics
+                document.getElementById('perf-fps').textContent = this.perfStats.fps;
+                document.getElementById('perf-frame-time').textContent =
+                    `${this.perfStats.frameTime.toFixed(1)} ms`;
+                document.getElementById('perf-draw-calls').textContent = this.perfStats.drawCalls;
+                document.getElementById('perf-triangles').textContent = this.perfStats.triangles;
+
+                // Update physics metrics
+                document.getElementById('perf-physics-time').textContent =
+                    `${this.perfStats.physicsTime.toFixed(2)} ms`;
+                document.getElementById('perf-active-bodies').textContent = this.perfStats.activeBodies;
+                document.getElementById('perf-sleeping-bodies').textContent = this.perfStats.sleepingBodies;
+                document.getElementById('perf-collisions').textContent = this.perfStats.collisions;
+
+                // Update memory metrics
+                const memoryEl = document.getElementById('perf-memory-used');
+                memoryEl.textContent = `${this.perfStats.memoryUsed} MB`;
+
+                // Color code memory usage
+                const memLimit = this.perfStats.memoryLimit;
+                const memUsed = this.perfStats.memoryUsed;
+                const memPercent = memLimit ? (memUsed / memLimit) * 100 : 0;
+
+                // Update memory bar
+                document.getElementById('memory-bar-used').style.width =
+                    `${Math.min(memPercent, 100)}%`;
+
+                // Color code based on memory usage
+                if (memPercent < 50) {
+                    memoryEl.className = 'metric-value low';
+                } else if (memPercent < 75) {
+                    memoryEl.className = 'metric-value medium';
+                } else {
+                    memoryEl.className = 'metric-value high';
+                }
+
+                document.getElementById('perf-memory-limit').textContent =
+                    `${this.perfStats.memoryLimit} MB`;
+
+                // Update scene metrics
+                document.getElementById('perf-object-count').textContent = this.perfStats.objectCount;
+                document.getElementById('perf-texture-count').textContent = this.perfStats.textureCount;
+                document.getElementById('perf-geometry-count').textContent = this.perfStats.geometryCount;
+            }
+
+            // Also add the stress test method to the PhysicsSandbox class
+            runStressTest() {
+                // Show a warning if there are already many objects
+                if (this.objects.length > 50) {
+                    if (!confirm(`There are already ${this.objects.length} objects. Adding more may affect performance. Continue?`)) {
+                        return;
+                    }
+                }
+
+                const testSize = 40; // Number of objects to create
+                const objectTypes = ['box', 'sphere', 'cylinder', 'cone'];
+                const startTime = performance.now();
+
+                // Create a status message
+                const statusMsg = document.createElement('div');
+                statusMsg.style.position = 'absolute';
+                statusMsg.style.top = '50%';
+                statusMsg.style.left = '50%';
+                statusMsg.style.transform = 'translate(-50%, -50%)';
+                statusMsg.style.background = 'rgba(0,0,0,0.8)';
+                statusMsg.style.color = 'white';
+                statusMsg.style.padding = '15px';
+                statusMsg.style.borderRadius = '5px';
+                statusMsg.style.zIndex = '2000';
+                statusMsg.textContent = `Creating ${testSize} objects...`;
+                document.body.appendChild(statusMsg);
+
+                // Create objects with a slight delay to avoid freezing the UI
+                let count = 0;
+                const createBatch = () => {
+                    for (let i = 0; i < 5 && count < testSize; i++, count++) {
+                        // Choose a random object type
+                        const typeIndex = Math.floor(Math.random() * objectTypes.length);
+                        const type = objectTypes[typeIndex];
+
+                        // Create object based on type
+                        switch (type) {
+                            case 'box': this.addBox(); break;
+                            case 'sphere': this.addSphere(); break;
+                            case 'cylinder': this.addCylinder(); break;
+                            case 'cone': this.addCone(); break;
+                        }
+                    }
+
+                    // Update status
+                    statusMsg.textContent = `Creating objects: ${count}/${testSize}`;
+
+                    // Continue if not done
+                    if (count < testSize) {
+                        setTimeout(createBatch, 10);
+                    } else {
+                        // Finished - remove status and show results
+                        document.body.removeChild(statusMsg);
+                        const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+                        alert(`Stress test completed!\nCreated ${testSize} objects in ${duration} seconds.\nTotal objects: ${this.objects.length}`);
+                    }
+                };
+
+                // Start creating objects
+                createBatch();
             }
         }
 

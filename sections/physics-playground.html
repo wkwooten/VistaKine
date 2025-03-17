@@ -1,0 +1,69 @@
+<div class="section-inner section-page">
+    <!-- Page divider at top -->
+    <div class="page-divider">
+        <div class="page-number">1</div>
+    </div>
+
+    <div class="content-header">
+        <h1>Physics Playground</h1>
+        <div class="subtitle">Interactive 3D Physics Sandbox</div>
+        <div class="section-size">
+            <span class="label">Section length:</span>
+            <div class="dots">
+                <span class="dot active"></span>
+                <span class="dot active"></span>
+                <span class="dot active"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-section">
+        <h2>Experimental Physics Engine</h2>
+        <div class="section-text">
+            <p>This playground demonstrates the Rapier physics engine integrated with Three.js for realistic 3D physics simulations. Experiment with different object types and observe how they interact with gravity, friction, and each other.</p>
+
+            <p>The physics engine calculates realistic collision responses, momentum transfer, and energy conservation. This environment is designed to help visualize and understand the principles of rigid body dynamics.</p>
+        </div>
+
+        <!-- Physics sandbox container -->
+        <div class="visualization-container" data-threejs="physics-playground">
+            <!-- The physics playground will be loaded here -->
+        </div>
+
+        <div class="section-text">
+            <p>Use the controls in the upper right corner to add objects to the scene. You can switch between "Tactile Mode" for direct manipulation and "Transform Mode" for precise positioning of objects.</p>
+        </div>
+    </div>
+    <div class="content-section">
+        <h2>Physics Principles</h2>
+        <div class="section-text">
+            <p>The simulation demonstrates several key physics principles:</p>
+
+            <ul>
+                <li><strong>Gravity:</strong> Objects fall due to simulated gravitational acceleration (9.81 m/s²).</li>
+                <li><strong>Friction:</strong> Objects sliding on surfaces gradually slow down due to friction.</li>
+                <li><strong>Collisions:</strong> When objects collide, momentum and energy are transferred based on their mass and velocity.</li>
+                <li><strong>Restitution:</strong> The "bounciness" of objects is determined by their material properties.</li>
+                <li><strong>Mass and Inertia:</strong> Heavier objects require more force to move and resist changes in motion.</li>
+            </ul>
+
+            <p>Try creating different arrangements of objects and observe how they interact. The physics engine handles all calculations in real-time, providing an accurate representation of how these objects would behave in the real world.</p>
+        </div>
+    </div>
+
+    <!-- Page divider at bottom -->
+    <div class="page-divider">
+        <div class="page-number">3</div>
+    </div>
+</div>
+
+<!-- Physics sandbox script -->
+<script type="module">
+    // This script will be initialized when the visualization engine loads
+    // the container with data-threejs="physics-playground"
+
+    // Initialization will be handled by the visualization engine
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Physics playground section loaded - awaiting visualization engine');
+    });
+</script>

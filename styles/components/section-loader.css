@@ -1,28 +1,112 @@
 /**
  * Section Loader Styles
- * These styles are for section loading, unloading, and error states
+ * These styles are for section loading, unloaded, and error states
  */
 
-/* Section Loading States */
-.section-container {
-	transition: opacity 0.3s ease;
+/* Section Loading States - increase specificity for faster application */
+body .section-container {
+	position: relative;
+	transition: opacity 0.5s ease, min-height 0.5s ease, background-color 0.5s ease;
+	min-height: 300px;
+	/* Base min-height for all sections */
+	border-radius: 4px;
+	background-color: var(--section-cover-bg);
 }
 
-.section-container.loading {
-	opacity: 0.7;
+body .section-container.loading {
+	opacity: 0.8;
 }
 
-.section-container.loaded {
+body .section-container.loaded {
 	opacity: 1;
 }
 
-.section-container.unloaded {
-	opacity: 0.5;
+/* Unloaded section styles with predetermined heights */
+body .section-container.unloaded {
+	opacity: 0.9;
+	border: 1px solid var(--border-color, #e0e0e0);
+	/* Apply unloaded styles immediately */
+	transition: none;
 }
 
-.section-container.load-error {
+/* Specific heights and background colors for different section types
+   These need to be applied to all states, not just unloaded */
+
+/* Cover section */
+body .section-container[id="cover"] {
+	background-color: var(--section-cover-bg, #F0F8FF);
+}
+
+body .section-container.unloaded[id="cover"] {
+	min-height: 800px !important;
+	/* !important to override any inline styles */
+}
+
+/* About section */
+body .section-container[id="about"] {
+	background-color: var(--section-about-bg, #E0F2F7);
+}
+
+body .section-container.unloaded[id="about"] {
+	min-height: 600px !important;
+}
+
+/* Chapters section */
+body .section-container[id="chapters"] {
+	background-color: var(--section-chapters-bg, #E1F5FE);
+}
+
+body .section-container.unloaded[id="chapters"] {
+	min-height: 700px !important;
+}
+
+/* All chapter sections */
+body .section-container[id^="chapter"] {
+	background-color: var(--section-chapter1-bg, #E3F2FD);
+}
+
+body .section-container.unloaded[id^="chapter"] {
+	min-height: 1000px !important;
+}
+
+/* Chapter-specific backgrounds */
+body .section-container[id^="chapter1"] {
+	background-color: var(--section-chapter1-bg, #E3F2FD);
+}
+
+body .section-container[id^="chapter2"] {
+	background-color: var(--section-chapter2-bg, #E8F5E9);
+}
+
+body .section-container[id^="chapter3"] {
+	background-color: var(--section-chapter3-bg, #FFF8E1);
+}
+
+/* Default fallback for any other section */
+body .section-container.unloaded:not([id="cover"]):not([id="about"]):not([id="chapters"]):not([id^="chapter"]) {
+	min-height: 500px !important;
+}
+
+/* For error states */
+body .section-container.load-error {
 	opacity: 1;
-	background-color: rgba(255, 200, 200, 0.1);
+	background-color: var(--bg-error);
+}
+
+/* Improved section content transitions */
+body .section-container .section-content {
+	transition: opacity 0.5s ease-in-out;
+	height: 100%;
+	background-color: transparent;
+	/* Ensure content is transparent to let section background show */
+	padding: 20px;
+	border-radius: 4px;
+}
+
+/* Apply a subtle inner shadow to loaded content for better readability */
+body .section-container.loaded .section-content {
+	box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
+	background-color: rgba(var(--primary-color-rgb), 0.04);
 }
 
 /* Loading Placeholder */
@@ -35,27 +119,119 @@
 	border-radius: 4px;
 	margin: 1rem 0;
 	background-color: var(--bg-light);
+	transition: opacity 0.3s ease;
+	font-size: 16px;
+	height: calc(100% - 2rem);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+/* Smooth animation for section content loading */
+body .section-container.loading .section-content {
+	opacity: 0.4;
+	transition: opacity 0.3s ease;
+}
+
+body .section-container.loaded .section-content {
+	opacity: 1;
+	transition: opacity 0.4s ease 0.1s;
+	/* Slightly faster transition with less delay */
+}
+
+/* Improve loading placeholder for unloaded sections - ensure high specificity */
+body .section-container.unloaded .loading-placeholder {
+	margin: 2rem;
+	padding: 3rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: calc(100% - 4rem);
+	border-style: dashed;
+	background-color: rgba(var(--primary-color-rgb), 0.03);
+	box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
+	font-size: 18px;
+}
+
+/* Hide "ready to load" text with faded transitions to avoid flicker */
+body .section-container.loading .loading-placeholder {
+	opacity: 0;
+	/* Immediately hide the placeholder when loading starts */
+	transition: opacity 0.1s ease;
+	/* Remove conflicting animation */
+	animation: none;
+}
+
+/* Section type indicators for unloaded sections */
+body .section-container[id^="chapter"].unloaded .loading-placeholder::before {
+	content: "Chapter";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--link-color);
+}
+
+body .section-container[id="cover"].unloaded .loading-placeholder::before {
+	content: "Cover Page";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--accent-color);
+}
+
+body .section-container[id="about"].unloaded .loading-placeholder::before {
+	content: "About";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--link-color);
+}
+
+/* Add loading indicator animation */
+body .section-container.unloaded .loading-placeholder::after {
+	content: "";
+	display: block;
+	width: 40px;
+	height: 4px;
+	margin-top: 1.5rem;
+	background: linear-gradient(90deg, transparent, var(--link-color), transparent);
+	border-radius: 2px;
+	animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
 }
 
 /* Error Indicator */
 .error-indicator {
 	padding: 2rem;
 	text-align: center;
-	color: var(--text-error, #d32f2f);
-	background-color: var(--bg-error, rgba(211, 47, 47, 0.1));
-	border: 1px solid var(--border-error, rgba(211, 47, 47, 0.3));
+	color: var(--text-error);
+	background-color: var(--bg-error);
+	border: 1px solid var(--border-error);
 	border-radius: 4px;
 	margin: 1rem 0;
 }
 
 .error-indicator h3 {
 	margin-top: 0;
-	color: var(--text-error, #d32f2f);
+	color: var(--text-error);
 }
 
 .error-indicator .error-message {
 	font-family: monospace;
-	background-color: rgba(0, 0, 0, 0.05);
+	background-color: var(--hover-bg);
 	padding: 0.5rem;
 	border-radius: 3px;
 	margin: 1rem 0;
@@ -63,8 +239,8 @@
 }
 
 .error-indicator button {
-	background-color: var(--bg-button, #f0f0f0);
-	border: 1px solid var(--border-color, #ccc);
+	background-color: var(--section-cover-bg);
+	border: 1px solid var(--border-color);
 	border-radius: 4px;
 	padding: 0.5rem 1rem;
 	cursor: pointer;
@@ -73,10 +249,11 @@
 }
 
 .error-indicator button:hover {
-	background-color: var(--bg-button-hover, #e0e0e0);
+	background-color: var(--hover-bg);
+	color: var(--link-color);
 }
 
-/* Animation for loading sections */
+/* Animation for loading sections - only apply to sections that are unloaded */
 @keyframes pulse {
 	0% {
 		opacity: 0.6;
@@ -91,7 +268,8 @@
 	}
 }
 
-.section-container.loading .loading-placeholder {
+/* Apply animation only to unloaded sections, not loading ones */
+body .section-container.unloaded:not(.loading) .loading-placeholder {
 	animation: pulse 1.5s infinite ease-in-out;
 }
 
@@ -121,7 +299,7 @@
 
 /* Improved visibility for high-contrast mode */
 @media (prefers-contrast: high) {
-	.section-container.loading {
+	body .section-container.loading {
 		opacity: 0.9;
 	}
 

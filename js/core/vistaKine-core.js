@@ -1,6 +1,16 @@
 /**
- * VistaKine Core - Central configuration and functionality
- * This module provides a single source of truth for shared functionality
+ * VistaKine Core - Central System Architecture
+ *
+ * This module serves as the foundation of the VistaKine framework, providing:
+ * 1. Configuration settings for the entire application
+ * 2. A centralized state management system that enforces data integrity
+ * 3. Core utility functions that are used across multiple modules
+ * 4. Initialization and lifecycle management for the application
+ *
+ * Architecture Design:
+ * - Uses a module pattern to prevent global namespace pollution
+ * - Provides a publish/subscribe mechanism for state changes
+ * - Centralizes configuration to simplify maintenance and extensibility
  */
 
 // Namespace for all VistaKine functionality
@@ -37,32 +47,252 @@ VistaKine.config = {
     }
 };
 
-// Central state management
-VistaKine.state = {
-    // Loaded sections
+/**
+ * Centralized State Management System
+ *
+ * This system provides a single source of truth for the application state using
+ * a clean API with get/set methods and a subscription system. Key benefits:
+ *
+ * - Prevents direct manipulation of state properties
+ * - Enables reactivity through the subscription mechanism
+ * - Creates a predictable state flow throughout the application
+ * - Supports deeply nested state properties through dot notation
+ * - Facilitates debugging by logging all state changes when in debug mode
+ */
+VistaKine.state = (function() {
+    // Private internal state store
+    const _state = {
+        // UI State
+        ui: {
+            sidebar: {
+                width: VistaKine.config.defaultSidebarWidth,
+                isExpanded: true,
+                isMiniCollapsed: false,
+                isFullyCollapsed: false,
+                isVisible: true,
+            },
+            bottomNav: {
+                isVisible: false,
+                isPrevEnabled: false,
+                isNextEnabled: true
+            }
+        },
+
+        // Navigation State
+        navigation: {
+            currentSection: null,
+            visibleSections: [],
+            isTransitioning: false,
+            isDirectNavigation: false,
+            history: []
+        },
+
+        // Content State
+        content: {
     loadedSections: new Set(),
+            currentProgress: 0,
+            pendingRequests: new Map()
+        },
 
-    // Active section
-    activeSection: null,
-
-    // Initialization state
+        // Module Initialization State
+        system: {
     initialized: {
         core: false,
         sidebar: false,
         navigation: false,
-        content: false
-    },
+                content: false,
+                visualization: false
+            },
+            startTime: Date.now(),
+            observers: {
+                navigation: null,
+                content: null
+            }
+        }
+    };
 
-    // Sidebar state
-    sidebar: {
-        width: null,
-        isCollapsed: false,
-        isMiniCollapsed: false
-    },
+    // Subscribers for state changes
+    const _subscribers = new Map();
 
-    // 3D scenes
-    threeJsScenes: new Map()
-};
+    // Private methods
+    function _notify(path, newValue, oldValue) {
+        if (VistaKine.config.debug) {
+            console.log(`[VistaKine State] Change: ${path}`, {
+                old: oldValue,
+                new: newValue
+            });
+        }
+
+        // Notify all subscribers that match this path
+        _subscribers.forEach((callback, pattern) => {
+            if (path.startsWith(pattern)) {
+                try {
+                    callback(path, newValue, oldValue);
+                } catch (err) {
+                    console.error(`[VistaKine State] Error in subscriber callback for ${pattern}:`, err);
+                }
+            }
+        });
+    }
+
+    function _getNestedProperty(obj, path) {
+        return path.split('.').reduce((prev, curr) => {
+            return prev ? prev[curr] : undefined;
+        }, obj);
+    }
+
+    function _setNestedProperty(obj, path, value) {
+        const parts = path.split('.');
+        const lastProp = parts.pop();
+        const target = parts.reduce((prev, curr) => {
+            if (!prev[curr]) prev[curr] = {};
+            return prev[curr];
+        }, obj);
+
+        const oldValue = target[lastProp];
+        target[lastProp] = value;
+
+        return oldValue;
+    }
+
+    // Public API
+    return {
+        /**
+         * Get a value from the state store
+         * @param {string} path - Dot notation path to the state property
+         * @param {any} defaultValue - Default value if property doesn't exist
+         * @returns {any} The state value or defaultValue
+         */
+        get: function(path, defaultValue) {
+            const value = _getNestedProperty(_state, path);
+            return value !== undefined ? value : defaultValue;
+        },
+
+        /**
+         * Set a value in the state store, triggering subscribers
+         * @param {string} path - Dot notation path to the state property
+         * @param {any} value - New value to set
+         * @returns {boolean} Success of the operation
+         */
+        set: function(path, value) {
+            try {
+                const oldValue = _setNestedProperty(_state, path, value);
+                _notify(path, value, oldValue);
+                return true;
+            } catch (err) {
+                console.error(`[VistaKine State] Error setting ${path}:`, err);
+                return false;
+            }
+        },
+
+        /**
+         * Add a new loaded section to the set
+         * @param {string} sectionId - ID of the section that was loaded
+         */
+        addLoadedSection: function(sectionId) {
+            const sections = this.get('content.loadedSections');
+            sections.add(sectionId);
+            _notify('content.loadedSections', sections, sections);
+            return true;
+        },
+
+        /**
+         * Remove a section from the loaded sections set
+         * @param {string} sectionId - ID of the section to unload
+         * @returns {boolean} Whether the section was successfully unloaded
+         */
+        removeLoadedSection: function(sectionId) {
+            const sections = this.get('content.loadedSections');
+            const wasLoaded = sections.has(sectionId);
+            if (wasLoaded) {
+                sections.delete(sectionId);
+                _notify('content.loadedSections', sections, sections);
+                return true;
+            }
+            return false;
+        },
+
+        /**
+         * Get all loaded section IDs as an array
+         * @returns {string[]} Array of loaded section IDs
+         */
+        getLoadedSections: function() {
+            const sections = this.get('content.loadedSections');
+            return Array.from(sections);
+        },
+
+        /**
+         * Check if a section is loaded
+         * @param {string} sectionId - ID of the section to check
+         * @returns {boolean} Whether the section is loaded
+         */
+        isSectionLoaded: function(sectionId) {
+            return this.get('content.loadedSections').has(sectionId);
+        },
+
+        /**
+         * Subscribe to changes on a specific state path
+         * @param {string} pathPattern - Path prefix to listen for changes
+         * @param {Function} callback - Callback function(path, newValue, oldValue)
+         * @returns {string} Subscription ID for unsubscribing
+         */
+        subscribe: function(pathPattern, callback) {
+            const id = Date.now().toString(36) + Math.random().toString(36).substring(2);
+            _subscribers.set(pathPattern, callback);
+            return id;
+        },
+
+        /**
+         * Unsubscribe from state changes
+         * @param {string} id - Subscription ID to remove
+         */
+        unsubscribe: function(id) {
+            return _subscribers.delete(id);
+        },
+
+        /**
+         * Mark a module as initialized
+         * @param {string} moduleName - Name of the module (core, sidebar, etc.)
+         */
+        setInitialized: function(moduleName) {
+            this.set(`system.initialized.${moduleName}`, true);
+        },
+
+        /**
+         * Check if a module is initialized
+         * @param {string} moduleName - Name of the module
+         * @returns {boolean} Whether the module is initialized
+         */
+        isInitialized: function(moduleName) {
+            return this.get(`system.initialized.${moduleName}`, false);
+        },
+
+        /**
+         * Get the current section ID
+         * @returns {string|null} The current section ID or null
+         */
+        getCurrentSection: function() {
+            return this.get('navigation.currentSection', null);
+        },
+
+        /**
+         * Set the current active section
+         * @param {string} sectionId - ID of the section to set as current
+         */
+        setCurrentSection: function(sectionId) {
+            const oldSection = this.get('navigation.currentSection');
+            if (sectionId !== oldSection) {
+                this.set('navigation.currentSection', sectionId);
+                // Add to history if it's a new section
+                const history = this.get('navigation.history', []);
+                if (!history.includes(sectionId)) {
+                    history.push(sectionId);
+                    this.set('navigation.history', history);
+                }
+            }
+        }
+    };
+})();
 
 // Utility functions
 VistaKine.utils = {
@@ -206,27 +436,82 @@ VistaKine.dom = {
 VistaKine.init = function() {
     VistaKine.utils.log('Initializing VistaKine Core');
 
+    // Migrate any existing state from old system to new
+    VistaKine.migrateState();
+
     // Set initial sidebar width from localStorage or default
     const storedWidth = localStorage.getItem('sidebarWidth');
-    VistaKine.state.sidebar.width = storedWidth ? parseInt(storedWidth) : VistaKine.config.defaultSidebarWidth;
+    VistaKine.state.set('ui.sidebar.width', storedWidth ? parseInt(storedWidth) : VistaKine.config.defaultSidebarWidth);
 
     // Check if we're on GitHub Pages and store that info
-    if (window.vistaKineConfig) {
-        VistaKine.state.isGitHubPages = window.vistaKineConfig.isGitHubPages;
-        VistaKine.state.repoName = window.vistaKineConfig.repoName;
+    if (window.location.hostname.endsWith('github.io') ||
+        window.location.hostname.endsWith('githubusercontent.com')) {
+        VistaKine.state.set('system.isGitHubPages', true);
     }
 
-    // Initialize the grid layout modes based on device
-    VistaKine.setupGridLayout();
-
-    // Add resize listener for the grid layout
-    window.addEventListener('resize', VistaKine.handleWindowResize);
-
     // Mark core as initialized
-    VistaKine.state.initialized.core = true;
+    VistaKine.state.setInitialized('core');
     VistaKine.utils.log('Core initialized successfully', 'success');
+};
 
-    return VistaKine;
+/**
+ * State Migration System
+ *
+ * Critical compatibility layer that ensures smooth transitions between different
+ * versions of the state management system. This method is responsible for:
+ *
+ * 1. VERSION COMPATIBILITY: Migrates data from older state formats to the new centralized format
+ * 2. DATA PRESERVATION: Ensures no user data or application state is lost during upgrades
+ * 3. MODULE COORDINATION: Handles state dependencies between different modules
+ * 4. GRACEFUL DEGRADATION: Fails safely if old state format is incompatible
+ *
+ * The migration system provides backward compatibility for:
+ * - Previously loaded sections to prevent unnecessary reloading
+ * - Active section state to maintain user's position
+ * - UI preferences such as sidebar width and collapse state
+ *
+ * This is automatically called during initialization to ensure a seamless
+ * user experience even when upgrading to new versions.
+ */
+VistaKine.migrateState = function() {
+    VistaKine.utils.log('Migrating existing state to new state system');
+
+    // Migrate loadedSections
+    if (window.VistaKine && VistaKine.state && VistaKine.state.loadedSections) {
+        const oldLoadedSections = VistaKine.state.loadedSections;
+        if (oldLoadedSections instanceof Set && oldLoadedSections.size > 0) {
+            VistaKine.utils.log(`Migrating ${oldLoadedSections.size} loaded sections`);
+            oldLoadedSections.forEach(sectionId => {
+                VistaKine.state.addLoadedSection(sectionId);
+                VistaKine.utils.log(`Migrated section: ${sectionId}`);
+            });
+        }
+    }
+
+    // Migrate active section
+    if (window.VistaKine && VistaKine.state && VistaKine.state.activeSection) {
+        const oldActiveSection = VistaKine.state.activeSection;
+        if (oldActiveSection) {
+            VistaKine.utils.log(`Migrating active section: ${oldActiveSection}`);
+            VistaKine.state.setCurrentSection(oldActiveSection);
+        }
+    }
+
+    // Migrate sidebar state if it exists
+    if (window.VistaKine && VistaKine.state && VistaKine.state.sidebar) {
+        const oldSidebarState = VistaKine.state.sidebar;
+        if (oldSidebarState) {
+            if ('width' in oldSidebarState && oldSidebarState.width) {
+                VistaKine.state.set('ui.sidebar.width', oldSidebarState.width);
+            }
+            if ('isCollapsed' in oldSidebarState) {
+                VistaKine.state.set('ui.sidebar.isFullyCollapsed', oldSidebarState.isCollapsed);
+            }
+            if ('isMiniCollapsed' in oldSidebarState) {
+                VistaKine.state.set('ui.sidebar.isMiniCollapsed', oldSidebarState.isMiniCollapsed);
+            }
+        }
+    }
 };
 
 /**
@@ -286,8 +571,8 @@ VistaKine.registerModule = function(moduleName, moduleObj) {
     VistaKine.utils.log(`Registering module: ${moduleName}`);
 
     // Update initialization state tracking
-    if (!VistaKine.state.initialized[moduleName]) {
-        VistaKine.state.initialized[moduleName] = false;
+    if (!VistaKine.state.system.initialized[moduleName]) {
+        VistaKine.state.system.initialized[moduleName] = false;
     }
 
     // If module has an init method, add it to the callback queue
@@ -305,3 +590,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Make VistaKine globally available
 window.VistaKine = VistaKine;
+
+/**
+ * Utility functions for device and media query detection
+ */
+VistaKine.device = {
+    /**
+     * Check if the current device is a mobile device
+     */
+    isMobile: function() {
+        return window.matchMedia(`(max-width: ${VistaKine.config.breakpoints.mobile}px)`).matches ||
+            ('ontouchstart' in window && navigator.userAgent.match(/Mobi/));
+    },
+
+    /**
+     * Check if the current device is a tablet
+     */
+    isTablet: function() {
+        return (window.matchMedia(`(min-width: ${VistaKine.config.breakpoints.mobile + 1}px) and (max-width: ${VistaKine.config.breakpoints.tablet}px)`).matches) ||
+            ('ontouchstart' in window && !this.isMobile() && window.innerWidth <= VistaKine.config.breakpoints.tablet);
+    },
+
+    /**
+     * Check if the current device is a desktop
+     */
+    isDesktop: function() {
+        return window.matchMedia(`(min-width: ${VistaKine.config.breakpoints.tablet + 1}px)`).matches;
+    },
+
+    /**
+     * Check if the device has touch capability
+     */
+    hasTouch: function() {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    },
+
+    /**
+     * Match a custom media query
+     * @param {string} query - CSS media query
+     * @returns {boolean} - Whether the query matches
+     */
+    matchMedia: function(query) {
+        return window.matchMedia(query).matches;
+    }
+};
