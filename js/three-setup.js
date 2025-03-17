@@ -7,7 +7,8 @@ window.THREE = THREE;
 window.OrbitControls = OrbitControls;
 window.TransformControls = TransformControls;
 
-
-import '../node_modules/@phosphor-icons/web/src/regular/style.css';
+// Use CDN for Phosphor Icons instead of local import
+// The local import path won't work properly on GitHub Pages
+// Import removed: import '../node_modules/@phosphor-icons/web/src/regular/style.css';
 
 console.log('THREE.js setup complete:', THREE.REVISION);

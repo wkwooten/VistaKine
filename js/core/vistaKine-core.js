@@ -346,7 +346,12 @@ VistaKine.utils = {
         // Strip leading slashes for consistency
         const cleanPath = path.replace(/^\/+/, '');
 
-        // GitHub Pages handling
+        // Use the base path helper if available
+        if (window.getPath) {
+            return window.getPath(cleanPath);
+        }
+
+        // GitHub Pages handling (fallback)
         if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages && window.vistaKineConfig.repoName) {
             const repoName = window.vistaKineConfig.repoName;
 
