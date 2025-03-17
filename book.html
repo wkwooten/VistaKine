@@ -5,17 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VistaKine Physics</title>
 
+    <!-- Base path for GitHub Pages compatibility -->
+    <script>
+        // Handle base path for GitHub Pages
+        window.vistaKineBasePath = '';
+
+        // Check if we're on GitHub Pages
+        if (window.location.hostname.includes('github.io')) {
+            // Extract repository name from URL for GitHub Pages
+            const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+            const repoName = pathParts.length > 0 ? pathParts[0] : '';
+            window.vistaKineBasePath = repoName ? `/${repoName}` : '';
+        }
+
+        // Helper to get correct paths
+        window.getPath = function(path) {
+            path = path.startsWith('/') ? path : `/${path}`;
+            return window.vistaKineBasePath + path;
+        };
+    </script>
+
     <!-- CSS Files -->
+    <link rel="stylesheet" href="" id="main-css">
+    <script>
+        // Set CSS path with correct base
+        document.getElementById('main-css').href = window.getPath('styles/main.css');
+    </script>
 
-    <!-- Phosphor Icons -->
+    <!-- Phosphor Icons - use CDN for reliability -->
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css" />
 
-    <!-- Import local modules first -->
+    <!-- Import local modules with correct base path -->
+    <script type="module" src="" id="three-setup"></script>
+    <script>
+        document.getElementById('three-setup').src = window.getPath('js/three-setup.js');
+    </script>
 
     <!-- VistaKine Main Framework - load after three-setup.js -->
-    <script defer src="js/core/main.js"></script>
-  <script type="module" crossorigin src="/VistaKine/assets/main-B_Zp-u69.js"></script>
-  <link rel="stylesheet" crossorigin href="/VistaKine/assets/main-k6VTFalh.css">
+    <script defer src="" id="main-js"></script>
+    <script>
+        document.getElementById('main-js').src = window.getPath('js/core/main.js');
+    </script>
+  <script type="module" crossorigin src="/VistaKine/assets/main-B5Qt9EMX.js"></script>
 </head>
 <body>
     <!-- Navigation toggle button - Mobile/tablet only -->
