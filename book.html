@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VistaKine Physics</title>
 
-    <!-- Base path for GitHub Pages compatibility -->
+    <!-- Base path configuration for multiple environments -->
     <script>
-        // Handle base path for GitHub Pages
+        // Handle base path for different environments
         window.vistaKineBasePath = '';
+        window.isGitHubPages = false;
+        window.isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
         // Check if we're on GitHub Pages
         if (window.location.hostname.includes('github.io')) {
@@ -16,37 +18,38 @@
             const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
             const repoName = pathParts.length > 0 ? pathParts[0] : '';
             window.vistaKineBasePath = repoName ? `/${repoName}` : '';
+            window.isGitHubPages = true;
         }
 
-        // Helper to get correct paths
+        // Path helper that works in both environments
         window.getPath = function(path) {
-            path = path.startsWith('/') ? path : `/${path}`;
-            return window.vistaKineBasePath + path;
+            if (!path) return '';
+
+            // Strip leading slashes for consistency
+            path = path.replace(/^\/+/, '');
+
+            // For GitHub Pages, add the base path
+            if (window.isGitHubPages) {
+                return window.vistaKineBasePath + '/' + path;
+            }
+
+            // For local dev, use relative path
+            return path;
         };
     </script>
 
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="" id="main-css">
-    <script>
-        // Set CSS path with correct base
-        document.getElementById('main-css').href = window.getPath('styles/main.css');
-    </script>
+    <!-- CSS Files - works in both environments -->
+    <link rel="stylesheet" href="styles/main.css">
 
     <!-- Phosphor Icons - use CDN for reliability -->
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css" />
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css" />
 
-    <!-- Import local modules with correct base path -->
-    <script type="module" src="" id="three-setup"></script>
-    <script>
-        document.getElementById('three-setup').src = window.getPath('js/three-setup.js');
-    </script>
+    <!-- Import local modules - works in both environments -->
+    <script type="module" src="js/three-setup.js"></script>
 
     <!-- VistaKine Main Framework - load after three-setup.js -->
-    <script defer src="" id="main-js"></script>
-    <script>
-        document.getElementById('main-js').src = window.getPath('js/core/main.js');
-    </script>
+    <script defer src="js/core/main.js"></script>
 </head>
 <body>
     <!-- Navigation toggle button - Mobile/tablet only -->

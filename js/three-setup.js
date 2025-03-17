@@ -7,8 +7,16 @@ window.THREE = THREE;
 window.OrbitControls = OrbitControls;
 window.TransformControls = TransformControls;
 
-// Use CDN for Phosphor Icons instead of local import
-// The local import path won't work properly on GitHub Pages
-// Import removed: import '../node_modules/@phosphor-icons/web/src/regular/style.css';
+// Use Phosphor Icons from CDN or local based on environment
+// Local import works in Vite development but not in GitHub Pages
+try {
+  if (!window.isGitHubPages) {
+    // For local development, try to import from node_modules
+    import('../node_modules/@phosphor-icons/web/src/regular/style.css')
+      .catch(err => console.warn('Could not load Phosphor icons from node_modules, using CDN instead', err));
+  }
+} catch (e) {
+  console.warn('Phosphor icons import error, will fall back to CDN', e);
+}
 
 console.log('THREE.js setup complete:', THREE.REVISION);

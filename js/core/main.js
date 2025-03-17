@@ -27,17 +27,6 @@ VistaKine.loader = {
         'visualization': 'js/visualization/visualization-engine.js'
     },
 
-    // Helper function to get correct module path
-    getModulePath: function(moduleName) {
-        const relativePath = this.modulePaths[moduleName];
-        // Use window.getPath if available (from book.html)
-        if (window.getPath) {
-            return window.getPath(relativePath);
-        }
-        // Fallback to default path
-        return relativePath;
-    },
-
     // Module dependencies
     dependencies: {
         'navigation': ['core'],
@@ -91,93 +80,106 @@ VistaKine.loader = {
 
     // Load a module by name with optional callback
     loadModule: function(moduleName, callback) {
-        // Check if module is already loaded
-        if (this.loadedModules.has(moduleName)) {
-            this.debugMode && console.log(`Module ${moduleName} already loaded`);
-            if (callback) callback.call(this);
-            return;
-        }
-
-        // Check if module is in the process of loading
-        if (this.loadAttempts[moduleName]) {
-            this.debugMode && console.log(`Module ${moduleName} is already loading`);
-            return;
-        }
-
+        // Record load attempt
         this.loadAttempts[moduleName] = (this.loadAttempts[moduleName] || 0) + 1;
-        this.debugMode && console.log(`Loading module: ${moduleName} (attempt ${this.loadAttempts[moduleName]})`);
 
-        // Load dependencies first
-        if (this.dependencies[moduleName]) {
-            const deps = this.dependencies[moduleName];
-            this.debugMode && console.log(`Module ${moduleName} has dependencies: ${deps.join(', ')}`);
+        // Check if the module is already loaded
+        if (this.loadedModules.has(moduleName)) {
+            this.debugMode && console.log(`Module '${moduleName}' already loaded, skipping`);
+            if (callback) callback();
+            return;
+        }
 
-            let loadedDeps = 0;
-            for (const dep of deps) {
-                if (!this.loadedModules.has(dep)) {
-                    this.loadModule(dep, function() {
-                        loadedDeps++;
-                        if (loadedDeps === deps.length) {
-                            this.loadModuleFile(moduleName, callback);
-                        }
-                    });
-                } else {
-                    loadedDeps++;
-                    if (loadedDeps === deps.length) {
-                        this.loadModuleFile(moduleName, callback);
-                    }
-                }
+        // Check dependencies first
+        this.debugMode && console.log(`Loading module: ${moduleName}`);
+
+        try {
+            const modulePath = this.getModulePath(moduleName);
+            if (!modulePath) {
+                throw new Error(`Module path not defined for '${moduleName}'`);
             }
-        } else {
-            this.loadModuleFile(moduleName, callback);
+
+            // Check and load dependencies first
+            const deps = this.dependencies[moduleName] || [];
+            this.loadDependencies(deps, () => {
+                this.debugMode && console.log(`Dependencies for '${moduleName}' satisfied, loading module from ${modulePath}`);
+
+                // Create script element
+                const script = document.createElement('script');
+                script.src = modulePath + '?_=' + (window.vistaKineInitTime || Date.now());
+                script.async = false;
+
+                // Handle success
+                script.onload = () => {
+                    this.debugMode && console.log(`Module '${moduleName}' loaded successfully`);
+                    this.loadedModules.add(moduleName);
+
+                    // Special handling for visualization module
+                    if (moduleName === 'visualization' && typeof VistaKine.visualization === 'object') {
+                        // Initialize the visualization module
+                        this.debugMode && console.log('Initializing visualization module after load');
+                        try {
+                            if (typeof VistaKine.visualization.init === 'function') {
+                                VistaKine.visualization.init();
+                            }
+                        } catch (initError) {
+                            console.error('Error initializing visualization module:', initError);
+                        }
+                    }
+
+                    if (callback) callback();
+                };
+
+                // Handle errors
+                script.onerror = (e) => {
+                    console.error(`Failed to load module '${moduleName}' from ${modulePath}`, e);
+                    this.failedModules.add(moduleName);
+
+                    // Try a different path if this is the visualization module
+                    if (moduleName === 'visualization' && this.loadAttempts[moduleName] === 1) {
+                        console.log('Attempting to load visualization module from archive...');
+                        this.modulePaths.visualization = 'js/archive/visualization-engine.js';
+                        setTimeout(() => this.loadModule(moduleName, callback), 100);
+                    } else {
+                        this.showErrorMessage(`Failed to load module '${moduleName}'. Check the console for details.`);
+                        if (callback) callback(new Error(`Failed to load module '${moduleName}'`));
+                    }
+                };
+
+                // Append to document
+                document.head.appendChild(script);
+            });
+        } catch (error) {
+            console.error(`Error loading module '${moduleName}':`, error);
+            this.failedModules.add(moduleName);
+            this.showErrorMessage(`Error loading module '${moduleName}': ${error.message}`);
+            if (callback) callback(error);
         }
     },
 
-    loadModuleFile: function(moduleName, callback) {
-        const self = this;
-        const script = document.createElement('script');
-        script.src = this.getModulePath(moduleName); // Use the helper
-        script.async = true;
+    // Load all dependencies for a module
+    loadDependencies: function(dependencies, callback) {
+        if (!dependencies || dependencies.length === 0) {
+            callback();
+            return;
+        }
 
-        // Handle success
-        script.onload = () => {
-            this.debugMode && console.log(`Module '${moduleName}' loaded successfully`);
-            this.loadedModules.add(moduleName);
-
-            // Special handling for visualization module
-            if (moduleName === 'visualization' && typeof VistaKine.visualization === 'object') {
-                // Initialize the visualization module
-                this.debugMode && console.log('Initializing visualization module after load');
-                try {
-                    if (typeof VistaKine.visualization.init === 'function') {
-                        VistaKine.visualization.init();
-                    }
-                } catch (initError) {
-                    console.error('Error initializing visualization module:', initError);
-                }
+        let loaded = 0;
+        const checkDone = () => {
+            loaded++;
+            if (loaded === dependencies.length) {
+                callback();
             }
-
-            if (callback) callback();
         };
 
-        // Handle errors
-        script.onerror = (e) => {
-            console.error(`Failed to load module '${moduleName}' from ${this.getModulePath(moduleName)}`, e);
-            this.failedModules.add(moduleName);
-
-            // Try a different path if this is the visualization module
-            if (moduleName === 'visualization' && this.loadAttempts[moduleName] === 1) {
-                console.log('Attempting to load visualization module from archive...');
-                this.modulePaths.visualization = 'js/archive/visualization-engine.js';
-                setTimeout(() => this.loadModule(moduleName, callback), 100);
+        this.debugMode && console.log(`Loading dependencies: ${dependencies.join(', ')}`);
+        dependencies.forEach(dep => {
+            if (this.loadedModules.has(dep)) {
+                checkDone();
             } else {
-                this.showErrorMessage(`Failed to load module '${moduleName}'. Check the console for details.`);
-                if (callback) callback(new Error(`Failed to load module '${moduleName}'`));
+                this.loadModule(dep, checkDone);
             }
-        };
-
-        // Append to document
-        document.head.appendChild(script);
+        });
     },
 
     // Set up fallback initialization after a timeout
@@ -298,6 +300,19 @@ VistaKine.loader = {
                 toast.remove();
             }
         }, 15000);
+    },
+
+    // Helper function to get correct module path
+    getModulePath: function(moduleName) {
+        const relativePath = this.modulePaths[moduleName];
+
+        // For GitHub Pages, use the window.getPath helper
+        if (window.isGitHubPages && window.getPath) {
+            return window.getPath(relativePath);
+        }
+
+        // For local development, use relative paths directly
+        return relativePath;
     }
 };
 

@@ -346,24 +346,28 @@ VistaKine.utils = {
         // Strip leading slashes for consistency
         const cleanPath = path.replace(/^\/+/, '');
 
-        // Use the base path helper if available
+        // Use the window.getPath helper for both environments
         if (window.getPath) {
             return window.getPath(cleanPath);
         }
 
-        // GitHub Pages handling (fallback)
-        if (window.vistaKineConfig && window.vistaKineConfig.isGitHubPages && window.vistaKineConfig.repoName) {
-            const repoName = window.vistaKineConfig.repoName;
+        // Legacy fallback - GitHub Pages handling
+        if (window.location.hostname.includes('github.io')) {
+            // Extract repository name from URL
+            const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+            const repoName = pathParts.length > 0 ? pathParts[0] : '';
 
-            // Ensure path doesn't already contain the repo name
-            if (cleanPath.startsWith(repoName + '/')) {
-                return '/' + cleanPath;
+            if (repoName) {
+                // Ensure path doesn't already contain the repo name
+                if (cleanPath.startsWith(repoName + '/')) {
+                    return '/' + cleanPath;
+                }
+                return `/${repoName}/${cleanPath}`;
             }
-            return `/${repoName}/${cleanPath}`;
         }
 
-        // Local development
-        return '/' + cleanPath;
+        // Local development - use relative path
+        return cleanPath;
     },
 
     /**
