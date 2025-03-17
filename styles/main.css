@@ -135,3 +135,35 @@ img {
 	max-width: 100%;
 	height: auto;
 }
+
+/* Force dark theme to properly apply with higher specificity */
+:root.dark-theme body {
+	background-color: var(--bg-color);
+	color: var(--text-color);
+}
+
+/* Force theme-specific link colors for dark mode */
+:root.dark-theme a:not([class]) {
+	color: var(--link-color);
+}
+
+:root.dark-theme a:not([class]):hover {
+	color: var(--link-color-hover);
+}
+
+:root.dark-theme a:not([class]):active {
+	color: var(--link-color-active);
+}
+
+/* Fix all buttons to use the chalk theme in dark mode */
+:root.dark-theme button,
+:root.dark-theme .button {
+	color: var(--text-color);
+	border-color: var(--border-color);
+}
+
+:root.dark-theme button:hover,
+:root.dark-theme .button:hover {
+	background-color: var(--hover-bg);
+	color: var(--hover-color);
+}

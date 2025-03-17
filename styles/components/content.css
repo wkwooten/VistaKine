@@ -317,3 +317,23 @@
 
 /* Remove the old overlapping media query */
 /* @media (max-width: 768px) - REMOVED */
+
+/* Chalk theme for content in dark mode */
+:root.dark-theme .content-block {
+	border-color: var(--content-border);
+	background-color: var(--content-bg);
+}
+
+:root.dark-theme .content-heading {
+	color: var(--text-color);
+	border-bottom-color: var(--content-border);
+}
+
+:root.dark-theme .content-divider {
+	background: linear-gradient(90deg, transparent, var(--content-divider), transparent);
+}
+
+:root.dark-theme .content-callout {
+	background-color: var(--active-bg);
+	border-left-color: var(--primary-color);
+}

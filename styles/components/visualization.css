@@ -236,3 +236,23 @@
 		display: none;
 	}
 }
+
+/* Dark theme chalk style for visualizations */
+:root.dark-theme .visualization-container {
+	background-color: var(--bg-overlay);
+	border: 1px solid var(--border-color);
+}
+
+:root.dark-theme .visualization-container canvas {
+	filter: brightness(1.1) contrast(1.05);
+}
+
+:root.dark-theme .vis-controls {
+	background-color: var(--bg-secondary);
+	border-top: 1px solid var(--border-color);
+}
+
+:root.dark-theme .experiment-area {
+	background-color: var(--content-bg);
+	border: 1px solid var(--border-color);
+}

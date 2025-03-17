@@ -211,7 +211,7 @@
 	gap: var(--spacing-xl);
 }
 
-/* Section backgrounds */
+/* Section backgrounds - restoring background colors for section-inner */
 #cover .section-inner {
 	background-color: var(--section-cover-bg);
 }
@@ -224,7 +224,7 @@
 	background-color: var(--section-chapters-bg);
 }
 
-/* Chapter 1 sections */
+/* Chapter 1 sections - restoring background colors */
 #chapter1-intro .section-inner,
 #chapter1-coordinates .section-inner,
 #chapter1-matrices .section-inner,
@@ -232,7 +232,7 @@
 	background-color: var(--section-chapter1-bg);
 }
 
-/* Chapter 2 sections */
+/* Chapter 2 sections - restoring background colors */
 #chapter2-intro .section-inner,
 #chapter2-operations .section-inner,
 #chapter2-dot-products .section-inner,
@@ -240,7 +240,7 @@
 	background-color: var(--section-chapter2-bg);
 }
 
-/* Chapter 3 sections */
+/* Chapter 3 sections - restoring background colors */
 #chapter3-definition .section-inner,
 #chapter3-geometric .section-inner,
 #chapter3-applications .section-inner,
@@ -300,4 +300,45 @@
 	.page-divider {
 		margin: var(--spacing-xs) 0;
 	}
+}
+
+/* Section inner content for blackboard theme */
+:root.dark-theme .section-inner {
+	background-color: rgba(38, 38, 38, 0.8) !important;
+	/* Blackboard background */
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	transition: box-shadow 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+}
+
+/* Section inner hover for blackboard theme */
+:root.dark-theme .section-inner:hover {
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(0, 0, 0, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Override section background colors for dark theme */
+:root.dark-theme #cover .section-inner,
+:root.dark-theme #about .section-inner,
+:root.dark-theme #chapters .section-inner,
+:root.dark-theme #chapter1-intro .section-inner,
+:root.dark-theme #chapter1-coordinates .section-inner,
+:root.dark-theme #chapter1-matrices .section-inner,
+:root.dark-theme #chapter1-matrix-lab .section-inner,
+:root.dark-theme #chapter2-intro .section-inner,
+:root.dark-theme #chapter2-operations .section-inner,
+:root.dark-theme #chapter2-dot-products .section-inner,
+:root.dark-theme #chapter2-applications .section-inner,
+:root.dark-theme #chapter3-definition .section-inner,
+:root.dark-theme #chapter3-geometric .section-inner,
+:root.dark-theme #chapter3-applications .section-inner,
+:root.dark-theme #chapter3-triple .section-inner {
+	background-color: rgba(35, 45, 40, 0.8) !important;
+	/* Common blackboard color */
+}
+
+/* Card elements in dark mode */
+:root.dark-theme .card-element {
+	background-color: rgba(30, 40, 35, 0.9);
+	border: 1px solid rgba(255, 255, 255, 0.08);
 }

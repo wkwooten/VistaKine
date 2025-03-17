@@ -6,11 +6,10 @@
 /* Section Loading States - increase specificity for faster application */
 body .section-container {
 	position: relative;
-	transition: opacity 0.5s ease, min-height 0.5s ease, background-color 0.5s ease;
+	transition: opacity 0.5s ease, min-height 0.5s ease;
 	min-height: 300px;
 	/* Base min-height for all sections */
 	border-radius: 4px;
-	background-color: var(--section-cover-bg);
 }
 
 body .section-container.loading {
@@ -24,17 +23,17 @@ body .section-container.loaded {
 /* Unloaded section styles with predetermined heights */
 body .section-container.unloaded {
 	opacity: 0.9;
-	border: 1px solid var(--border-color, #e0e0e0);
+	/* Removing border to eliminate outline */
+	/* border: 1px solid var(--border-color, #e0e0e0); */
 	/* Apply unloaded styles immediately */
 	transition: none;
 }
 
-/* Specific heights and background colors for different section types
-   These need to be applied to all states, not just unloaded */
+/* Specific sections without background colors */
 
 /* Cover section */
 body .section-container[id="cover"] {
-	background-color: var(--section-cover-bg, #F0F8FF);
+	/* Removing background-color */
 }
 
 body .section-container.unloaded[id="cover"] {
@@ -44,7 +43,7 @@ body .section-container.unloaded[id="cover"] {
 
 /* About section */
 body .section-container[id="about"] {
-	background-color: var(--section-about-bg, #E0F2F7);
+	/* Removing background-color */
 }
 
 body .section-container.unloaded[id="about"] {
@@ -53,7 +52,7 @@ body .section-container.unloaded[id="about"] {
 
 /* Chapters section */
 body .section-container[id="chapters"] {
-	background-color: var(--section-chapters-bg, #E1F5FE);
+	/* Removing background-color */
 }
 
 body .section-container.unloaded[id="chapters"] {
@@ -62,24 +61,24 @@ body .section-container.unloaded[id="chapters"] {
 
 /* All chapter sections */
 body .section-container[id^="chapter"] {
-	background-color: var(--section-chapter1-bg, #E3F2FD);
+	/* Removing background-color */
 }
 
 body .section-container.unloaded[id^="chapter"] {
 	min-height: 1000px !important;
 }
 
-/* Chapter-specific backgrounds */
+/* Chapter-specific backgrounds - removing background colors */
 body .section-container[id^="chapter1"] {
-	background-color: var(--section-chapter1-bg, #E3F2FD);
+	/* Removing background-color */
 }
 
 body .section-container[id^="chapter2"] {
-	background-color: var(--section-chapter2-bg, #E8F5E9);
+	/* Removing background-color */
 }
 
 body .section-container[id^="chapter3"] {
-	background-color: var(--section-chapter3-bg, #FFF8E1);
+	/* Removing background-color */
 }
 
 /* Default fallback for any other section */
@@ -306,4 +305,39 @@ body .section-container.unloaded:not(.loading) .loading-placeholder {
 	.error-indicator {
 		border-width: 2px;
 	}
+}
+
+/* Blackboard-specific loading placeholders */
+:root.dark-theme .loading-placeholder {
+	background-color: rgba(255, 255, 255, 0.03);
+	border: 1px dashed rgba(255, 255, 255, 0.1);
+	color: rgba(255, 255, 255, 0.6);
+}
+
+:root.dark-theme .section-container.loading .section-content {
+	background-image: linear-gradient(90deg,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(255, 255, 255, 0.05) 50%,
+			rgba(255, 255, 255, 0) 100%);
+}
+
+/* Chalk theme for section loader in dark mode */
+:root.dark-theme .section-container::before {
+	background-image: radial-gradient(rgba(255, 255, 255, var(--chalk-dust-opacity)) 1px,
+			transparent 1px);
+	background-size: 4px 4px;
+}
+
+:root.dark-theme .section-loader {
+	background: var(--bg-overlay);
+}
+
+:root.dark-theme .section-loader .loader {
+	border-color: rgba(var(--primary-color-rgb), 0.2);
+	border-top-color: var(--primary-color);
+}
+
+:root.dark-theme .section-error {
+	background-color: var(--bg-overlay);
+	border: 1px solid rgba(255, 82, 82, 0.2);
 }

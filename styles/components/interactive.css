@@ -269,3 +269,33 @@
 		font-size: var(--text-sm);
 	}
 }
+
+/* Chalk theme for interactive elements in dark mode */
+:root.dark-theme .interactive-control {
+	background-color: var(--bg-tertiary);
+	border: 1px solid var(--border-color);
+	color: var(--text-color);
+}
+
+:root.dark-theme .interactive-control:hover {
+	background-color: var(--bg-secondary);
+	border-color: var(--hover-bg);
+}
+
+:root.dark-theme .interactive-control:active {
+	background-color: var(--bg-secondary);
+}
+
+:root.dark-theme .slider-control .track {
+	background-color: var(--bg-tertiary);
+}
+
+:root.dark-theme .slider-control .handle {
+	background: var(--primary-color);
+	box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.5);
+}
+
+:root.dark-theme .slider-control .handle:hover {
+	background-color: var(--link-color-hover);
+	box-shadow: 0 0 12px var(--chalk-glow);
+}

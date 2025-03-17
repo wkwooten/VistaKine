@@ -3,9 +3,10 @@
  *
  * This file handles:
  * - Initialization of Three.js scenes
- * - Integration with Cannon.js physics
+ * - Integration with Rapier physics
  * - Management of visualization containers
  * - Fullscreen/expand functionality
+ * - Main UI components for visualizations
  */
 
 // Create the VistaKine namespace if it doesn't exist

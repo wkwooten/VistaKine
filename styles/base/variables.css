@@ -145,50 +145,112 @@
 	/* Darker blue */
 }
 
-/* Dark theme variables (for future implementation) */
+/* Dark theme variables (blackboard-inspired) */
 :root.dark-theme {
-	--primary-color: #1A237E;
-	--primary-color-rgb: 26, 35, 126;
-	--accent-color: #64B5F6;
-	--accent-color-dark: #0D47A1;
-	/* Even darker blue for dark theme */
-	--text-color: #F5F5F5;
-	--text-light: #E1E1E1;
-	--border-color: #9FA8DA;
-	--hover-bg: rgba(159, 168, 218, 0.15);
-	--hover-color: #9FA8DA;
-	--active-bg: rgba(100, 181, 246, 0.15);
+	/* Core theme colors */
+	--primary-color: #90CAF9 !important;
+	/* Chalk-like blue */
+	--primary-color-rgb: 144, 202, 249 !important;
+	--primary-color-dark: #4FC3F7 !important;
+	/* Darker chalk blue */
 
-	/* Link colors for dark theme */
-	--link-color: #90CAF9;
-	--link-color-hover: #64B5F6;
-	--link-color-visited: #B39DDB;
-	--link-color-active: #42A5F5;
+	--accent-color: #81D4FA !important;
+	/* Light blue chalk accent */
+	--accent-color-dark: #4FC3F7 !important;
 
-	/* Section colors for dark theme */
-	--section-cover-bg: #1A237E;
-	--section-about-bg: #283593;
-	--section-chapters-bg: #303F9F;
-	--section-chapter1-bg: #3949AB;
-	--section-chapter2-bg: #3F51B5;
-	--section-chapter3-bg: #5C6BC0;
-	--section-chapter4-bg: #7986CB;
-	--section-chapter5-bg: #9FA8DA;
+	--text-color: #E3F2FD !important;
+	/* Chalk-like white-blue */
+	--text-light: #B3E5FC !important;
+	/* Lighter chalk blue */
 
-	/* Shadows for dark theme */
-	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-	--shadow-md: 0 2px 10px rgba(0, 0, 0, 0.4);
-	--shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.5);
+	/* Background colors */
+	--bg-color: #1a1a1a !important;
+	/* Darker background (was #2a2a2a) */
+	--bg-overlay: rgba(26, 26, 26, 0.9) !important;
+	/* Semi-transparent overlay */
+	--bg-secondary: rgba(22, 22, 22, 0.8) !important;
+	/* Slightly darker secondary background */
+	--bg-tertiary: rgba(18, 18, 18, 0.7) !important;
+	/* Even darker tertiary background */
 
-	/* Cover-specific colors */
-	--cover-gradient: linear-gradient(135deg, #1A2035, #112240);
-	--cover-text: var(--text-on-dark);
-	--cover-text-secondary: rgba(255, 255, 255, 0.75);
-	--cover-accent: #64B5F6;
-	--cover-accent-glow: rgba(100, 181, 246, 0.6);
-	--cover-heading-gradient: linear-gradient(90deg, #ffffff, rgba(200, 225, 255, 0.85));
-	--cover-button-primary: #1976D2;
-	--cover-button-primary-hover: #0D47A1;
+	/* UI elements */
+	--border-color: rgba(255, 255, 255, 0.2) !important;
+	/* Subtle chalk-like border */
+	--hover-bg: rgba(255, 255, 255, 0.07) !important;
+	/* Subtle chalk highlight */
+	--hover-color: #FFFFFF !important;
+	/* Bright chalk on hover */
+	--active-bg: rgba(144, 202, 249, 0.15) !important;
+	/* Subtle chalk blue */
+
+	/* Link colors */
+	--link-color: #90CAF9 !important;
+	/* Chalk blue */
+	--link-color-hover: #FFFFFF !important;
+	/* Pure white on hover */
+	--link-color-visited: #B39DDB !important;
+	/* Subtle purple chalk */
+	--link-color-active: #E1F5FE !important;
+	/* Very light blue */
+
+	/* Sidebar specific */
+	--sidebar-bg: rgba(31, 77, 41, 0.95) !important;
+	/* More saturated, approachable green */
+	--sidebar-border: rgba(255, 255, 255, 0.1) !important;
+	--sidebar-active-bg: rgba(144, 202, 249, 0.25) !important;
+	--sidebar-hover-bg: rgba(255, 255, 255, 0.07) !important;
+
+	/* Content elements */
+	--content-bg: rgba(35, 35, 35, 0.7) !important;
+	/* Lighter version of background instead of blue */
+	--content-border: rgba(255, 255, 255, 0.1) !important;
+	--content-divider: rgba(70, 70, 70, 0.5) !important;
+	/* Changed from blue to neutral gray */
+
+	/* Section backgrounds */
+	--section-cover-bg: #1e1e1e !important;
+	--section-about-bg: #232323 !important;
+	--section-chapters-bg: #282828 !important;
+	--section-chapter1-bg: #2d2d2d !important;
+	--section-chapter2-bg: #323232 !important;
+	--section-chapter3-bg: #373737 !important;
+	--section-chapter4-bg: #3c3c3c !important;
+	--section-chapter5-bg: #414141 !important;
+
+	/* Visual effects */
+	--chalk-dust-opacity: 0.02 !important;
+	--chalk-grid-size: 25px !important;
+	--chalk-glow: rgba(255, 255, 255, 0.4) !important;
+
+	/* Cover specific colors */
+	--cover-gradient: linear-gradient(135deg, #1A2035, #112240) !important;
+	--cover-text: var(--text-on-dark) !important;
+	--cover-text-secondary: rgba(255, 255, 255, 0.75) !important;
+	--cover-accent: #90CAF9 !important;
+	/* Chalk blue */
+	--cover-accent-glow: rgba(230, 240, 255, 0.5) !important;
+	/* Chalk glow */
+	--cover-heading-gradient: linear-gradient(90deg, #ffffff, rgba(230, 240, 255, 0.85)) !important;
+	--cover-button-primary: rgba(144, 202, 249, 0.8) !important;
+	/* Chalk blue */
+	--cover-button-primary-hover: #FFFFFF !important;
+	/* Bright white on hover */
+}
+
+/* Dark theme (blackboard-inspired) */
+:root.dark-theme body {
+	/* Blackboard background - much darker than before */
+	background-color: #121212;
+
+	/* Remove the grid and replace with a subtle blackboard texture */
+	background-image:
+		linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+	background-size: 40px 40px;
+	/* Slightly larger grid for chalk effect */
+
+	/* Add subtle noise texture to mimic blackboard surface */
+	background-blend-mode: overlay;
 }
 
 /* Device variables */
@@ -202,7 +264,7 @@
 
 /* High contrast theme (for accessibility) */
 :root.high-contrast {
-	--primary-color: #0000ff;
+	/* --primary-color: #0000ff;
 	--primary-color-rgb: 0, 0, 255;
 	--accent-color: #6666ff;
 	--accent-color-dark: #0000cc;
@@ -211,21 +273,21 @@
 	--border-color: #000000;
 	--hover-bg: rgba(0, 0, 0, 0.1);
 	--hover-color: #000000;
-	--active-bg: rgba(0, 0, 255, 0.2);
+	--active-bg: rgba(0, 0, 255, 0.2); */
 
 	/* Link colors for high contrast */
-	--link-color: #0000EE;
+	/* --link-color: #0000EE;
 	--link-color-hover: #0000CC;
 	--link-color-visited: #551A8B;
-	--link-color-active: #0000FF;
+	--link-color-active: #0000FF; */
 
 	/* Cover-specific colors */
-	--cover-gradient: linear-gradient(135deg, #000080, #0000CC);
+	/* --cover-gradient: linear-gradient(135deg, #000080, #0000CC);
 	--cover-text: white;
 	--cover-text-secondary: white;
 	--cover-accent: #FFFF00;
 	--cover-accent-glow: rgba(255, 255, 0, 0.5);
 	--cover-heading-gradient: linear-gradient(90deg, white, white);
 	--cover-button-primary: #FFFF00;
-	--cover-button-primary-hover: #FFFFCC;
+	--cover-button-primary-hover: #FFFFCC; */
 }
