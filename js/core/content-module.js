@@ -132,7 +132,7 @@ VistaKine.content = {
             section.classList.add('unloaded');
 
             // Get the content element
-            const contentElement = section.querySelector('.section-content');
+            const contentElement = section.querySelector('.section-wrapper');
             if (contentElement) {
                 // Update the loading placeholder with a friendly title
                 const loadingPlaceholder = contentElement.querySelector('.loading-placeholder');
@@ -181,66 +181,45 @@ VistaKine.content = {
 
     /**
      * Set up an observer to detect which section is visible while scrolling
+     * This is now a lightweight version that relies on the navigation module's observer
      */
     setupScrollObserver: function() {
-        // Check device type using centralized utilities
-        const isTablet = VistaKine.device.isTablet();
+        console.log('[Content] Using navigation observer exclusively, disabling content scroll observer');
 
-        // Use properly throttled scroll event as a backup for the IntersectionObserver
-        let lastScrollTime = 0;
-        const scrollThreshold = isTablet ? 350 : 250; // Increased throttling for tablets
-        let scrollTimer = null;
-        let isScrolling = false;
+        // Subscribe to navigation state changes instead of using our own observer
+        VistaKine.state.subscribe('navigation.currentSection', (path, newSectionId, oldSectionId) => {
+            console.log(`[Content] Detected section change from central state: ${oldSectionId} -> ${newSectionId}`);
 
-        window.addEventListener('scroll', function() {
-            const now = Date.now();
-            isScrolling = true;
-
-            // First, cancel any pending scroll timer to avoid stacking updates
-            if (scrollTimer) {
-                clearTimeout(scrollTimer);
-            }
-
-            // Only process scroll when scrolling stops or after threshold time
-            scrollTimer = setTimeout(() => {
-                // Only do the expensive check if enough time has passed since last processed scroll
-                if (now - lastScrollTime > scrollThreshold) {
-                    lastScrollTime = now;
-
-                    // Use requestAnimationFrame to avoid layout thrashing
-                    window.requestAnimationFrame(function() {
-                        // Only process if we're not in the middle of a direct navigation
-                        if (VistaKine.navigation && VistaKine.navigation.state &&
-                            VistaKine.navigation.state.isDirectNavigation) {
-                            return;
-                        }
-
-                        // Prefer to use the Observer-detected section if available
-                        let visibleSection = null;
-
-                        if (VistaKine.navigation.state.visibleSections &&
-                            VistaKine.navigation.state.visibleSections.length > 0) {
-                            // Get the top section from the IntersectionObserver data
-                            visibleSection = VistaKine.navigation.state.visibleSections[0].element;
-                        } else {
-                            // Fallback to the old method
-                            visibleSection = VistaKine.navigation.findVisibleSection();
-                        }
-
-                        if (visibleSection && visibleSection.id) {
-                            // Only update the active section if it's different from current
-                            if (VistaKine.navigation.state.currentSection !== visibleSection.id) {
-                                VistaKine.utils.log(`Scroll event detected section change: ${visibleSection.id}`, 'debug');
-                                VistaKine.navigation.setActiveSection(visibleSection.id);
-                            }
-                        }
-
-                        // Flag that we're done scrolling
-                        isScrolling = false;
-                    });
+            if (newSectionId) {
+                const section = document.getElementById(newSectionId);
+                if (section && !VistaKine.state.isSectionLoaded(newSectionId)) {
+                    console.log(`[Content] Loading section ${newSectionId} due to state change`);
+                    this.loadSection(section);
                 }
-            }, isTablet ? 200 : 100); // Short timeout before checking - longer for tablets
+            }
         });
+
+        // Also subscribe to the visible sections array changes
+        VistaKine.state.subscribe('navigation.visibleSections', (path, newValue) => {
+            if (!newValue || !Array.isArray(newValue) || newValue.length === 0) return;
+
+            // Check if any visible sections need to be loaded
+            for (const visSection of newValue) {
+                if (visSection && visSection.id && !VistaKine.state.isSectionLoaded(visSection.id)) {
+                    const section = document.getElementById(visSection.id);
+                    if (section) {
+                        console.log(`[Content] Loading visible section ${visSection.id}`);
+                        this.loadSection(section);
+                    }
+                }
+            }
+        });
+
+        /* Disabling the old scroll event listener - using navigation observer instead
+        window.addEventListener('scroll', function() {
+            ...existing scroll handler code...
+        });
+        */
     },
 
     /**
@@ -288,7 +267,31 @@ VistaKine.content = {
         }
 
         const sectionId = section.id;
-        const contentElement = section.querySelector('.section-content');
+
+        // Check if navigation is locked first
+        if (VistaKine.navigation &&
+            VistaKine.navigation.state &&
+            VistaKine.navigation.state.navigationLock) {
+            console.log(`[Content] Deferring load of ${sectionId} due to navigation lock`);
+
+            // Schedule for after lock release
+            setTimeout(() => {
+                // Check if it's still needed after the lock is released
+                if (!VistaKine.state.isSectionLoaded(sectionId)) {
+                    console.log(`[Content] Attempting deferred load of ${sectionId} after navigation lock released`);
+                    this.loadSection(section);
+                }
+            }, VistaKine.navigation.state.navigationLockDuration + 100);
+            return false;
+        }
+
+        // Check if we're already loading this section
+        if (VistaKine.state.get(`content.pendingRequests.${sectionId}`)) {
+            console.log(`[Content] Section ${sectionId} is already being loaded, skipping duplicate request`);
+            return false;
+        }
+
+        const contentElement = section.querySelector('.section-wrapper');
 
         if (!contentElement) {
             VistaKine.utils.log(`Section ${sectionId} has no content element`, 'error');
@@ -619,7 +622,7 @@ VistaKine.content = {
         }
 
         // Get the content element
-        const contentElement = section.querySelector('.section-content');
+        const contentElement = section.querySelector('.section-wrapper');
         if (!contentElement) {
             VistaKine.utils.log(`Section ${sectionId} has no content element`, 'warn');
             return false;
@@ -804,269 +807,266 @@ VistaKine.content = {
      * Used during development and testing to monitor section loading/unloading
      */
     createDebugPanel: function() {
-        // Check if panel already exists
-        if (document.getElementById('vk-debug-panel')) {
-            return;
-        }
+        console.log('[Content] Showing debug panel');
 
-        // Create panel element
-        const panel = document.createElement('div');
-        panel.id = 'vk-debug-panel';
-        panel.className = 'vk-debug-panel';
+        // Check if debug panel already exists
+        let debugPanel = document.querySelector('#vistakine-debug-panel');
 
-        // Style the panel
-        panel.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 9999;
-            max-height: 300px;
-            overflow-y: auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            display: none; /* Hidden by default */
-        `;
+        if (!debugPanel) {
+            // Create debug panel
+            debugPanel = document.createElement('div');
+            debugPanel.id = 'vistakine-debug-panel';
+            debugPanel.className = 'vistakine-debug-panel';
 
-        // Create header
-        const header = document.createElement('div');
-        header.style.cssText = `
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #666;
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-        `;
-        header.innerHTML = `
-            <span>VistaKine Debug Panel</span>
-            <button id="vk-debug-close" style="background: none; border: none; color: #fff; cursor: pointer;">×</button>
-        `;
+            // Create panel content
+            debugPanel.innerHTML = `
+                <div class="debug-panel-header">
+                    <h3>VistaKine Debug Panel</h3>
+                    <button class="debug-panel-close">×</button>
+                </div>
+                <div class="debug-panel-content">
+                    <div class="debug-section">
+                        <h4>Navigation State</h4>
+                        <div id="debug-nav-state" class="debug-info"></div>
+                    </div>
+                    <div class="debug-section">
+                        <h4>Loaded Sections</h4>
+                        <div id="debug-loaded-sections" class="debug-info"></div>
+                    </div>
+                    <div class="debug-section">
+                        <h4>Observer Stats</h4>
+                        <div id="debug-observer-stats" class="debug-info"></div>
+                    </div>
+                    <div class="debug-section">
+                        <h4>Performance</h4>
+                        <div id="debug-performance" class="debug-info"></div>
+                    </div>
+                </div>
+            `;
 
-        // Create content container
-        const content = document.createElement('div');
-        content.id = 'vk-debug-content';
-
-        // Add elements to the DOM
-        panel.appendChild(header);
-        panel.appendChild(content);
-        document.body.appendChild(panel);
-
-        // Add close button event listener
-        document.getElementById('vk-debug-close').addEventListener('click', () => {
-            this.hideDebugPanel();
-
-            // If we're using the settings integration, update the settings value
-            if (VistaKine.settings && VistaKine.settings.current && VistaKine.settings.current.development) {
-                VistaKine.settings.current.development.showDebugPanel = false;
-
-                // Update the checkbox in the settings panel if it exists
-                const debugPanelCheckbox = document.getElementById('debug-panel');
-                if (debugPanelCheckbox) {
-                    debugPanelCheckbox.checked = false;
+            // Add panel styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .vistakine-debug-panel {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 350px;
+                    background: rgba(20, 20, 20, 0.9);
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    color: #fff;
+                    font-family: monospace;
+                    font-size: 12px;
+                    z-index: 10000;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    max-height: 500px;
+                    overflow-y: auto;
+                    transition: opacity 0.3s ease;
                 }
 
-                // Save settings
-                if (typeof VistaKine.settings.saveSettings === 'function') {
-                    VistaKine.settings.saveSettings();
+                .debug-panel-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: #333;
+                    border-bottom: 1px solid #555;
+                    border-radius: 6px 6px 0 0;
                 }
+
+                .debug-panel-header h3 {
+                    margin: 0;
+                    font-size: 14px;
+                    color: #fff;
+                }
+
+                .debug-panel-close {
+                    background: none;
+                    border: none;
+                    color: #aaa;
+                    font-size: 18px;
+                    cursor: pointer;
+                    padding: 0 4px;
+                }
+
+                .debug-panel-close:hover {
+                    color: #fff;
+                }
+
+                .debug-panel-content {
+                    padding: 10px;
+                }
+
+                .debug-section {
+                    margin-bottom: 12px;
+                }
+
+                .debug-section h4 {
+                    margin: 0 0 4px 0;
+                    font-size: 12px;
+                    color: #88ccff;
+                    border-bottom: 1px solid #444;
+                    padding-bottom: 4px;
+                }
+
+                .debug-info {
+                    font-family: monospace;
+                    white-space: pre-wrap;
+                    font-size: 11px;
+                    line-height: 1.3;
+                    margin-bottom: 8px;
+                    color: #ddd;
+                }
+
+                .debug-highlight {
+                    color: #ffcc33;
+                }
+
+                .debug-error {
+                    color: #ff6666;
+                }
+
+                .debug-success {
+                    color: #66cc66;
+                }
+
+                :root.dark-theme .vistakine-debug-panel {
+                    background: rgba(30, 30, 30, 0.95);
+                    border: 1px solid #555;
+                }
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(debugPanel);
+
+            // Add close button event
+            const closeButton = debugPanel.querySelector('.debug-panel-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    this.hideDebugPanel();
+                    // Also update the settings toggle
+                    if (VistaKine.settings) {
+                        VistaKine.settings.set('development.showDebugPanel', false, false);
+                    }
+                });
             }
-        });
-
-        // Create toggle button (now hidden by default - accessible via settings)
-        const toggleBtn = document.createElement('button');
-        toggleBtn.id = 'vk-debug-toggle';
-        toggleBtn.textContent = 'Debug';
-        toggleBtn.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            z-index: 9998;
-            display: none; /* Hidden by default */
-        `;
-
-        // Add toggle button to DOM
-        document.body.appendChild(toggleBtn);
-
-        // Toggle button event listener
-        toggleBtn.addEventListener('click', () => {
-            this.showDebugPanel();
-        });
-
-        // Initial update
-        this.updateDebugPanel();
-
-        // Set up auto-refresh every second
-        setInterval(() => this.updateDebugPanel(), 1000);
-    },
-
-    /**
-     * Show the debug panel
-     */
-    showDebugPanel: function() {
-        const panel = document.getElementById('vk-debug-panel');
-        const toggleBtn = document.getElementById('vk-debug-toggle');
-
-        if (panel) {
-            panel.style.display = 'block';
+        } else {
+            // Show existing panel
+            debugPanel.style.display = 'block';
         }
 
-        if (toggleBtn) {
-            toggleBtn.style.display = 'none';
-        }
+        // Start updating the debug panel
+        this.startDebugUpdates();
     },
 
     /**
      * Hide the debug panel
      */
     hideDebugPanel: function() {
-        const panel = document.getElementById('vk-debug-panel');
-        const toggleBtn = document.getElementById('vk-debug-toggle');
+        console.log('[Content] Hiding debug panel');
 
-        if (panel) {
-            panel.style.display = 'none';
+        const debugPanel = document.querySelector('#vistakine-debug-panel');
+        if (debugPanel) {
+            debugPanel.style.display = 'none';
         }
 
-        if (toggleBtn) {
-            toggleBtn.style.display = 'none'; // Keep toggle hidden for settings integration
+        // Stop update interval if it exists
+        if (this.debugUpdateInterval) {
+            clearInterval(this.debugUpdateInterval);
+            this.debugUpdateInterval = null;
         }
     },
 
     /**
-     * Update the debug panel with current system state
+     * Start periodic updates of debug information
+     */
+    startDebugUpdates: function() {
+        // Stop any existing interval
+        if (this.debugUpdateInterval) {
+            clearInterval(this.debugUpdateInterval);
+        }
+
+        // Update immediately
+        this.updateDebugPanel();
+
+        // Set up interval for updates
+        this.debugUpdateInterval = setInterval(() => {
+            this.updateDebugPanel();
+        }, 500); // Update every 500ms
+    },
+
+    /**
+     * Update debug panel with current information
      */
     updateDebugPanel: function() {
-        const content = document.getElementById('vk-debug-content');
-        if (!content) return;
+        const navStateEl = document.getElementById('debug-nav-state');
+        const loadedSectionsEl = document.getElementById('debug-loaded-sections');
+        const observerStatsEl = document.getElementById('debug-observer-stats');
+        const performanceEl = document.getElementById('debug-performance');
 
-        // Get data from the centralized state system
-        const loadedSections = VistaKine.state.getLoadedSections();
-        const currentSection = VistaKine.state.getCurrentSection();
+        if (!navStateEl || !loadedSectionsEl || !observerStatsEl || !performanceEl) return;
 
-        // Get visible sections from the navigation module
+        // Update navigation state
+        const currentSection = VistaKine.state.getCurrentSection() || 'none';
+        const isLocked = VistaKine.navigation && VistaKine.navigation.state ?
+                        VistaKine.navigation.state.navigationLock : false;
+        const isDirectNav = VistaKine.navigation && VistaKine.navigation.state ?
+                            VistaKine.navigation.state.isDirectNavigation : false;
+
+        navStateEl.innerHTML = `
+            <div>Current Section: <span class="debug-highlight">${currentSection}</span></div>
+            <div>Navigation Lock: <span class="${isLocked ? 'debug-error' : 'debug-success'}">${isLocked}</span></div>
+            <div>Direct Navigation: <span class="${isDirectNav ? 'debug-highlight' : ''}">${isDirectNav}</span></div>
+        `;
+
+        // Update loaded sections
+        const loadedSections = VistaKine.state.getLoadedSections() || [];
+        loadedSectionsEl.innerHTML = `
+            <div>Total Loaded: <span class="debug-highlight">${loadedSections.length}</span></div>
+            <div>${loadedSections.map(s => `<span class="debug-success">✓</span> ${s}`).join('<br>')}</div>
+        `;
+
+        // Update observer stats
         let visibleSections = [];
         if (VistaKine.navigation && VistaKine.navigation.state) {
             visibleSections = VistaKine.navigation.state.visibleSections || [];
         }
 
-        // Sort visible sections by visibility ratio for display
-        const sortedVisibleSections = [...visibleSections].sort((a, b) => b.ratio - a.ratio);
+        observerStatsEl.innerHTML = `
+            <div>Visible Sections: <span class="debug-highlight">${visibleSections.length}</span></div>
+            ${visibleSections.map(s => `<div>${s.id}: ${(s.ratio * 100).toFixed(1)}%</div>`).join('')}
+        `;
 
-        // Get all sections and indicate which are loaded/unloaded
-        const allSections = Array.from(VistaKine.dom.getSections()).map(section => section.id);
-        const unloadedSections = allSections.filter(id => !loadedSections.includes(id));
+        // Update performance metrics
+        const loadStartTime = window.vistaKineInitTime || 0;
+        const currentTime = Date.now();
+        const timeSinceLoad = currentTime - loadStartTime;
 
-        // Format section list with indicators
-        const loadedSectionsList = loadedSections.map(sectionId => {
-            const isCurrent = sectionId === currentSection;
-            const visibleSection = visibleSections.find(s => s.id === sectionId);
-            const isVisible = visibleSection !== undefined;
-            const isEssential = this.config.essentialSections.includes(sectionId);
-
-            let indicators = '';
-            if (isCurrent) indicators += ' <span style="color: #ffcc00;">⭐</span>';
-            if (isVisible) {
-                const ratio = visibleSection.ratio.toFixed(2);
-                indicators += ` <span style="color: #00ccff;">👁️ ${ratio}</span>`;
-            }
-            if (isEssential) indicators += ' <span style="color: #ff6666;">🔒</span>';
-
-            return `<li><span style="color: #66ff66;">▣</span> ${sectionId}${indicators}</li>`;
-        }).join('');
-
-        // Format unloaded sections list
-        const unloadedSectionsList = unloadedSections.map(sectionId => {
-            return `<li><span style="color: #999;">□</span> ${sectionId}</li>`;
-        }).join('');
-
-        // Get memory information if performance API is available
-        let memoryInfo = '';
-        if (window.performance && performance.memory) {
-            const memory = performance.memory;
-            const totalMB = Math.round(memory.totalJSHeapSize / (1024 * 1024));
-            const usedMB = Math.round(memory.usedJSHeapSize / (1024 * 1024));
-            const limitMB = Math.round(memory.jsHeapSizeLimit / (1024 * 1024));
-
-            memoryInfo = `
-                <div><span style="color: #999;">JS Heap:</span> ${usedMB}MB / ${totalMB}MB (Limit: ${limitMB}MB)</div>
-            `;
-        } else {
-            // Fallback to rough estimation
-            const memoryUsage = loadedSections.length * 300; // Very rough estimate in KB
-            memoryInfo = `<div><span style="color: #999;">Est. Memory:</span> ~${memoryUsage} KB</div>`;
+        // Get last observer processing time if available
+        let lastProcessingTime = 'N/A';
+        if (window.lastObserverProcessingTime) {
+            lastProcessingTime = `${window.lastObserverProcessingTime.toFixed(2)}ms`;
         }
 
-        // Create list of visible sections with visibility ratio
-        const visibleSectionsList = sortedVisibleSections.length > 0
-            ? sortedVisibleSections.map(s => `${s.id} (${s.ratio.toFixed(2)})`).join(', ')
-            : 'none';
-
-        // Show direct navigation status
-        const directNavStatus = VistaKine.navigation &&
-                               VistaKine.navigation.state &&
-                               VistaKine.navigation.state.isDirectNavigation
-            ? '<span style="color: #ffcc00;">ACTIVE</span>'
-            : '<span style="color: #999;">inactive</span>';
-
-        // Update content
-        content.innerHTML = `
-            <div style="margin-bottom: 10px;">
-                <div><span style="color: #999;">Current:</span> ${currentSection || 'none'}</div>
-                <div>
-                    <span style="color: #999;">Status:</span>
-                    <span style="${loadedSections.length > this.config.maxLoadedSections ? 'color: #ff6666;' : 'color: #66ff66;'}">
-                        ${loadedSections.length}/${this.config.maxLoadedSections} loaded
-                    </span>
-                </div>
-                ${memoryInfo}
-                <div style="margin-top: 5px;">
-                    <span style="color: #999;">Visible sections:</span>
-                    <span style="color: #00ccff;">${visibleSectionsList}</span>
-                </div>
-                <div style="margin-top: 3px;">
-                    <span style="color: #999;">Direct navigation:</span> ${directNavStatus}
-                </div>
-                <div style="margin-top: 5px;">
-                    <button onclick="VistaKine.navigation.ensureSectionVisible(VistaKine.state.getCurrentSection())" style="background: #333; color: #fff; border: 1px solid #666; padding: 2px 5px; font-size: 10px; cursor: pointer; border-radius: 3px;">
-                        Recenter Current Section
-                    </button>
-                </div>
-            </div>
-            <div style="margin-bottom: 10px;">
-                <div style="color: #999; margin-bottom: 5px;">Loaded Sections:</div>
-                <div style="margin-left: 10px;">
-                    <ul style="list-style: none; padding-left: 0;">
-                        ${loadedSectionsList}
-                    </ul>
-                </div>
-            </div>
-            <div style="margin-bottom: 10px;">
-                <div style="color: #999; margin-bottom: 5px; cursor: pointer;" onclick="document.getElementById('vk-unloaded-list').style.display = document.getElementById('vk-unloaded-list').style.display === 'none' ? 'block' : 'none';">
-                    Unloaded Sections (${unloadedSections.length}) <span style="font-size: 10px;">▼</span>
-                </div>
-                <div id="vk-unloaded-list" style="margin-left: 10px; display: none;">
-                    <ul style="list-style: none; padding-left: 0;">
-                        ${unloadedSectionsList}
-                    </ul>
-                </div>
-            </div>
-            <div style="margin-top: 10px; font-size: 10px; color: #666; text-align: center;">
-                Last updated: ${new Date().toLocaleTimeString()}
-            </div>
+        performanceEl.innerHTML = `
+            <div>Session Duration: <span class="debug-highlight">${(timeSinceLoad / 1000).toFixed(1)}s</span></div>
+            <div>Last Observer Process: <span class="${parseFloat(lastProcessingTime) > 50 ? 'debug-error' : 'debug-success'}">${lastProcessingTime}</span></div>
+            <div>Memory: <span class="debug-highlight">${this.getMemoryUsage()}</span></div>
         `;
+    },
+
+    /**
+     * Get memory usage info if available
+     */
+    getMemoryUsage: function() {
+        if (window.performance && window.performance.memory) {
+            const memory = window.performance.memory;
+            const usedHeap = (memory.usedJSHeapSize / 1048576).toFixed(1); // Convert to MB
+            const totalHeap = (memory.totalJSHeapSize / 1048576).toFixed(1);
+            return `${usedHeap}MB / ${totalHeap}MB`;
+        }
+        return 'Not available';
     },
 
     /**

@@ -121,6 +121,10 @@ VistaKine.state = (function() {
                 old: oldValue,
                 new: newValue
             });
+
+            // Add timestamp for sequence analysis
+            const timeElapsed = window.vistaKineInitTime ? (Date.now() - window.vistaKineInitTime) : '?';
+            console.log(`[VistaKine Timestamp] ${timeElapsed}ms since init, path: ${path}`);
         }
 
         // Notify all subscribers that match this path

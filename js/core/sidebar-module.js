@@ -84,8 +84,14 @@ VistaKine.sidebar = {
         // Set up window resize handler
         window.addEventListener('resize', this.handleWindowResize.bind(this));
 
-        // Subscribe to sidebar state changes
+        // Subscribe to state changes
         VistaKine.state.subscribe('ui.sidebar', this.handleSidebarStateChange.bind(this));
+
+        // Subscribe to navigation state changes
+        VistaKine.state.subscribe('navigation.currentSection', this.handleSectionChange.bind(this));
+
+        // Subscribe to content loading changes for indicators
+        VistaKine.state.subscribe('content.loadedSections', this.updateLoadedSectionIndicators.bind(this));
 
         // Mark as initialized
         VistaKine.state.setInitialized('sidebar');
@@ -371,6 +377,60 @@ VistaKine.sidebar = {
                 sidebar.classList.remove('active');
             }
         }
+    },
+
+    /**
+     * Handle section changes from the navigation module
+     * @param {string} path - State path that changed
+     * @param {string} newSectionId - New active section ID
+     * @param {string} oldSectionId - Previous active section ID
+     */
+    handleSectionChange: function(path, newSectionId, oldSectionId) {
+        if (!newSectionId) return;
+
+        console.log(`[Sidebar] Updating for section change: ${oldSectionId || 'none'} -> ${newSectionId}`);
+
+        // Update active section UI
+        const allLinks = document.querySelectorAll('.nav-chapter, .nav-subchapter');
+        allLinks.forEach(link => {
+            link.classList.remove('active', 'parent-active');
+        });
+
+        // Set active on the exact link
+        const activeLink = document.querySelector(`a[href="#${newSectionId}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+            this.expandParentChapter(activeLink);
+        }
+    },
+
+    /**
+     * Expand the parent chapter of a navigation link
+     * @param {HTMLElement} element - The navigation link element
+     */
+    expandParentChapter: function(element) {
+        if (element.classList.contains('nav-subchapter')) {
+            const subchapterList = element.closest('.subchapter-list');
+            if (subchapterList) {
+                // Expand the subchapter list
+                subchapterList.classList.add('expanded');
+
+                // Find and expand the parent chapter
+                const parentChapter = subchapterList.previousElementSibling;
+                if (parentChapter && parentChapter.classList.contains('nav-chapter')) {
+                    parentChapter.classList.remove('collapsed');
+                    parentChapter.classList.add('parent-active');
+                }
+            }
+        }
+    },
+
+    /**
+     * Update indicators for loaded sections in the sidebar
+     */
+    updateLoadedSectionIndicators: function(path, newLoadedSections) {
+        // This would update visual indicators if we had them
+        console.log(`[Sidebar] Loaded sections changed, now ${Array.from(newLoadedSections || []).length} sections loaded`);
     }
 };
 

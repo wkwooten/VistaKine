@@ -256,16 +256,89 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 24px;
-	height: 24px;
-	background-color: rgba(0, 0, 0, 0.07);
-	color: var(--text-light);
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
-	font-size: var(--text-sm);
-	transition: all 0.3s ease;
+	margin-right: 12px;
 	flex-shrink: 0;
-	margin-top: 3px;
-	border: 1px solid transparent;
+	background-color: var(--sidebar-item-bg);
+	color: var(--sidebar-text);
+	border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+	font-size: 0.9rem;
+	position: relative;
+	overflow: hidden;
+	z-index: 0;
+	/* Ensure proper stacking context */
+}
+
+/* Progress indicator - circular fill from center */
+.chapter-number::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(var(--progress-scale, 0));
+	width: 100%;
+	height: 100%;
+	background-color: rgba(var(--primary-color-rgb), 0.15);
+	border-radius: 50%;
+	transition: transform 0.3s ease-out;
+	z-index: -1;
+}
+
+/* Make sure the number stays above the progress background */
+.chapter-number > span,
+.chapter-number > i {
+	position: relative;
+	z-index: 1;
+}
+
+/* Chapter-specific progress fill colors */
+.nav-chapter[href^="#chapter1"] .chapter-number::before {
+	background-color: rgba(59, 130, 246, 0.15);
+}
+
+.nav-chapter[href^="#chapter2"] .chapter-number::before {
+	background-color: rgba(16, 185, 129, 0.15);
+}
+
+.nav-chapter[href^="#chapter3"] .chapter-number::before {
+	background-color: rgba(245, 158, 11, 0.15);
+}
+
+.nav-chapter[href^="#chapter4"] .chapter-number::before {
+	background-color: rgba(239, 68, 68, 0.15);
+}
+
+.nav-chapter[href^="#chapter5"] .chapter-number::before {
+	background-color: rgba(139, 92, 246, 0.15);
+}
+
+/* Dark theme colors for progress fill */
+:root.dark-theme .nav-chapter[href^="#chapter1"] .chapter-number::before {
+	background-color: rgba(59, 130, 246, 0.3);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter2"] .chapter-number::before {
+	background-color: rgba(16, 185, 129, 0.3);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter3"] .chapter-number::before {
+	background-color: rgba(245, 158, 11, 0.3);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter4"] .chapter-number::before {
+	background-color: rgba(239, 68, 68, 0.3);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter5"] .chapter-number::before {
+	background-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Chapter-specific completion indicators - a simple border change */
+.nav-chapter.chapter-complete .chapter-number {
+	border-color: currentColor;
+	border-width: 2px;
 }
 
 /* Hover feedback for chapter numbers */
@@ -1262,6 +1335,84 @@
 :root.dark-theme .sidebar {
 	background-color: var(--sidebar-bg);
 	border-right: 1px solid var(--sidebar-border);
+}
+
+/* Dark theme chapter-specific styling */
+:root.dark-theme .nav-chapter[href^="#chapter1"] .chapter-number {
+	background-color: var(--chapter1-dark-hover);
+	color: #FFFFFF;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter2"] .chapter-number {
+	background-color: var(--chapter2-dark-hover);
+	color: #FFFFFF;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter3"] .chapter-number {
+	background-color: var(--chapter3-dark-hover);
+	color: #FFFFFF;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter4"] .chapter-number {
+	background-color: var(--chapter4-dark-hover);
+	color: #FFFFFF;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter5"] .chapter-number {
+	background-color: var(--chapter5-dark-hover);
+	color: #FFFFFF;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Hover states in dark mode */
+:root.dark-theme .nav-chapter[href^="#chapter1"]:hover {
+	background-color: var(--chapter1-dark-hover);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter2"]:hover {
+	background-color: var(--chapter2-dark-hover);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter3"]:hover {
+	background-color: var(--chapter3-dark-hover);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter4"]:hover {
+	background-color: var(--chapter4-dark-hover);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter5"]:hover {
+	background-color: var(--chapter5-dark-hover);
+}
+
+/* Active states in dark mode */
+:root.dark-theme .nav-chapter[href^="#chapter1"].active,
+:root.dark-theme .nav-chapter[href^="#chapter1"].parent-active {
+	background-color: var(--chapter1-dark-active);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter2"].active,
+:root.dark-theme .nav-chapter[href^="#chapter2"].parent-active {
+	background-color: var(--chapter2-dark-active);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter3"].active,
+:root.dark-theme .nav-chapter[href^="#chapter3"].parent-active {
+	background-color: var(--chapter3-dark-active);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter4"].active,
+:root.dark-theme .nav-chapter[href^="#chapter4"].parent-active {
+	background-color: var(--chapter4-dark-active);
+}
+
+:root.dark-theme .nav-chapter[href^="#chapter5"].active,
+:root.dark-theme .nav-chapter[href^="#chapter5"].parent-active {
+	background-color: var(--chapter5-dark-active);
 }
 
 /* Add subtle chalk dust effect to sidebar */

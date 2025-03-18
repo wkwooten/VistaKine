@@ -179,16 +179,12 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-	.interactive-section {
-		grid-template-columns: 1fr;
-	}
-
-	.vector-input input {
-		flex: 1;
-	}
+/* Desktop styles (min-width: 992px) */
+@media (min-width: 992px) {
+	/* Base desktop styles - desktop is the default */
 }
 
+/* Tablet styles (min-width: 480px and max-width: 991px) */
 @media (min-width: 480px) and (max-width: 991px) {
 	.interactive-section {
 		flex-direction: column;
@@ -199,6 +195,7 @@
 	}
 }
 
+/* Mobile styles (max-width: 479px) */
 @media (max-width: 479px) {
 	.control-panel {
 		padding: var(--spacing-sm);
@@ -211,6 +208,17 @@
 	.control-button {
 		padding: var(--spacing-xs) var(--spacing-sm);
 		font-size: var(--text-sm);
+	}
+}
+
+/* Legacy tablet/mobile breakpoint - maintaining for compatibility */
+@media (max-width: 768px) {
+	.interactive-section {
+		grid-template-columns: 1fr;
+	}
+
+	.vector-input input {
+		flex: 1;
 	}
 }
 
@@ -254,7 +262,7 @@
 	transform: rotate(90deg);
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments for expand button */
 @media (min-width: 992px) {
 
 	/* Show expand buttons only on mobile/tablet by default */

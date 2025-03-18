@@ -300,10 +300,14 @@ VistaKine.settings = {
         // Toggle debug panel
         if (settings.showDebugPanel) {
             if (VistaKine.content && typeof VistaKine.content.showDebugPanel === 'function') {
+                console.log('[Settings] Enabling debug panel');
                 VistaKine.content.showDebugPanel();
+            } else {
+                console.warn('[Settings] Debug panel requested but content.showDebugPanel not available');
             }
         } else {
             if (VistaKine.content && typeof VistaKine.content.hideDebugPanel === 'function') {
+                console.log('[Settings] Disabling debug panel');
                 VistaKine.content.hideDebugPanel();
             }
         }
@@ -881,8 +885,20 @@ VistaKine.settings = {
     /**
      * Open settings panel
      */
-    openPanel: function() {
-        if (!this.elements.panel || !this.elements.overlay) return;
+    openPanel: function(e) {
+        console.log('[Settings] Attempting to open settings panel', e);
+
+        if (!this.elements.panel || !this.elements.overlay) {
+            console.error('[Settings] Cannot open panel - elements not initialized');
+
+            // Try to recreate the panel
+            this.createSettingsPanel();
+
+            if (!this.elements.panel) {
+                console.error('[Settings] Failed to create settings panel');
+                return;
+            }
+        }
 
         // Update UI with current settings
         this.updateSettingsUI();

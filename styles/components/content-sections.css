@@ -1,0 +1,560 @@
+/**
+ * VistaKine Content and Section Components
+ *
+ * This file contains:
+ * - Main content area structure and layout
+ * - Section containers and styling
+ * - Section loading/unloaded states and animations
+ * - Error handling and messaging
+ * - Reading progress indicator
+ * - Content navigation components
+ */
+
+/* --------------------
+   1. MAIN CONTENT AREA
+   -------------------- */
+
+.main-content {
+	margin-left: 0;
+	/* No margin needed in grid layout */
+	padding: var(--spacing-xl);
+	padding-top: var(--spacing-md);
+	min-height: 100vh;
+	transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	scroll-padding-top: 2rem;
+}
+
+/* Desktop-specific styles */
+@media (min-width: 992px) {
+	.main-content {
+		padding-left: var(--spacing-xl);
+		padding-top: var(--spacing-md);
+	}
+}
+
+/* Tablet specific styles */
+@media (min-width: 480px) and (max-width: 991px) {
+	.main-content {
+		padding: var(--spacing-lg);
+		padding-top: var(--spacing-md);
+	}
+
+	/* Navigation adjustments for tablets */
+	.navigation-buttons {
+		padding: var(--spacing-md);
+	}
+}
+
+/* Mobile specific styles */
+@media (max-width: 479px) {
+	.main-content {
+		padding: var(--spacing-sm);
+	}
+
+	.navigation-buttons {
+		flex-direction: column;
+		gap: var(--spacing-sm);
+	}
+
+	.nav-button {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* Legacy compatibility for non-grid layouts (for backwards compatibility only) */
+.main-content.legacy-layout {
+	margin-left: var(--sidebar-width);
+}
+
+.sidebar.collapsed + .main-content.legacy-layout,
+.main-content.sidebar-collapsed.legacy-layout {
+	margin-left: var(--sidebar-collapsed-width, 0);
+}
+
+.sidebar.mini-collapsed + .main-content.legacy-layout,
+.main-content.sidebar-mini-collapsed.legacy-layout {
+	margin-left: var(--sidebar-mini-collapsed-width);
+}
+
+/* Backwards compatibility for non-grid layouts */
+@media (min-width: 480px) and (max-width: 991px) {
+
+	/* Legacy styles for non-grid layouts */
+	.main-content.legacy-layout {
+		margin-left: var(--sidebar-mini-collapsed-width);
+		padding-left: var(--spacing-lg);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	/* No margin change when expanded in legacy layouts - sidebar overlays content */
+	.sidebar.expanded + .main-content.legacy-layout {
+		margin-left: var(--sidebar-mini-collapsed-width);
+	}
+}
+
+/* Alias for backwards compatibility */
+#book-content {
+	flex: 1;
+	min-height: 100vh;
+	overflow-y: auto;
+	padding: var(--spacing-md);
+	transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add desktop-specific margin for #book-content in legacy layouts */
+@media (min-width: 992px) {
+	#book-content.legacy-layout {
+		margin-left: var(--sidebar-width);
+	}
+}
+
+/* --------------------
+   2. SECTION CONTAINERS
+   -------------------- */
+
+/* Section container base styles with increased specificity */
+body .section-container {
+	position: relative;
+	transition: opacity 0.5s ease, min-height 0.5s ease;
+	min-height: 300px;
+	/* Base min-height for all sections */
+	border-radius: var(--section-radius);
+	margin-bottom: var(--spacing-xl);
+}
+
+/* Section content base styles */
+body .section-container .section-wrapper {
+	transition: opacity 0.5s ease-in-out;
+	height: 100%;
+	background-color: transparent;
+	padding: 20px;
+	border-radius: var(--section-content-radius);
+	-webkit-transition: opacity 0.5s ease-in-out;
+	-moz-transition: opacity 0.5s ease-in-out;
+	-ms-transition: opacity 0.5s ease-in-out;
+	-o-transition: opacity 0.5s ease-in-out;
+}
+
+/* Apply a subtle inner shadow to loaded content for better readability */
+body .section-container.loaded .section-wrapper {
+	box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
+	background-color: rgba(var(--primary-color-rgb), 0.04);
+}
+
+/* Section-specific height overrides */
+body .section-container.unloaded[id="cover"] {
+	min-height: 800px !important;
+}
+
+body .section-container.unloaded[id="about"] {
+	min-height: 600px !important;
+}
+
+body .section-container.unloaded[id="chapters"] {
+	min-height: 700px !important;
+}
+
+body .section-container.unloaded[id^="chapter"] {
+	min-height: 1000px !important;
+}
+
+/* Default fallback for any other section */
+body .section-container.unloaded:not([id="cover"]):not([id="about"]):not([id="chapters"]):not([id^="chapter"]) {
+	min-height: 500px !important;
+}
+
+/* --------------------
+   3. LOADING STATES
+   -------------------- */
+
+/* Section loading states */
+body .section-container.loading {
+	opacity: 0.8;
+}
+
+body .section-container.loaded {
+	opacity: 1;
+}
+
+/* Unloaded section styles */
+body .section-container.unloaded {
+	opacity: 0.9;
+	transition: none;
+	/* Apply unloaded styles immediately */
+}
+
+/* Section content loading transitions */
+body .section-container.loading .section-wrapper {
+	opacity: 0.4;
+	transition: opacity 0.3s ease;
+}
+
+body .section-container.loaded .section-wrapper {
+	opacity: 1;
+	transition: opacity 0.4s ease 0.1s;
+}
+
+/* Loading placeholder - shared between files with merged properties */
+.loading-placeholder {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-secondary, #666);
+	font-style: italic;
+	border: 1px dashed var(--border-color);
+	border-radius: var(--section-inner-radius);
+	margin: 1rem 0;
+	background-color: var(--bg-light, #f5f5f5);
+	transition: opacity 0.3s ease;
+	font-size: 16px;
+	height: calc(100% - 2rem);
+}
+
+/* Loading placeholder for unloaded sections */
+body .section-container.unloaded .loading-placeholder {
+	margin: 2rem;
+	padding: 3rem;
+	height: calc(100% - 4rem);
+	border-style: dashed;
+	background-color: rgba(var(--primary-color-rgb), 0.03);
+	box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
+	font-size: 18px;
+}
+
+/* Hide placeholder during loading to avoid flicker */
+body .section-container.loading .loading-placeholder {
+	opacity: 0;
+	transition: opacity 0.1s ease;
+	animation: none;
+}
+
+/* Section type indicators for unloaded sections */
+body .section-container[id^="chapter"].unloaded .loading-placeholder::before {
+	content: "Chapter";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--link-color);
+}
+
+body .section-container[id="cover"].unloaded .loading-placeholder::before {
+	content: "Cover Page";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--accent-color);
+}
+
+body .section-container[id="about"].unloaded .loading-placeholder::before {
+	content: "About";
+	display: block;
+	font-weight: bold;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: var(--link-color);
+}
+
+/* Loading animations */
+.loading-placeholder::after {
+	content: "";
+	position: absolute;
+	width: 60px;
+	height: 4px;
+	bottom: 30%;
+	background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+	animation: loading-shimmer 1.5s infinite;
+	border-radius: var(--radius-xs);
+}
+
+body .section-container.unloaded .loading-placeholder::after {
+	content: "";
+	display: block;
+	position: static;
+	width: 40px;
+	height: 4px;
+	margin-top: 1.5rem;
+	background: linear-gradient(90deg, transparent, var(--link-color), transparent);
+	border-radius: var(--radius-xs);
+	animation: shimmer 2s infinite;
+}
+
+@keyframes loading-shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(calc(300% + 60px));
+	}
+}
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+/* Animation for unloaded sections */
+@keyframes pulse {
+	0% {
+		opacity: 0.6;
+	}
+
+	50% {
+		opacity: 0.8;
+	}
+
+	100% {
+		opacity: 0.6;
+	}
+}
+
+body .section-container.unloaded:not(.loading) .loading-placeholder {
+	animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* --------------------
+   4. ERROR STATES
+   -------------------- */
+
+/* For error states */
+body .section-container.load-error {
+	opacity: 1;
+	background-color: var(--bg-error);
+}
+
+/* Error indicator */
+.error-indicator {
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-error);
+	background-color: var(--bg-error);
+	border: 1px solid var(--border-error);
+	border-radius: var(--section-inner-radius);
+	margin: 1rem 0;
+}
+
+.error-indicator h3 {
+	margin-top: 0;
+	color: var(--text-error);
+}
+
+.error-indicator .error-message {
+	font-family: monospace;
+	background-color: var(--hover-bg);
+	padding: 0.5rem;
+	border-radius: var(--radius-xs);
+	margin: 1rem 0;
+	word-break: break-word;
+}
+
+.error-indicator button {
+	background-color: var(--section-cover-bg);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-sm);
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.2s ease;
+}
+
+.error-indicator button:hover {
+	background-color: var(--hover-bg);
+}
+
+/* Standard error message */
+.error-message {
+	background-color: #fff0f0;
+	border-left: 4px solid #ff6b6b;
+	padding: var(--spacing-md);
+	margin: var(--spacing-md) 0;
+	border-radius: var(--radius-sm);
+}
+
+.error-message h2 {
+	color: #d63031;
+	margin-bottom: var(--spacing-sm);
+}
+
+.error-message .error-details {
+	background-color: rgba(0, 0, 0, 0.03);
+	padding: var(--spacing-sm);
+	border-radius: var(--radius-sm);
+	font-family: monospace;
+	font-size: var(--text-sm);
+	margin: var(--spacing-sm) 0;
+	white-space: pre-wrap;
+}
+
+.error-message button {
+	background-color: #f7f7f7;
+	border: 1px solid #ddd;
+	border-radius: var(--radius-sm);
+	padding: var(--spacing-xs) var(--spacing-md);
+	margin-top: var(--spacing-sm);
+	margin-right: var(--spacing-sm);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.error-message button:hover {
+	background-color: #eee;
+}
+
+/* --------------------
+   5. NAVIGATION AND PROGRESS
+   -------------------- */
+
+/* Reading progress indicator */
+.reading-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 0%;
+	height: 4px;
+	background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+	z-index: 1000;
+	transition: width 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation buttons */
+.navigation-buttons {
+	display: flex;
+	justify-content: space-between;
+	margin-top: var(--spacing-lg);
+}
+
+.nav-button {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border-color);
+	background-color: white;
+	color: var(--text-color);
+	text-decoration: none;
+	transition: all 0.2s ease;
+	cursor: pointer;
+}
+
+.nav-button:hover {
+	background-color: var(--hover-bg);
+}
+
+.prev-button i,
+.next-button i {
+	font-size: 1.2em;
+}
+
+.prev-button i {
+	margin-right: var(--spacing-xs);
+}
+
+.next-button i {
+	margin-left: var(--spacing-xs);
+}
+
+/* --------------------
+   6. RESPONSIVE ADJUSTMENTS
+   -------------------- */
+
+/* Medium devices (tablets) */
+@media screen and (max-width: 1024px) {
+
+	.loading-placeholder,
+	.error-indicator {
+		padding: 1.5rem;
+		margin: 0.75rem 0;
+	}
+}
+
+/* Small devices (mobile) */
+@media screen and (max-width: 768px) {
+
+	.loading-placeholder,
+	.error-indicator {
+		padding: 1rem;
+		margin: 0.5rem 0;
+	}
+
+	.error-indicator h3 {
+		font-size: 1.1rem;
+	}
+}
+
+/* Improved visibility for high-contrast mode */
+@media (prefers-contrast: high) {
+	body .section-container.loading {
+		opacity: 0.9;
+	}
+
+	.error-indicator {
+		border-width: 2px;
+	}
+}
+
+/* --------------------
+   7. DARK THEME ADJUSTMENTS
+   -------------------- */
+
+/* Dark theme specific adjustments */
+:root.dark-theme .loading-placeholder {
+	background-color: rgba(255, 255, 255, 0.03);
+	border: 1px dashed rgba(255, 255, 255, 0.1);
+	color: rgba(255, 255, 255, 0.6);
+}
+
+:root.dark-theme .section-container.loading .section-wrapper {
+	background-image: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+}
+
+/* Chalk theme for section loader in dark mode */
+:root.dark-theme .section-container::before {
+	background-image: radial-gradient(rgba(255, 255, 255, var(--chalk-dust-opacity)) 1px,
+			transparent 1px);
+	background-size: 4px 4px;
+}
+
+:root.dark-theme .section-loader {
+	background: var(--bg-overlay);
+}
+
+:root.dark-theme .section-loader .loader {
+	border-color: rgba(var(--primary-color-rgb), 0.2);
+	border-top-color: var(--primary-color);
+}
+
+:root.dark-theme .section-error {
+	background-color: var(--bg-overlay);
+	border: 1px solid rgba(255, 82, 82, 0.2);
+}
+
+:root.dark-theme .content-block {
+	border-color: var(--content-border);
+	background-color: var(--content-bg);
+}
+
+:root.dark-theme .content-heading {
+	color: var(--text-color);
+	border-bottom-color: var(--content-border);
+}
+
+:root.dark-theme .content-divider {
+	background: linear-gradient(90deg, transparent, var(--content-divider), transparent);
+}
+
+:root.dark-theme .content-callout {
+	background-color: var(--active-bg);
+	border-left-color: var(--primary-color);
+}

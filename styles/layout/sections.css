@@ -29,27 +29,33 @@
 
 .section-inner {
 	background-color: #ffffff;
-	border-radius: 8px;
-	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+	/*Standardizedneutralbackground*/
+	/* border-radius: 8px; */
 	padding: var(--spacing-lg);
 	margin-bottom: var(--spacing-lg);
 	transition: box-shadow 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
 	position: relative;
 }
 
-.section-inner:hover {
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 3px 12px rgba(0, 0, 0, 0.05);
-	transform: translateY(-2px);
-}
 
-.section-content {
+/* Renamed from section-content to section-wrapper for clarity */
+.section-wrapper {
 	width: 100%;
 	max-width: var(--max-content-width);
 	margin: 0 auto;
+	min-height: 300px;
+	/* Minimum height to reduce layout shifts */
+	transition: opacity 0.3s ease;
+	/* Smooth transition for opacity changes */
 }
 
-/* Content blocks */
-.content-section {
+/* Add a loading state class */
+.section-wrapper.loading {
+	opacity: 0.7;
+}
+
+/* Renamed from content-section to content-block for clarity */
+.content-block {
 	margin-bottom: var(--spacing-xl);
 	padding: var(--spacing-md) var(--spacing-lg);
 	border-radius: 6px;
@@ -59,16 +65,16 @@
 	transition: box-shadow 0.2s ease;
 }
 
-.content-section:hover {
+.content-block:hover {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.content-section:last-child {
+.content-block:last-child {
 	margin-bottom: 0;
 }
 
-.content-section h2,
-.content-section h3 {
+.content-block h2,
+.content-block h3 {
 	margin-top: 0;
 	margin-bottom: var(--spacing-md);
 	color: var(--text-color);
@@ -211,50 +217,60 @@
 	gap: var(--spacing-xl);
 }
 
-/* Section backgrounds - restoring background colors for section-inner */
-#cover .section-inner {
+/* Section backgrounds - moved to section-content (renamed to section-wrapper) */
+#cover .section-wrapper {
 	background-color: var(--section-cover-bg);
 }
 
-#about .section-inner {
+#about .section-wrapper {
 	background-color: var(--section-about-bg);
 }
 
-#chapters .section-inner {
+#chapters .section-wrapper {
 	background-color: var(--section-chapters-bg);
 }
 
-/* Chapter 1 sections - restoring background colors */
-#chapter1-intro .section-inner,
-#chapter1-coordinates .section-inner,
-#chapter1-matrices .section-inner,
-#chapter1-matrix-lab .section-inner {
+/* Chapter 1 sections - moved colors to section-wrapper */
+#chapter1-intro .section-wrapper,
+#chapter1-coordinates .section-wrapper,
+#chapter1-matrices .section-wrapper,
+#chapter1-matrix-lab .section-wrapper {
 	background-color: var(--section-chapter1-bg);
 }
 
-/* Chapter 2 sections - restoring background colors */
-#chapter2-intro .section-inner,
-#chapter2-operations .section-inner,
-#chapter2-dot-products .section-inner,
-#chapter2-applications .section-inner {
+/* Chapter 2 sections - moved colors to section-wrapper */
+#chapter2-intro .section-wrapper,
+#chapter2-operations .section-wrapper,
+#chapter2-dot-products .section-wrapper,
+#chapter2-applications .section-wrapper {
 	background-color: var(--section-chapter2-bg);
 }
 
-/* Chapter 3 sections - restoring background colors */
-#chapter3-definition .section-inner,
-#chapter3-geometric .section-inner,
-#chapter3-applications .section-inner,
-#chapter3-triple .section-inner {
+/* Chapter 3 sections - moved colors to section-wrapper */
+#chapter3-definition .section-wrapper,
+#chapter3-geometric .section-wrapper,
+#chapter3-applications .section-wrapper,
+#chapter3-triple .section-wrapper {
 	background-color: var(--section-chapter3-bg);
 }
 
 /* Responsive adjustments */
+/* Desktop styles (min-width: 992px) */
+@media (min-width: 992px) {
+
+	/* Base desktop styles - if any specific desktop-only adjustments are needed */
+	.chapter-sections {
+		grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+	}
+}
+
+/* Tablet styles (min-width: 480px and max-width: 991px) */
 @media (min-width: 480px) and (max-width: 991px) {
 	.section-inner {
 		padding: var(--spacing-md);
 	}
 
-	.content-section {
+	.content-block {
 		margin-bottom: var(--spacing-lg);
 		padding: var(--spacing-sm) var(--spacing-md);
 	}
@@ -273,13 +289,14 @@
 	}
 }
 
+/* Mobile styles (max-width: 479px) */
 @media (max-width: 479px) {
 	.section-inner {
 		padding: var(--spacing-sm);
 		margin-bottom: var(--spacing-md);
 	}
 
-	.content-section {
+	.content-block {
 		margin-bottom: var(--spacing-md);
 		padding: var(--spacing-xs) var(--spacing-sm);
 	}
@@ -302,9 +319,13 @@
 	}
 }
 
-/* Section inner content for blackboard theme */
 :root.dark-theme .section-inner {
 	background-color: rgba(38, 38, 38, 0.8) !important;
+}
+
+/* Section inner content for blackboard theme */
+:root.dark-theme .section-wrapper {
+
 	/* Blackboard background */
 	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
 	border: 1px solid rgba(255, 255, 255, 0.07);
@@ -312,29 +333,9 @@
 }
 
 /* Section inner hover for blackboard theme */
-:root.dark-theme .section-inner:hover {
+:root.dark-theme .section-wrapper:hover {
 	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(0, 0, 0, 0.15);
 	border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* Override section background colors for dark theme */
-:root.dark-theme #cover .section-inner,
-:root.dark-theme #about .section-inner,
-:root.dark-theme #chapters .section-inner,
-:root.dark-theme #chapter1-intro .section-inner,
-:root.dark-theme #chapter1-coordinates .section-inner,
-:root.dark-theme #chapter1-matrices .section-inner,
-:root.dark-theme #chapter1-matrix-lab .section-inner,
-:root.dark-theme #chapter2-intro .section-inner,
-:root.dark-theme #chapter2-operations .section-inner,
-:root.dark-theme #chapter2-dot-products .section-inner,
-:root.dark-theme #chapter2-applications .section-inner,
-:root.dark-theme #chapter3-definition .section-inner,
-:root.dark-theme #chapter3-geometric .section-inner,
-:root.dark-theme #chapter3-applications .section-inner,
-:root.dark-theme #chapter3-triple .section-inner {
-	background-color: rgba(35, 45, 40, 0.8) !important;
-	/* Common blackboard color */
 }
 
 /* Card elements in dark mode */

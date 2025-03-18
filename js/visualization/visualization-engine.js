@@ -163,6 +163,27 @@ VistaKine.visualization = {
             console.log('Engine ready, scanning for containers...');
             this.engine.scanForContainers();
         });
+    },
+
+    /**
+     * Initialize visualizations in the active section
+     */
+    initActiveSection() {
+        try {
+            // Find all placeholders in the active section
+            const activeSection = document.querySelector('.section-wrapper.active');
+            if (!activeSection) return;
+
+            const placeholders = activeSection.querySelectorAll('.visualization-placeholder, .content-block');
+            if (!placeholders.length) return;
+
+            // Initialize each placeholder
+            placeholders.forEach(placeholder => {
+                this.initVisualization(placeholder);
+            });
+        } catch (error) {
+            console.error('Error initializing active section visualizations:', error);
+        }
     }
 };
 
@@ -747,7 +768,7 @@ class VisualizationEngine {
             const sectionEl = document.querySelector(`[data-section-id="${container.dataset.originalSection}"]`);
             if (sectionEl) {
                 // Look for visualization container placeholders
-                const placeholders = sectionEl.querySelectorAll('.visualization-placeholder, .content-section');
+                const placeholders = sectionEl.querySelectorAll('.visualization-placeholder, .content-block');
                 for (const placeholder of placeholders) {
                     // Check if this placeholder doesn't already have a visualization
                     if (!placeholder.querySelector('.visualization-container')) {
@@ -765,9 +786,9 @@ class VisualizationEngine {
         }
 
         // Method 4: Look for empty visualization placeholders in the currently active section
-        const activeSection = document.querySelector('.section-content.active');
+        const activeSection = document.querySelector('.section-wrapper.active');
         if (activeSection) {
-            const placeholders = activeSection.querySelectorAll('.visualization-placeholder, .content-section');
+            const placeholders = activeSection.querySelectorAll('.visualization-placeholder, .content-block');
             for (const placeholder of placeholders) {
                 // Check if this placeholder doesn't already have a visualization
                 if (!placeholder.querySelector('.visualization-container')) {

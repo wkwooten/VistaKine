@@ -28,9 +28,11 @@ VistaKine.navigation = {
         observer: null,
         pendingUpdate: null,
         isDirectNavigation: false,
-        updateDebounceTime: 150,
+        updateDebounceTime: 50,         // Reduced from 150ms to 50ms
         navigationLock: false,          // Add navigation lock flag
-        navigationLockDuration: 1200    // Lock duration in milliseconds (1.2 seconds)
+        navigationLockDuration: 600,    // Reduced from 1200ms to 600ms
+        lastProgressUpdate: 0,          // Track last progress update time
+        progressUpdateThrottle: 100     // Only update progress every 100ms
     },
 
     /**
@@ -455,22 +457,33 @@ VistaKine.navigation = {
         this.state.pendingUpdate = null;
         this.state.isDirectNavigation = false;
 
+        // Enhanced observer options with fewer threshold points for better performance
         const options = {
             root: null, // Use viewport
             rootMargin: '0px',
-            threshold: [0.1, 0.5, 0.9] // Just enough thresholds to determine visibility levels
+            threshold: [0, 0.25, 0.5, 0.75, 1.0] // Reduced threshold points for better performance
         };
 
+        console.log('[Navigation] Setting up enhanced IntersectionObserver with granular thresholds');
+
         this.state.observer = new IntersectionObserver((entries) => {
+            // Performance monitoring
+            const startTime = performance.now();
+
+            // Add detailed logging
+            console.log(`[Navigation Observer] Processing ${entries.length} entries, lock: ${this.state.navigationLock}, direct nav: ${this.state.isDirectNavigation}`);
+
             // Skip updates during navigation lock or direct navigation
             if (this.state.navigationLock || this.state.isDirectNavigation) {
-                VistaKine.utils.log('Skipping intersection updates due to active navigation lock', 'debug');
+                console.log('[Navigation Observer] Skipping intersection updates due to active navigation lock or direct navigation');
                 return;
             }
 
             // Process entries and update visibleSections
             entries.forEach(entry => {
                 const sectionId = entry.target.id;
+                console.log(`[Navigation Observer] Section ${sectionId}: intersecting=${entry.isIntersecting}, ratio=${entry.intersectionRatio.toFixed(2)}`);
+
                 const index = this.state.visibleSections.findIndex(s => s.id === sectionId);
 
                 if (entry.isIntersecting) {
@@ -487,10 +500,14 @@ VistaKine.navigation = {
                         this.state.visibleSections[index].ratio = visibilityScore;
                     }
 
-                    // If section content isn't loaded yet, load it
+                    // Update progress for chapter sections
+                    this.updateSectionProgress(sectionId, visibilityScore);
+
+                    // If section content isn't loaded yet, trigger content module to load it
                     if (VistaKine.state.isInitialized('content') &&
                         !VistaKine.state.isSectionLoaded(sectionId)) {
-                        VistaKine.content.loadSection(entry.target);
+                        // Let the content module handle this through subscription
+                        console.log(`[Navigation Observer] Section ${sectionId} needs loading`);
                     }
                 } else if (index !== -1) {
                     // Remove from visible list if no longer intersecting
@@ -501,6 +518,10 @@ VistaKine.navigation = {
             // Sort visible sections by visibility ratio
             this.state.visibleSections.sort((a, b) => b.ratio - a.ratio);
 
+            // Update central state with visible sections
+            const visibleIds = this.state.visibleSections.map(s => ({ id: s.id, ratio: s.ratio }));
+            VistaKine.state.set('navigation.visibleSections', visibleIds);
+
             // Debounce the section update to prevent rapid changes
             if (this.state.pendingUpdate) {
                 clearTimeout(this.state.pendingUpdate);
@@ -510,6 +531,13 @@ VistaKine.navigation = {
                 this.updateActiveFromVisibleSections();
                 this.state.pendingUpdate = null;
             }, this.state.updateDebounceTime);
+
+            // Performance monitoring - log time taken
+            const endTime = performance.now();
+            const processingTime = endTime - startTime;
+            // Store in global variable for debug panel
+            window.lastObserverProcessingTime = processingTime;
+            console.log(`[Performance] Observer processing took ${processingTime.toFixed(2)}ms for ${entries.length} entries`);
         }, options);
 
         // Observe all sections
@@ -518,7 +546,7 @@ VistaKine.navigation = {
             this.state.observer.observe(section);
         });
 
-        VistaKine.utils.log(`IntersectionObserver set up with ${sections.length} sections`);
+        VistaKine.utils.log(`Enhanced IntersectionObserver set up with ${sections.length} sections`);
     },
 
     /**
@@ -583,11 +611,16 @@ VistaKine.navigation = {
     },
 
     /**
-     * Ensure a section is visible to the user
-     * Used for direct navigation (links, hash changes)
-     * @param {string} sectionId - ID of the section to display
+     * Ensure the specified section is visible
+     * This handles both scrolling to the section and loading it if needed
      */
     ensureSectionVisible: function(sectionId) {
+        // Use the standard lock method
+        this.setNavigationLock(true, `Programmatic scroll to ${sectionId}`);
+
+        // Mark this as a direct navigation
+        this.state.isDirectNavigation = true;
+
         if (!sectionId) {
             VistaKine.utils.log('Cannot navigate: No section ID provided', 'error');
             return;
@@ -600,13 +633,6 @@ VistaKine.navigation = {
         }
 
         VistaKine.utils.log(`Direct navigation to section: ${sectionId}`);
-
-        // Set navigation lock to prioritize user intent
-        this.state.navigationLock = true;
-        VistaKine.utils.log(`Navigation lock activated for ${this.state.navigationLockDuration}ms - user intent prioritized`, 'info');
-
-        // Set direct navigation flag to temporarily pause automatic updates
-        this.state.isDirectNavigation = true;
 
         // Ensure the section is loaded
         if (VistaKine.state.isInitialized('content') && !VistaKine.state.isSectionLoaded(sectionId)) {
@@ -682,16 +708,20 @@ VistaKine.navigation = {
     },
 
     /**
-     * Set up the hash change handler
-     * This handles direct URL navigation and the browser back/forward buttons
+     * Set up handler for hash changes in the URL
      */
     setupHashChangeHandler: function() {
-        window.addEventListener('hashchange', function(e) {
+        window.addEventListener('hashchange', (event) => {
             const hash = window.location.hash.substring(1);
-            if (hash) {
-                VistaKine.utils.log(`Hash changed to: ${hash}`);
-                VistaKine.navigation.ensureSectionVisible(hash);
-            }
+            if (!hash) return;
+
+            VistaKine.utils.log(`Hash changed to: ${hash}`);
+
+            // Set navigation lock for hash changes to ensure smooth transitions
+            this.setNavigationLock(true, `URL hash changed to ${hash}`);
+
+            // Navigate to the section
+            this.ensureSectionVisible(hash);
         });
 
         VistaKine.utils.log('Hash change handler set up');
@@ -722,8 +752,8 @@ VistaKine.navigation = {
                 // Update URL hash (this will trigger hashchange)
                 window.location.hash = targetId;
 
-                // Set navigation lock to prioritize user intent
-                self.state.navigationLock = true;
+                // Use the standard lock method instead of directly setting the flag
+                self.setNavigationLock(true, `User clicked link to ${targetId}`);
 
                 // Use the helper method to handle navigation
                 self.ensureSectionVisible(targetId);
@@ -736,16 +766,16 @@ VistaKine.navigation = {
 
         if (prevButton) {
             prevButton.addEventListener('click', () => {
-                // Set navigation lock to prioritize user intent
-                self.state.navigationLock = true;
+                // Use the standard lock method instead of directly setting the flag
+                self.setNavigationLock(true, 'User clicked previous button');
                 self.goToPrevious();
             });
         }
 
         if (nextButton) {
             nextButton.addEventListener('click', () => {
-                // Set navigation lock to prioritize user intent
-                self.state.navigationLock = true;
+                // Use the standard lock method instead of directly setting the flag
+                self.setNavigationLock(true, 'User clicked next button');
                 self.goToNext();
             });
         }
@@ -764,6 +794,114 @@ VistaKine.navigation = {
         const currentSection = VistaKine.state.getCurrentSection();
         if (currentSection) {
             this.ensureSectionVisible(currentSection);
+        }
+    },
+
+    /**
+     * Set navigation lock status with proper logging
+     * @param {boolean} locked - Whether to lock or unlock navigation
+     * @param {string} reason - The reason for the lock change
+     * @returns {boolean} - Previous lock state
+     */
+    setNavigationLock: function(locked, reason = 'Unknown reason') {
+        const prevState = this.state.navigationLock;
+        this.state.navigationLock = locked;
+
+        if (locked) {
+            console.log(`[Navigation] LOCK engaged: ${reason}`);
+
+            // Auto-release after timeout
+            setTimeout(() => {
+                if (this.state.navigationLock) {
+                    console.log('[Navigation] LOCK auto-released after timeout');
+                    this.state.navigationLock = false;
+                }
+            }, this.state.navigationLockDuration);
+        } else {
+            console.log(`[Navigation] LOCK released: ${reason}`);
+        }
+
+        return prevState;
+    },
+
+    /**
+     * Update section progress based on visibility ratio
+     * @param {string} sectionId - ID of the section
+     * @param {number} visibilityRatio - Ratio of section visibility (0-1)
+     */
+    updateSectionProgress: function(sectionId, visibilityRatio) {
+        // Only proceed if section is visible
+        if (visibilityRatio <= 0) return;
+
+        // Extract chapter ID from section ID (e.g., "chapter1" from "chapter1-intro")
+        // For main sections and subsections, we want to find the parent chapter
+        let navChapterId;
+
+        // Check if it's a direct chapter reference or a subsection
+        if (sectionId.match(/^chapter\d+$/) && !sectionId.includes('-')) {
+            // It's a main chapter (e.g., "chapter1")
+            navChapterId = sectionId;
+        } else if (sectionId.startsWith('chapter')) {
+            // It's a chapter subsection (e.g., "chapter1-intro")
+            navChapterId = sectionId.split('-')[0];
+        } else {
+            // Not a chapter section, skip progress update
+            return;
+        }
+
+        // Throttle updates to reduce DOM operations
+        const now = performance.now();
+        if (now - this.state.lastProgressUpdate < this.state.progressUpdateThrottle) {
+            return; // Skip update if too soon after last update
+        }
+        this.state.lastProgressUpdate = now;
+
+        // Find the nav item for this chapter
+        const navItem = document.querySelector(`.nav-chapter[href="#${navChapterId}"]`);
+        if (!navItem) return;
+
+        // Find the chapter number element
+        const chapterNumber = navItem.querySelector('.chapter-number');
+        if (!chapterNumber) return;
+
+        // Calculate progress across all sections of this chapter
+        let progress;
+        const relatedSections = this.state.visibleSections
+            .filter(s => s.id.startsWith(navChapterId))
+            .map(s => s.ratio);
+
+        if (relatedSections.length > 0) {
+            // Use maximum visibility as the progress indicator
+            const maxRatio = Math.max(...relatedSections);
+            progress = Math.min(1, maxRatio); // Keep as decimal (0-1) for scaling
+        } else {
+            // Fallback to current section's visibility
+            progress = Math.min(1, visibilityRatio);
+        }
+
+        // Update progress visually using CSS variable with requestAnimationFrame
+        requestAnimationFrame(() => {
+            // Use scale transform instead of height
+            // Start with 0 scale and grow to 1.0 (full) as progress increases
+            chapterNumber.style.setProperty('--progress-scale', progress.toFixed(2));
+
+            // Add a title attribute for accessibility (as percentage)
+            const progressPercent = Math.round(progress * 100);
+            chapterNumber.setAttribute('title', `${progressPercent}% viewed`);
+
+            // Mark complete if needed (95% or more)
+            if (progress >= 0.95) {
+                navItem.classList.add('chapter-complete');
+            } else {
+                navItem.classList.remove('chapter-complete');
+            }
+        });
+
+        // Only update state if progress changed significantly
+        const progressPercent = Math.round(progress * 100);
+        const currentProgress = VistaKine.state.get(`navigation.progress.${navChapterId}`, 0);
+        if (Math.abs(currentProgress - progressPercent) >= 5) {
+            VistaKine.state.set(`navigation.progress.${navChapterId}`, progressPercent);
         }
     },
 };

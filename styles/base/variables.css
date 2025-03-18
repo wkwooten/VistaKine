@@ -22,6 +22,20 @@
 	--space-xl: 2rem;
 	--space-xxl: 3rem;
 
+	/* Border radius */
+	--radius-xs: 2px;
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 12px;
+	--radius-round: 50%;
+	--radius-pill: 9999px;
+
+	/* Section element radii */
+	--section-radius: var(--radius-sm);
+	--section-content-radius: var(--radius-sm);
+	--section-inner-radius: var(--radius-sm);
+
 	/* Font sizes */
 	--text-xs: 0.75rem;
 	--text-sm: 0.875rem;
@@ -143,6 +157,10 @@
 
 	--primary-color-dark: #1565C0;
 	/* Darker blue */
+
+	/* Common structural variables (moved from main.css) */
+	--bg-color: var(--section-cover-bg);
+	--body-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Dark theme variables (blackboard-inspired) */
@@ -172,6 +190,8 @@
 	/* Slightly darker secondary background */
 	--bg-tertiary: rgba(18, 18, 18, 0.7) !important;
 	/* Even darker tertiary background */
+	--body-bg-color: #121212 !important;
+	/* Blackboard background - darker than bg-color */
 
 	/* UI elements */
 	--border-color: rgba(255, 255, 255, 0.2) !important;
@@ -209,18 +229,44 @@
 
 	/* Section backgrounds */
 	--section-cover-bg: #1e1e1e !important;
-	--section-about-bg: #232323 !important;
-	--section-chapters-bg: #282828 !important;
-	--section-chapter1-bg: #2d2d2d !important;
-	--section-chapter2-bg: #323232 !important;
-	--section-chapter3-bg: #373737 !important;
-	--section-chapter4-bg: #3c3c3c !important;
-	--section-chapter5-bg: #414141 !important;
-
+	--section-about-bg: #1a2129 !important;
+	--section-chapters-bg: #1a1c29 !important;
+	--section-chapter1-bg: #161e2e !important;
+	--section-chapter2-bg: #162a1c !important;
+	--section-chapter3-bg: #292210 !important;
+	--section-chapter4-bg: #29151a !important;
+	--section-chapter5-bg: #24152a !important;
 	/* Visual effects */
 	--chalk-dust-opacity: 0.02 !important;
 	--chalk-grid-size: 25px !important;
 	--chalk-glow: rgba(255, 255, 255, 0.4) !important;
+
+	/* Dark theme chapter colors for sidebar and UI elements */
+	--chapter1-dark-bg: var(--section-chapter1-bg) !important;
+	--chapter1-dark-hover: rgba(59, 130, 246, 0.15) !important;
+	--chapter1-dark-active: rgba(59, 130, 246, 0.25) !important;
+
+	--chapter2-dark-bg: var(--section-chapter2-bg) !important;
+	--chapter2-dark-hover: rgba(16, 185, 129, 0.15) !important;
+	--chapter2-dark-active: rgba(16, 185, 129, 0.25) !important;
+
+	--chapter3-dark-bg: var(--section-chapter3-bg) !important;
+	--chapter3-dark-hover: rgba(245, 158, 11, 0.15) !important;
+	--chapter3-dark-active: rgba(245, 158, 11, 0.25) !important;
+
+	--chapter4-dark-bg: var(--section-chapter4-bg) !important;
+	--chapter4-dark-hover: rgba(239, 68, 68, 0.15) !important;
+	--chapter4-dark-active: rgba(239, 68, 68, 0.25) !important;
+
+	--chapter5-dark-bg: var(--section-chapter5-bg) !important;
+	--chapter5-dark-hover: rgba(139, 92, 246, 0.15) !important;
+	--chapter5-dark-active: rgba(139, 92, 246, 0.25) !important;
+
+	/* Chalkboard texture properties */
+	--chalk-line-color: rgba(255, 255, 255, 0.03) !important;
+	--chalk-dot-size: 1px !important;
+	--chalk-texture-size: 40px !important;
+	--chalk-noise-opacity: 0.15 !important;
 
 	/* Cover specific colors */
 	--cover-gradient: linear-gradient(135deg, #1A2035, #112240) !important;
@@ -239,55 +285,31 @@
 
 /* Dark theme (blackboard-inspired) */
 :root.dark-theme body {
-	/* Blackboard background - much darker than before */
-	background-color: #121212;
+	/* Use the blackboard background color variable */
+	background-color: var(--body-bg-color);
 
-	/* Remove the grid and replace with a subtle blackboard texture */
+	/* Use chalkboard texture instead of grid */
 	background-image:
-		linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-	background-size: 40px 40px;
-	/* Slightly larger grid for chalk effect */
-
-	/* Add subtle noise texture to mimic blackboard surface */
+		/* Fine chalk dust texture */
+		url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADvSURBVGhD7ZhBDoMgEEXRjSe1PoIOHsATuPEoLBXEkplC2lAVxf+S2VDgPYMTJVGJiIj0YMSZbKsR59nGc1TqZB+fYy4JBXd3+dXlE0z3n03kcC0YbL8Sl9BEjl8tn6YiImnopWXLNINH6xnRG8p6eaXjhTzf+5nTteQdLZGcEeY0RSwCMj8bLXGSLCK2BuH7DXllsQDIHt2bUyVhgZDNukLi3JD9ZlsROQpkv9lWRI4A2e/sxkkLiOyrqohdQeQP+ioiNcT/OqkORM/rfqJcx6YidQDLmLXIHcBSVjGWv1kl31JERER+T0qfNjUVAXn25qYAAAAASUVORK5CYII=");
+	background-size: 150px 150px;
 	background-blend-mode: overlay;
+	background-position: center;
 }
 
-/* Device variables */
-:root {
-	/* Media query breakpoints */
-	--mobile-max: 479px;
-	--tablet-min: 480px;
-	--tablet-max: 991px;
-	--desktop-min: 992px;
-}
-
-/* High contrast theme (for accessibility) */
+/* High contrast variables for accessibility */
 :root.high-contrast {
-	/* --primary-color: #0000ff;
-	--primary-color-rgb: 0, 0, 255;
-	--accent-color: #6666ff;
-	--accent-color-dark: #0000cc;
-	--text-color: #000000;
-	--text-light: #333333;
-	--border-color: #000000;
+	--border-color: var(--primary-color);
 	--hover-bg: rgba(0, 0, 0, 0.1);
-	--hover-color: #000000;
-	--active-bg: rgba(0, 0, 255, 0.2); */
+	--active-bg: rgba(0, 0, 255, 0.2);
+}
 
-	/* Link colors for high contrast */
-	/* --link-color: #0000EE;
-	--link-color-hover: #0000CC;
-	--link-color-visited: #551A8B;
-	--link-color-active: #0000FF; */
+.font-small {
+	--text-base-size: 0.9rem;
+	--text-scale-ratio: 1.2;
+}
 
-	/* Cover-specific colors */
-	/* --cover-gradient: linear-gradient(135deg, #000080, #0000CC);
-	--cover-text: white;
-	--cover-text-secondary: white;
-	--cover-accent: #FFFF00;
-	--cover-accent-glow: rgba(255, 255, 0, 0.5);
-	--cover-heading-gradient: linear-gradient(90deg, white, white);
-	--cover-button-primary: #FFFF00;
-	--cover-button-primary-hover: #FFFFCC; */
+.font-large {
+	--text-base-size: 1.1rem;
+	--text-scale-ratio: 1.25;
 }
